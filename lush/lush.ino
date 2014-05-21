@@ -48,7 +48,8 @@ OctoWS2811 g_octo(LEDS_PER_STRIP, g_display_memory, g_drawing_memory,
 		  WS2811_GRB | WS2811_800kHz);
 
 // UI state
-Encoder encoder(ENCODER_1_A_PIN, ENCODER_1_B_PIN);
+Encoder encoder1(ENCODER_1_A_PIN, ENCODER_1_B_PIN);
+UI_state ui;
 
 void setup()
 {
@@ -83,6 +84,33 @@ void loop()
 
 void ui_loop()
 {
+    {
+	History<Encoder_state> &history = ui.m_encoder1;
+	Encoder_state state(encoder1.read());
+	int steps = state.m_position - history.m_current.m_position;
+	if (abs(steps) > 2) {
+	    history.m_previous = history.m_current;
+	    history.m_current = state;
+	    int adjustment = -steps / 2;
+
+	    Serial.println(adjustment);
+	}
+    }
+
+    {
+	History<Button_state> &history = ui.m_button1;
+	int pin = ENCODER_1_SW_PIN;
+	Button_state state(digitalRead(pin) == LOW);
+	if (state.m_pressed != history.m_current.m_pressed) {
+	    history.m_previous = history.m_current;
+	    history.m_current = state;
+
+	    Serial.print(state.m_pressed ? "pressed" : "released");
+	    Serial.print(" after ");
+	    Serial.println(history.m_current.m_ms - history.m_previous.m_ms);
+	}
+
+    }
 }
 
 void display_loop()

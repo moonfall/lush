@@ -161,6 +161,45 @@ class Pattern_huey
     Value m_hue_offset;
 };
 
+class Encoder_state
+{
+  public:
+    Encoder_state(int position = 0)
+	: m_position(position), m_ms(millis())
+    {
+    }
+
+    int		m_position;
+    int		m_ms;
+};
+
+class Button_state
+{
+  public:
+    Button_state(bool pressed = false)
+	: m_pressed(pressed), m_ms(millis())
+    {
+    }
+
+    bool	m_pressed;
+    int		m_ms;
+};
+
+template<class T>
+class History
+{
+  public:
+    T		m_current;
+    T		m_previous;
+};
+
+class UI_state
+{
+  public:
+    History<Encoder_state>	m_encoder1;
+    History<Button_state>	m_button1;
+};
+
 // lock
 // selected mode
 // display pattern
