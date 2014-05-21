@@ -1,4 +1,5 @@
 #include <limits.h>
+#include <math.h>
 
 #include <OctoWS2811.h>
 
@@ -31,6 +32,26 @@ void Value::set_wrap(bool wraps)
     m_wraps = wraps;
 }
 
+int Value::get_min()
+{
+    return m_min;
+}
+
+int Value::get_max()
+{
+    return m_max;
+}
+
+int Value::get_range()
+{
+    return m_max - m_min + 1;
+}
+
+bool Value::get_wrap()
+{
+    return m_wraps;
+}
+
 void Value::set(int value)
 {
     m_value = bound(value);
@@ -49,10 +70,29 @@ void Value::set_velocity(int delta, int delta_ms)
     m_velocity_ms = delta_ms;
 }
 
+void Value::set_periodic(int amplitude, int cycle_ms)
+{
+    set(get());
+    m_periodic = amplitude;
+    m_periodic_ms = cycle_ms;
+}
+
 int Value::get()
 {
-    int elapsed = now() - m_value_time;
-    return m_value + m_velocity * elapsed / m_velocity_ms;
+    int value = m_value;
+    int elapsed = 0;
+    if (m_velocity && m_velocity_ms) {
+	elapsed = now() - m_value_time;
+	value += m_velocity * elapsed / m_velocity_ms;
+    } 
+    if (m_periodic && m_periodic_ms) {
+	if (!elapsed) {
+	    elapsed = now() - m_value_time;
+	}
+	value += m_periodic * sin(2 * M_PI * (double) elapsed / (double) m_periodic_ms);
+    }
+
+    return bound(value);
 }
 
 int Value::now()
@@ -69,7 +109,7 @@ int Value::bound(int value)
 
     if (value < m_min) {
 	if (m_wraps) {
-	    int range = m_max - m_min + 1;
+	    int range = get_range();
 	    while (value < m_min) {
 		value += range;
 	    }
@@ -78,7 +118,7 @@ int Value::bound(int value)
 	}
     } else if (value > m_max) {
 	if (m_wraps) {
-	    int range = m_max - m_min + 1;
+	    int range = get_range();
 	    while (value > m_min) {
 		value -= range;
 	    }

@@ -30,8 +30,8 @@ const int FFT_SIZE = 256;
 Pattern *g_current_pattern = NULL;
 Pattern_huey g_huey;
 
-Value g_brightness(16);
-Value g_hue(0);
+Value g_brightness(16, 0, 255);
+Value g_hue(0, 0, 255, true);
 
 // Audio acquisition
 IntervalTimer g_sampling_timer;
@@ -69,7 +69,7 @@ void setup()
 
     g_current_pattern = &g_huey;
 
-    g_hue.set_velocity(1, 40);
+    g_hue.set_velocity(256, 10000);
 }
 
 void loop()

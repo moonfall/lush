@@ -98,6 +98,11 @@ class Value
     void set_max(int max);
     void set_wrap(bool wraps);
 
+    int get_min();
+    int get_max();
+    bool get_wrap();
+    int get_range();
+
     void set(int value);
     void modify(int delta);
 
@@ -119,7 +124,9 @@ class Value
 
     int m_velocity;
     int m_velocity_ms;
-    int m_velocity_start;
+
+    int m_periodic;
+    int m_periodic_ms;
 };
 
 extern Value g_brightness;
