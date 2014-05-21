@@ -9,12 +9,16 @@ Value::Value(int initial)
     : m_min(INT_MIN), m_max(INT_MAX), m_wraps(true)
 {
     set(initial);
+    set_velocity(0, 0);
+    set_periodic(0, 0);
 }
 
 Value::Value(int initial, int min, int max, bool wraps)
     : m_min(min), m_max(max), m_wraps(wraps)
 {
     set(initial);
+    set_velocity(0, 0);
+    set_periodic(0, 0);
 }
 
 void Value::set_min(int min)
@@ -65,6 +69,7 @@ void Value::modify(int delta)
 
 void Value::set_velocity(int delta, int delta_ms)
 {
+    // TODO: This will cause discontinuities due to periodic.
     set(get());
     m_velocity = delta;
     m_velocity_ms = delta_ms;
@@ -72,12 +77,13 @@ void Value::set_velocity(int delta, int delta_ms)
 
 void Value::set_periodic(int amplitude, int cycle_ms)
 {
+    // TODO: This will cause discontinuities due to velocity.
     set(get());
     m_periodic = amplitude;
     m_periodic_ms = cycle_ms;
 }
 
-int Value::get()
+int Value::get_unbounded()
 {
     int value = m_value;
     int elapsed = 0;
@@ -92,7 +98,12 @@ int Value::get()
 	value += m_periodic * sin(2 * M_PI * (double) elapsed / (double) m_periodic_ms);
     }
 
-    return bound(value);
+    return value;
+}
+
+int Value::get()
+{
+    return bound(get_unbounded());
 }
 
 int Value::now()
@@ -107,19 +118,21 @@ int Value::bound(int value)
 	return value;
     }
 
-    if (value < m_min) {
+    if (m_min != INT_MIN && value < m_min) {
 	if (m_wraps) {
 	    int range = get_range();
+	    // TODO: This will take longer and longer without resetting value.
 	    while (value < m_min) {
 		value += range;
 	    }
 	} else {
 	    value = m_min;
 	}
-    } else if (value > m_max) {
+    } else if (m_max != INT_MAX && value > m_max) {
 	if (m_wraps) {
 	    int range = get_range();
-	    while (value > m_min) {
+	    // TODO: This will take longer and longer without resetting value.
+	    while (value > m_max) {
 		value -= range;
 	    }
 	} else {
