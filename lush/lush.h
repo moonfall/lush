@@ -125,4 +125,16 @@ class Value
 extern Value g_brightness;
 extern Value g_hue;
 
+// lock
+// selected mode
+// display pattern
+// brightness
+// hue change speed
+// max refresh rate
+// sample rate
+// sound sensitivity
+//   gain
+//   min
+//   max
+
 #endif // !_LUSH_H_INCLUDED
