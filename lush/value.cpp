@@ -132,9 +132,13 @@ int Value::bound(int value)
 	if (m_wraps) {
 	    int range = get_range();
 	    // TODO: This will take longer and longer without resetting value.
+#if 0
 	    while (value > m_max) {
 		value -= range;
 	    }
+#else
+	    value = (value - m_min) % range + m_min;
+#endif
 	} else {
 	    value = m_max;
 	}
