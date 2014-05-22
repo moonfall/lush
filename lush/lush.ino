@@ -25,6 +25,7 @@ const int COLUMN_COUNT = 8;
 const int LED_COUNT = ROW_COUNT * COLUMN_COUNT;
 const int LEDS_PER_STRIP = LED_COUNT;
 const int FFT_SIZE = 256;
+const int TURN_OFF_MS = 3000;
 
 // Current state
 Pattern *g_current_pattern = NULL;
@@ -39,6 +40,7 @@ const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 Value g_current_mode(0, 0, MODE_COUNT - 1, true);
 
 Value g_brightness(16, 0, 255);
+Value g_resume_brightness(16, 0, 255);
 Value g_hue(0, 0, 255, true);
 
 // Audio acquisition
@@ -86,6 +88,7 @@ void setup()
 }
 
 void idle() {
+    // TODO: Replace this with actual sleep.
     delay(10);
 }
 
@@ -121,13 +124,18 @@ void ui_callback(Element_id id, Element const &element)
 	    g_brightness.modify(element.get_current_change());
 	    break;
 	case UI_KNOB1_BUTTON:
-	    // On release
-	    if (element.get_current_change() < 0) {
-		if (element.get_previous_millis() > 5000) {
+	    if (element.get_current_change() > 0) {
+		// On press: start fading off when pressed
+		g_resume_brightness = g_brightness;
+		g_brightness.set_velocity(-g_brightness.get(), TURN_OFF_MS);
+	    } else if (element.get_current_change() < 0) {
+		// On release: turn off, or switch modes
+		if (!g_off && g_brightness.get() == 0) {
 		    turn_off();
 		} else {
 		    ui_advance_mode();
 		}
+		g_brightness = g_resume_brightness;
 	    }
 	    break;
     }
