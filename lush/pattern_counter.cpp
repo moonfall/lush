@@ -18,6 +18,12 @@ bool Pattern_counter::display()
     draw_char(0, 0, counter / 10 + '0', c, &COLOUR_BLACK);
     draw_char(FONT_WIDTH, 0, counter % 10 + '0', c, &COLOUR_BLACK);
 
+    for (int y = FONT_HEIGHT; y < ROW_COUNT; ++y) {
+	for (int x = 0; x < COLUMN_COUNT; ++x) {
+	    draw_pixel(x, y, COLOUR_BLACK);
+	}
+    }
+
     return true;
 }
 
