@@ -161,44 +161,93 @@ class Pattern_huey
     Value m_hue_offset;
 };
 
-class Encoder_state
+struct Mode
 {
-  public:
-    Encoder_state(int position = 0)
-	: m_position(position), m_ms(millis())
-    {
-    }
-
-    int		m_position;
-    int		m_ms;
+    Pattern *m_pattern;
 };
 
-class Button_state
+class Element_state
 {
   public:
-    Button_state(bool pressed = false)
-	: m_pressed(pressed), m_ms(millis())
+    Element_state(int value = 0)
+	: m_value(value), m_ms(millis())
     {
     }
-
-    bool	m_pressed;
-    int		m_ms;
+    int			m_value;
+    int			m_ms;
 };
 
-template<class T>
-class History
+class Element
 {
   public:
-    T		m_current;
-    T		m_previous;
+    Element_state	m_data[2];
+
+    Element_state get_current() const
+    {
+	return m_data[0];
+    }
+
+    Element_state get_previous() const
+    {
+	return m_data[1];
+    }
+
+    virtual int get_change(Element_state const &current,
+	     Element_state const &previous) const
+    {
+	return current.m_value - previous.m_value;
+    }
+
+    virtual int get_current_change() const
+    {
+	return get_change(get_current(), get_previous());
+    }
+
+    int get_current_millis() const
+    {
+	return millis() - get_current().m_ms;
+    }
+
+    int get_previous_millis() const
+    {
+	return get_current().m_ms - get_previous().m_ms;
+    }
+
+    void push(Element_state const &current)
+    {
+	m_data[1] = m_data[0];
+	m_data[0] = current;
+    }
+};
+
+class Encoder_element
+    : public Element
+{
+    virtual int get_change(Element_state const &current,
+	    Element_state const &previous) const
+    {
+	return (previous.m_value - current.m_value) / 4;
+    }
+};
+
+enum Element_id
+{
+    UI_KNOB1_ENCODER,
+    UI_KNOB1_BUTTON,
+    UI_KNOB2_ENCODER,
+    UI_KNOB2_BUTTON,
 };
 
 class UI_state
 {
   public:
-    History<Encoder_state>	m_encoder1;
-    History<Button_state>	m_button1;
+    Encoder_element	m_knob1_encoder;
+    Element		m_knob1_button;
+    Encoder_element	m_knob2_encoder;
+    Element		m_knob2_button;
 };
+
+extern UI_state g_ui;
 
 // lock
 // selected mode

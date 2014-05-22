@@ -31,6 +31,13 @@ Pattern *g_current_pattern = NULL;
 Pattern_huey g_pattern_huey;
 Pattern_counter g_pattern_counter;
 
+struct Mode g_modes[] = {
+    { &g_pattern_huey },
+    { &g_pattern_counter },
+};
+const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
+Value g_current_mode(0, 0, MODE_COUNT - 1, true);
+
 Value g_brightness(16, 0, 255);
 Value g_hue(0, 0, 255, true);
 
@@ -46,10 +53,12 @@ DMAMEM int g_display_memory[LEDS_PER_STRIP * 6];
 int g_drawing_memory[LEDS_PER_STRIP * 6];
 OctoWS2811 g_octo(LEDS_PER_STRIP, g_display_memory, g_drawing_memory,
 		  WS2811_GRB | WS2811_800kHz);
+bool g_force_update = false;
 
 // UI state
 Encoder encoder1(ENCODER_1_A_PIN, ENCODER_1_B_PIN);
-UI_state ui;
+UI_state g_ui;
+bool g_off = false;
 
 void setup()
 {
@@ -69,58 +78,117 @@ void setup()
     // Begin output.
     g_octo.begin();
 
-    g_current_pattern = &g_pattern_counter;
     g_pattern_counter.setup();
     g_pattern_huey.setup();
+    update_pattern();
 
     g_hue.set_velocity(256, 10000);
+}
+
+void idle() {
+    delay(10);
 }
 
 void loop()
 {
     ui_loop();
     display_loop();
+    if (g_off) {
+	idle();
+    }
+}
+
+void update_pattern()
+{
+    g_current_pattern = g_modes[g_current_mode.get()].m_pattern;
+}
+
+void ui_advance_mode()
+{
+    if (g_off) {
+	turn_on();
+    }
+    g_current_mode.modify(1);
+    update_pattern();
+    Serial.print("next mode is ");
+    Serial.println(g_current_mode.get());
+}
+
+void ui_callback(Element_id id, Element const &element)
+{
+    switch (id) {
+	case UI_KNOB1_ENCODER:
+	    g_brightness.modify(element.get_current_change());
+	    break;
+	case UI_KNOB1_BUTTON:
+	    // On release
+	    if (element.get_current_change() < 0) {
+		if (element.get_previous_millis() > 5000) {
+		    turn_off();
+		} else {
+		    ui_advance_mode();
+		}
+	    }
+	    break;
+    }
 }
 
 void ui_loop()
 {
     {
-	History<Encoder_state> &history = ui.m_encoder1;
-	Encoder_state state(encoder1.read());
-	int steps = state.m_position - history.m_current.m_position;
-	if (abs(steps) > 2) {
-	    history.m_previous = history.m_current;
-	    history.m_current = state;
-	    int adjustment = -steps / 2;
+	Element &element = g_ui.m_knob1_encoder;
+	Element_state state(encoder1.read());
+	if (element.get_change(state, element.get_current())) {
+	    element.push(state);
 
-	    Serial.println(adjustment);
+	    Serial.print("new value is ");
+	    Serial.print(state.m_value);
+	    Serial.print(" change is ");
+	    Serial.println(element.get_current_change());
+
+	    ui_callback(UI_KNOB1_ENCODER, element);
 	}
     }
 
     {
-	History<Button_state> &history = ui.m_button1;
+	Element &element = g_ui.m_knob1_button;
 	int pin = ENCODER_1_SW_PIN;
-	Button_state state(digitalRead(pin) == LOW);
-	if (state.m_pressed != history.m_current.m_pressed) {
-	    history.m_previous = history.m_current;
-	    history.m_current = state;
+	Element_state state(digitalRead(pin) == LOW);
+	if (element.get_change(state, element.get_current())) {
+	    element.push(state);
 
-	    Serial.print(state.m_pressed ? "pressed" : "released");
+	    Serial.print(state.m_value ? "pressed" : "released");
 	    Serial.print(" after ");
-	    Serial.println(history.m_current.m_ms - history.m_previous.m_ms);
-	}
+	    Serial.println(element.get_previous_millis());
 
+	    ui_callback(UI_KNOB1_BUTTON, element);
+	}
     }
 }
 
 void display_loop()
 {
     bool needs_update = false;
-    if (g_current_pattern) {
+    if (!g_off && g_current_pattern) {
 	needs_update = g_current_pattern->display();
     }
 
-    if (needs_update) {
+    if (g_force_update || needs_update) {
 	show_pixels();
+	g_force_update = false;
     }
+}
+
+void turn_on()
+{
+    Serial.println("hello");
+    g_off = false;
+}
+
+void turn_off()
+{
+    Serial.println("okaybye");
+    draw_pixels(COLOUR_BLACK);
+    g_force_update = true;
+    g_off = true;
 }
