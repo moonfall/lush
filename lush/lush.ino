@@ -6,6 +6,8 @@
 #include <OctoWS2811.h>
 
 #include "lush.h"
+#include "sqrt_integer.h"
+#include "dspinst.h"
 
 #undef SAMPLE_TEST
 
@@ -314,7 +316,26 @@ void sampler_loop()
 	g_level_min = min;
 	g_level_max = max;
 
+#ifdef PROFILE_FFT
+	static int last = 0;
+	int start = micros();
+#endif
 	fft_loop();
+#ifdef PROFILE_FFT
+	int mid = micros();
+#endif
+	fft_loop2();
+#ifdef PROFILE_FFT
+	int end = micros();
+	Serial.print("time since last ");
+	Serial.print(start - last);
+	Serial.print(" fft ");
+	Serial.print(mid - start);
+	Serial.print(" mag ");
+	Serial.print(end - mid);
+	Serial.println();
+	last = end;
+#endif
 
 	// Start sampling all over again.
 	sampler_start();
@@ -328,7 +349,8 @@ void fft_setup()
 
 void fft_loop()
 {
-#if 0
+#ifdef LOG_SAMPLES
+    // Original samples.
     Serial.print("s ");
     for (int i = 0; i < FFT_SIZE; ++i) {
 	Serial.print(g_samples[i]);
@@ -336,8 +358,12 @@ void fft_loop()
     }
     Serial.println();
 #endif
+
+    // Perform FFT
     arm_cfft_radix4_q15(&g_fft_inst, g_samples);
-#if 0
+
+#ifdef LOG_FFT
+    // Raw FFT transform including complex.
     Serial.print("f ");
     for (int i = 0; i < FFT_SIZE; ++i) {
 	Serial.print(g_samples[i]);
@@ -345,28 +371,36 @@ void fft_loop()
     }
     Serial.println();
 #endif
+}
+
+void fft_loop2()
+{
+    // Calculate magnitudes
 #if 0
+    // TODO: Why isn't this working?
     arm_cmplx_mag_q15(g_samples, g_magnitudes, FFT_SIZE);
 #else
     for (int i = 0; i < FFT_SIZE / 2; ++i) {
-#if 0
+#if 1
 	uint32_t tmp = *((uint32_t *)g_samples + i);
 	uint32_t magsq = multiply_16tx16t_add_16bx16b(tmp, tmp);
-	g_magnitudes[i] = sqrt(magsq);
+	g_magnitudes[i] = sqrt_uint32_approx(magsq);
 #else
 	g_magnitudes[i] = sqrt(g_samples[2 * i] * g_samples[2 * i] +
 			       g_samples[2 * i + 1] * g_samples[2 * i + 1]);
 #endif
     }
 #endif
+
+#ifdef LOG_MAGNITUDES
     Serial.print("dc=");
     Serial.print(g_dc_total / g_dc_sample_count);
-
     for (int i = 0; i < FFT_SIZE / 2; ++i) {
 	Serial.print(" ");
 	Serial.print(g_magnitudes[i]);
     }
     Serial.println();
+#endif
 }
 
 void display_loop()
