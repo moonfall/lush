@@ -1,3 +1,4 @@
+#include <arm_math.h>
 #include <stdint.h>
 
 #include <ADC.h>
@@ -14,7 +15,7 @@ const int POWER_LED_PIN = 13;
 // A4 == external, A3 == adafruit internal
 const int AUDIO_INPUT_PIN = A3;
 // Bits of resolution for ADC
-const int ANALOG_READ_RESOLUTION = 10;
+const int ANALOG_READ_RESOLUTION = 12;
 // Number of samples to average with each ADC reading.
 const int ANALOG_READ_AVERAGING = 16;
 
@@ -49,14 +50,19 @@ Value g_hue(0, 0, 255, true);
 // Audio acquisition
 ADC *g_adc;
 IntervalTimer g_sampling_timer;
-float g_samples[FFT_SIZE * 2];
-float g_magnitudes[FFT_SIZE];
+int16_t g_samples[FFT_SIZE * 2];
+int16_t g_magnitudes[FFT_SIZE];
+arm_cfft_radix4_instance_q15 g_fft_inst;
 int g_sample_counter = 0;
 int g_sample_iterations = 0;
 int g_sample_rate_hz = 20000;
 float g_level_avg = 0.0;
 float g_level_min = 0.0;
 float g_level_max = 0.0;
+
+// Filter out DC component by keeping a rolling average.
+int g_dc_total = (1 << (ANALOG_READ_RESOLUTION - 1));
+const int g_dc_sample_count = 1024;
 
 // Output
 // 24 bytes == 6 words for each LED of each strip.
@@ -78,9 +84,18 @@ void setup()
     // Set up ADC and audio input.
     pinMode(AUDIO_INPUT_PIN, INPUT);
     g_adc = new ADC();
-    g_adc->setReference(DEFAULT);
-    g_adc->setResolution(ANALOG_READ_RESOLUTION);
-    g_adc->setAveraging(ANALOG_READ_AVERAGING);
+    g_adc->setReference(DEFAULT, 0);
+    g_adc->setReference(DEFAULT, 1);
+    g_adc->setResolution(ANALOG_READ_RESOLUTION, 0);
+    g_adc->setResolution(ANALOG_READ_RESOLUTION, 1);
+    g_adc->setAveraging(ANALOG_READ_AVERAGING, 0);
+    g_adc->setAveraging(ANALOG_READ_AVERAGING, 1);
+
+
+    g_dc_total = 0;
+    for (int i = 0; i < g_dc_sample_count; ++i) {
+	g_dc_total += g_adc->analogRead(AUDIO_INPUT_PIN);
+    }
 
     pinMode(ENCODER_1_SW_PIN, INPUT_PULLUP);
 
@@ -98,6 +113,8 @@ void setup()
     // Start cycling colours by default
     g_hue.set_velocity(256, 10000);
 
+    fft_setup();
+
 #ifndef SAMPLE_TEST
     // Start sampling sound.
     // TODO: Only do this if necessary
@@ -110,7 +127,8 @@ void idle() {
     delay(10);
 }
 
-#if 1
+#undef LOG_RAW_LEVELS
+#ifdef LOG_RAW_LEVELS
 int last_report = 0;
 #endif
 void loop()
@@ -133,7 +151,7 @@ void loop()
 #else
     sampler_loop();
 #endif
-#if 0
+#ifdef LOG_RAW_LEVELS
     if (millis() - last_report > 100) {
 	Serial.print(g_sample_iterations);
 	Serial.print(": ");
@@ -231,11 +249,15 @@ int extra_min = 9999;
 int extra_max = 0;
 void sampler_callback()
 {
+    // TODO: Fix this to actually calculate the DC offset.
     int sample = g_adc->analogRead(AUDIO_INPUT_PIN);
+    int dc_mean = g_dc_total / g_dc_sample_count;
+    g_dc_total = g_dc_total + sample - dc_mean;
+    sample -= dc_mean;
     g_samples[g_sample_counter] = sample;
 
     // Set imaginary part of the input to 0 for FFT.
-    g_samples[g_sample_counter + 1] = 0.0;
+    g_samples[g_sample_counter + 1] = 0;
 
 #if 0
     ++extra_count;
@@ -277,7 +299,6 @@ bool sampler_done()
     return g_sample_counter >= FFT_SIZE * 2;
 }
 
-int count = 0;
 void sampler_loop()
 {
     if (sampler_done()) {
@@ -285,11 +306,7 @@ void sampler_loop()
 	float min = g_samples[0];
 	float max = g_samples[0];
 	for (int i = 0; i < FFT_SIZE * 2; i += 2) {
-	    if (g_samples[i] > 512) { 
-		sum += g_samples[i] - 512;
-	    } else {
-		sum += 512 - g_samples[i];
-	    }
+	    sum += abs(g_samples[i]);
 	    min = min(min, g_samples[i]);
 	    max = max(max, g_samples[i]);
 	}
@@ -297,20 +314,59 @@ void sampler_loop()
 	g_level_min = min;
 	g_level_max = max;
 
-#if 0
-	if (count % 100 == 99) {
-	    for( int i = 0; i < FFT_SIZE * 2; i += 2) {
-		Serial.print(g_samples[i]);
-		Serial.print(" ");
-	    }
-	    Serial.println();
-	}
-	++count;
-#endif
+	fft_loop();
 
 	// Start sampling all over again.
 	sampler_start();
     }
+}
+
+void fft_setup()
+{
+    arm_cfft_radix4_init_q15(&g_fft_inst, FFT_SIZE, 0, 1);
+}
+
+void fft_loop()
+{
+#if 0
+    Serial.print("s ");
+    for (int i = 0; i < FFT_SIZE; ++i) {
+	Serial.print(g_samples[i]);
+	Serial.print(" ");
+    }
+    Serial.println();
+#endif
+    arm_cfft_radix4_q15(&g_fft_inst, g_samples);
+#if 0
+    Serial.print("f ");
+    for (int i = 0; i < FFT_SIZE; ++i) {
+	Serial.print(g_samples[i]);
+	Serial.print(" ");
+    }
+    Serial.println();
+#endif
+#if 0
+    arm_cmplx_mag_q15(g_samples, g_magnitudes, FFT_SIZE);
+#else
+    for (int i = 0; i < FFT_SIZE / 2; ++i) {
+#if 0
+	uint32_t tmp = *((uint32_t *)g_samples + i);
+	uint32_t magsq = multiply_16tx16t_add_16bx16b(tmp, tmp);
+	g_magnitudes[i] = sqrt(magsq);
+#else
+	g_magnitudes[i] = sqrt(g_samples[2 * i] * g_samples[2 * i] +
+			       g_samples[2 * i + 1] * g_samples[2 * i + 1]);
+#endif
+    }
+#endif
+    Serial.print("dc=");
+    Serial.print(g_dc_total / g_dc_sample_count);
+
+    for (int i = 0; i < FFT_SIZE / 2; ++i) {
+	Serial.print(" ");
+	Serial.print(g_magnitudes[i]);
+    }
+    Serial.println();
 }
 
 void display_loop()
