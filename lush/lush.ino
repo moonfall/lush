@@ -52,7 +52,8 @@ Value g_hue(0, 0, 255, true);
 // Audio acquisition
 ADC *g_adc;
 IntervalTimer g_sampling_timer;
-int16_t g_samples[FFT_SIZE * 2];
+int16_t g_samples[FFT_SIZE];
+int16_t g_fft_samples[FFT_SIZE * 2];
 int16_t g_magnitudes[FFT_SIZE];
 arm_cfft_radix4_instance_q15 g_fft_inst;
 int g_sample_counter = 0;
@@ -246,42 +247,15 @@ void ui_loop()
     }
 }
 
-int extra_count = 0;
-int extra_min = 9999;
-int extra_max = 0;
 void sampler_callback()
 {
-    // TODO: Fix this to actually calculate the DC offset.
     int sample = g_adc->analogRead(AUDIO_INPUT_PIN);
     int dc_mean = g_dc_total / g_dc_sample_count;
     g_dc_total = g_dc_total + sample - dc_mean;
     sample -= dc_mean;
     g_samples[g_sample_counter] = sample;
 
-    // Set imaginary part of the input to 0 for FFT.
-    g_samples[g_sample_counter + 1] = 0;
-
-#if 0
-    ++extra_count;
-    if (sample < extra_min) {
-	extra_min = sample;
-    } else if (sample > extra_max) {
-	extra_max = sample;
-    }
-    if (extra_count > 10000) {
-	Serial.print("extra m=");
-	Serial.print(extra_min);
-	Serial.print(" M=");
-	Serial.print(extra_max);
-	Serial.print(" D=");
-	Serial.println(extra_max - extra_min);
-	extra_min = 9999;
-	extra_max = 0;
-	extra_count = 0;
-    }
-#endif
-
-    g_sample_counter += 2;
+    ++g_sample_counter;
 
     // Don't collect further samples until these have been processed
     if (sampler_done()) {
@@ -298,7 +272,7 @@ void sampler_start()
 
 bool sampler_done()
 {
-    return g_sample_counter >= FFT_SIZE * 2;
+    return g_sample_counter >= FFT_SIZE;
 }
 
 void sampler_loop()
@@ -307,7 +281,7 @@ void sampler_loop()
 	float sum = 0;
 	float min = g_samples[0];
 	float max = g_samples[0];
-	for (int i = 0; i < FFT_SIZE * 2; i += 2) {
+	for (int i = 0; i < FFT_SIZE; ++i) {
 	    sum += abs(g_samples[i]);
 	    min = min(min, g_samples[i]);
 	    max = max(max, g_samples[i]);
@@ -318,27 +292,31 @@ void sampler_loop()
 
 #ifdef PROFILE_FFT
 	static int last = 0;
-	int start = micros();
+	int start_prepare = micros();
 #endif
-	fft_loop();
+	fft_prepare();
 #ifdef PROFILE_FFT
-	int mid = micros();
-#endif
-	fft_loop2();
-#ifdef PROFILE_FFT
-	int end = micros();
-	Serial.print("time since last ");
-	Serial.print(start - last);
-	Serial.print(" fft ");
-	Serial.print(mid - start);
-	Serial.print(" mag ");
-	Serial.print(end - mid);
-	Serial.println();
-	last = end;
+	int end_prepare = micros();
 #endif
 
 	// Start sampling all over again.
 	sampler_start();
+
+#ifdef PROFILE_FFT
+	int start_process = micros();
+#endif
+	fft_process();
+#ifdef PROFILE_FFT
+	int end_process = micros();
+	Serial.print("sample ");
+	Serial.print(start_prepare - last);
+	Serial.print(" prepare ");
+	Serial.print(end_prepare - start_prepare);
+	Serial.print(" fft ");
+	Serial.print(end_process - start_process);
+	Serial.println();
+	last = end_process;
+#endif
     }
 }
 
@@ -347,7 +325,16 @@ void fft_setup()
     arm_cfft_radix4_init_q15(&g_fft_inst, FFT_SIZE, 0, 1);
 }
 
-void fft_loop()
+void fft_prepare()
+{
+    const uint16_t *src = (const uint16_t *)g_samples;
+    uint32_t *dst = (uint32_t *)g_fft_samples;
+    for (int i=0; i < FFT_SIZE; i++) {
+	*dst++ = *src++;  // real sample plus a zero for imaginary
+    }
+}
+
+void fft_process()
 {
 #ifdef LOG_SAMPLES
     // Original samples.
@@ -360,38 +347,36 @@ void fft_loop()
 #endif
 
     // Perform FFT
-    arm_cfft_radix4_q15(&g_fft_inst, g_samples);
+    arm_cfft_radix4_q15(&g_fft_inst, g_fft_samples);
 
 #ifdef LOG_FFT
     // Raw FFT transform including complex.
     Serial.print("f ");
     for (int i = 0; i < FFT_SIZE; ++i) {
-	Serial.print(g_samples[i]);
+	Serial.print(g_fft_samples[i]);
 	Serial.print(" ");
     }
     Serial.println();
 #endif
-}
 
-void fft_loop2()
-{
     // Calculate magnitudes
 #if 0
     // TODO: Why isn't this working?
-    arm_cmplx_mag_q15(g_samples, g_magnitudes, FFT_SIZE);
+    arm_cmplx_mag_q15(g_fft_samples, g_magnitudes, FFT_SIZE);
 #else
     for (int i = 0; i < FFT_SIZE / 2; ++i) {
 #if 1
-	uint32_t tmp = *((uint32_t *)g_samples + i);
+	uint32_t tmp = *((uint32_t *)g_fft_samples + i);
 	uint32_t magsq = multiply_16tx16t_add_16bx16b(tmp, tmp);
 	g_magnitudes[i] = sqrt_uint32_approx(magsq);
 #else
-	g_magnitudes[i] = sqrt(g_samples[2 * i] * g_samples[2 * i] +
-			       g_samples[2 * i + 1] * g_samples[2 * i + 1]);
+	g_magnitudes[i] = sqrt(g_fft_samples[2 * i] * g_fft_samples[2 * i] +
+			       g_fft_samples[2 * i + 1] * g_fft_samples[2 * i + 1]);
 #endif
     }
 #endif
 
+#define LOG_MAGNITUDES
 #ifdef LOG_MAGNITUDES
     Serial.print("dc=");
     Serial.print(g_dc_total / g_dc_sample_count);
