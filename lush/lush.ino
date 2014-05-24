@@ -1,15 +1,18 @@
 #include <stdint.h>
 
+#include <ADC.h>
 #include <Encoder.h>
 #include <OctoWS2811.h>
 
 #include "lush.h"
 
+#undef SAMPLE_TEST
+
 // Pin configuration
 const int POWER_LED_PIN = 13;
 
-// A3 == external, A4 == adafruit internal
-const int AUDIO_INPUT_PIN = A4;
+// A4 == external, A3 == adafruit internal
+const int AUDIO_INPUT_PIN = A3;
 // Bits of resolution for ADC
 const int ANALOG_READ_RESOLUTION = 10;
 // Number of samples to average with each ADC reading.
@@ -44,10 +47,16 @@ Value g_resume_brightness(16, 0, 255);
 Value g_hue(0, 0, 255, true);
 
 // Audio acquisition
+ADC *g_adc;
 IntervalTimer g_sampling_timer;
 float g_samples[FFT_SIZE * 2];
 float g_magnitudes[FFT_SIZE];
-int g_sample_counter;
+int g_sample_counter = 0;
+int g_sample_iterations = 0;
+int g_sample_rate_hz = 20000;
+float g_level_avg = 0.0;
+float g_level_min = 0.0;
+float g_level_max = 0.0;
 
 // Output
 // 24 bytes == 6 words for each LED of each strip.
@@ -68,8 +77,10 @@ void setup()
 
     // Set up ADC and audio input.
     pinMode(AUDIO_INPUT_PIN, INPUT);
-    analogReadResolution(ANALOG_READ_RESOLUTION);
-    analogReadAveraging(ANALOG_READ_AVERAGING);
+    g_adc = new ADC();
+    g_adc->setReference(DEFAULT);
+    g_adc->setResolution(ANALOG_READ_RESOLUTION);
+    g_adc->setAveraging(ANALOG_READ_AVERAGING);
 
     pinMode(ENCODER_1_SW_PIN, INPUT_PULLUP);
 
@@ -84,7 +95,14 @@ void setup()
     g_pattern_huey.setup();
     update_pattern();
 
+    // Start cycling colours by default
     g_hue.set_velocity(256, 10000);
+
+#ifndef SAMPLE_TEST
+    // Start sampling sound.
+    // TODO: Only do this if necessary
+    sampler_start();
+#endif
 }
 
 void idle() {
@@ -92,9 +110,43 @@ void idle() {
     delay(10);
 }
 
+#if 1
+int last_report = 0;
+#endif
 void loop()
 {
     ui_loop();
+#ifdef SAMPLE_TEST
+    int min = g_adc->analogRead(AUDIO_INPUT_PIN);
+    int max = min;
+    for (int i = 0; i < 10000; ++i) {
+	int value = g_adc->analogRead(AUDIO_INPUT_PIN);
+	min = min(min, value);
+	max = max(max, value);
+    }
+    Serial.print("m=");
+    Serial.print(min);
+    Serial.print(" M=");
+    Serial.print(max);
+    Serial.print(" D=");
+    Serial.println(max - min);
+#else
+    sampler_loop();
+#endif
+#if 0
+    if (millis() - last_report > 100) {
+	Serial.print(g_sample_iterations);
+	Serial.print(": ");
+	Serial.print(g_level_avg);
+	Serial.print(" m=");
+	Serial.print(g_level_min);
+	Serial.print(" M=");
+	Serial.print(g_level_max);
+	Serial.print(" D=");
+	Serial.println(g_level_max - g_level_min);
+	last_report = millis();
+    }
+#endif
     display_loop();
     if (g_off) {
 	idle();
@@ -171,6 +223,93 @@ void ui_loop()
 
 	    ui_callback(UI_KNOB1_BUTTON, element);
 	}
+    }
+}
+
+int extra_count = 0;
+int extra_min = 9999;
+int extra_max = 0;
+void sampler_callback()
+{
+    int sample = g_adc->analogRead(AUDIO_INPUT_PIN);
+    g_samples[g_sample_counter] = sample;
+
+    // Set imaginary part of the input to 0 for FFT.
+    g_samples[g_sample_counter + 1] = 0.0;
+
+#if 0
+    ++extra_count;
+    if (sample < extra_min) {
+	extra_min = sample;
+    } else if (sample > extra_max) {
+	extra_max = sample;
+    }
+    if (extra_count > 10000) {
+	Serial.print("extra m=");
+	Serial.print(extra_min);
+	Serial.print(" M=");
+	Serial.print(extra_max);
+	Serial.print(" D=");
+	Serial.println(extra_max - extra_min);
+	extra_min = 9999;
+	extra_max = 0;
+	extra_count = 0;
+    }
+#endif
+
+    g_sample_counter += 2;
+
+    // Don't collect further samples until these have been processed
+    if (sampler_done()) {
+	g_sampling_timer.end();
+    }
+}
+
+void sampler_start()
+{
+    g_sample_counter = 0;
+    ++g_sample_iterations;
+    g_sampling_timer.begin(sampler_callback, 1000000 / g_sample_rate_hz);
+}
+
+bool sampler_done()
+{
+    return g_sample_counter >= FFT_SIZE * 2;
+}
+
+int count = 0;
+void sampler_loop()
+{
+    if (sampler_done()) {
+	float sum = 0;
+	float min = g_samples[0];
+	float max = g_samples[0];
+	for (int i = 0; i < FFT_SIZE * 2; i += 2) {
+	    if (g_samples[i] > 512) { 
+		sum += g_samples[i] - 512;
+	    } else {
+		sum += 512 - g_samples[i];
+	    }
+	    min = min(min, g_samples[i]);
+	    max = max(max, g_samples[i]);
+	}
+	g_level_avg = sum / FFT_SIZE;
+	g_level_min = min;
+	g_level_max = max;
+
+#if 0
+	if (count % 100 == 99) {
+	    for( int i = 0; i < FFT_SIZE * 2; i += 2) {
+		Serial.print(g_samples[i]);
+		Serial.print(" ");
+	    }
+	    Serial.println();
+	}
+	++count;
+#endif
+
+	// Start sampling all over again.
+	sampler_start();
     }
 }
 
