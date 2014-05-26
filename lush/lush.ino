@@ -3,13 +3,20 @@
 
 #include <ADC.h>
 #include <Encoder.h>
+#include <SPI.h>
+#include <Mcp4261.h>
 #include <OctoWS2811.h>
 
 #include "lush.h"
 #include "sqrt_integer.h"
 #include "dspinst.h"
 
-#define SAMPLE_TEST
+#undef SAMPLE_TEST
+#undef LOG_RAW_LEVELS
+#undef LOG_SAMPLES
+#undef LOG_FFT
+#undef LOG_MAGNITUDES
+#undef LOG_BINS
 
 // Pin configuration
 const int POWER_LED_PIN = 13;
@@ -20,6 +27,8 @@ const int AUDIO_INPUT_PIN = A4;
 const int ANALOG_READ_RESOLUTION = 10;
 // Number of samples to average with each ADC reading.
 const int ANALOG_READ_AVERAGING = 16;
+
+const int MCP4261_CS_PIN = 10;
 
 const int ENCODER_1_A_PIN = 0;
 const int ENCODER_1_B_PIN = 1;
@@ -54,6 +63,11 @@ Value g_current_mode(0, 0, MODE_COUNT - 1, true);
 Value g_brightness(16, 0, 255);
 Value g_resume_brightness(16, 0, 255);
 Value g_hue(0, 0, 255, true);
+
+// Audio gain control
+MCP4261 g_mcp4261(MCP4261_CS_PIN, 100000);
+Value g_gain0(128, 0, 255);
+Value g_gain1(128, 0, 255);
 
 // Audio acquisition
 ADC *g_adc;
@@ -97,6 +111,12 @@ void setup()
 {
     Serial.begin(38400);
 
+    // Set up SPI to allow control of digital pot for gain control.
+    SPI.begin();
+
+    delayMicroseconds(50);
+    set_gain();
+
     // Set up ADC and audio input.
     pinMode(AUDIO_INPUT_PIN, INPUT);
     g_adc = new ADC();
@@ -107,7 +127,6 @@ void setup()
     g_adc->setAveraging(ANALOG_READ_AVERAGING, 0);
     g_adc->setAveraging(ANALOG_READ_AVERAGING, 1);
 
-
     g_dc_total = 0;
     for (int i = 0; i < g_dc_sample_count; ++i) {
 	g_dc_total += g_adc->analogRead(AUDIO_INPUT_PIN);
@@ -115,9 +134,12 @@ void setup()
 
     pinMode(ENCODER_1_SW_PIN, INPUT_PULLUP);
 
+#if 0
     // Indicate power status.
+    // DISABLED: POWER_LED_PIN is used for SPI.
     pinMode(POWER_LED_PIN, OUTPUT);
     digitalWrite(POWER_LED_PIN, HIGH);
+#endif
 
     // Begin output.
     g_octo.begin();
@@ -138,12 +160,50 @@ void setup()
 #endif
 }
 
+uint16_t spi_issue2(byte b1, byte b2)
+{
+  digitalWrite(MCP4261_CS_PIN, LOW);
+  delayMicroseconds(20);
+  byte high = SPI.transfer(b1);
+  byte low = SPI.transfer(b2);
+  delayMicroseconds(20);
+  digitalWrite(MCP4261_CS_PIN, HIGH);
+  delayMicroseconds(50);
+  return high << 8 | low;
+}
+
+uint16_t set_wiper(int wiper, int pos)
+{
+  const int WR = B00 << 2;
+  const int RD = B11 << 2;
+
+  byte b1 = (wiper << 4) | WR | ((pos >> 8) & 0x3);
+  byte b2 = pos & 0xff;
+  uint16_t r = spi_issue2(b1, b2);
+
+  b1 = (wiper << 4) | RD;
+  b2 = 0xff;
+  r = spi_issue2(b1, b2);
+  uint16_t data = r & 0x1ff;
+
+  return data;
+}
+
+void set_gain()
+{
+    int gain0 = set_wiper(0, g_gain0.get());
+    int gain1 = set_wiper(1, g_gain1.get());
+    Serial.print("gain set to ");
+    Serial.print(gain0);
+    Serial.print("/");
+    Serial.println(gain1);
+}
+
 void idle() {
     // TODO: Replace this with actual sleep.
     delay(10);
 }
 
-#undef LOG_RAW_LEVELS
 #ifdef LOG_RAW_LEVELS
 int last_report = 0;
 #endif
@@ -207,7 +267,13 @@ void ui_callback(Element_id id, Element const &element)
 {
     switch (id) {
 	case UI_KNOB1_ENCODER:
+#if 0
 	    g_brightness.modify(element.get_current_change());
+#else
+	    g_gain0.modify(element.get_current_change());
+	    g_gain1.modify(element.get_current_change());
+	    set_gain();
+#endif
 	    break;
 	case UI_KNOB1_BUTTON:
 	    if (element.get_current_change() > 0) {
