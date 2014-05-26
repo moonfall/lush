@@ -6,6 +6,9 @@
 extern const int ROW_COUNT;
 extern const int COLUMN_COUNT;
 extern const int LED_COUNT;
+const int FFT_SIZE = 256;
+const int MAGNITUDE_COUNT = FFT_SIZE / 2;
+const int BIN_COUNT = 8;
 extern OctoWS2811 g_octo;
 
 const int MAX_BRIGHTNESS = 255;
@@ -13,6 +16,13 @@ const int MAX_SATURATION = 255;
 
 const int FONT_WIDTH = 4;
 const int FONT_HEIGHT = 5;
+
+extern int16_t g_fft_samples[FFT_SIZE * 2];
+extern int g_fft_sample_generation;
+extern int16_t g_magnitudes[MAGNITUDE_COUNT];
+extern int g_fft_generation;
+extern int16_t g_bins[BIN_COUNT];
+extern int g_bin_generation;
 
 // Drawing commands
 typedef int Colour;
@@ -159,6 +169,14 @@ class Pattern_huey
     virtual bool display();
   
     Value m_hue_offset;
+};
+
+class Pattern_spectrum
+    : public Pattern
+{
+  public:
+    virtual void setup();
+    virtual bool display();
 };
 
 struct Mode

@@ -9,15 +9,15 @@
 #include "sqrt_integer.h"
 #include "dspinst.h"
 
-#undef SAMPLE_TEST
+#define SAMPLE_TEST
 
 // Pin configuration
 const int POWER_LED_PIN = 13;
 
 // A4 == external, A3 == adafruit internal
-const int AUDIO_INPUT_PIN = A3;
+const int AUDIO_INPUT_PIN = A4;
 // Bits of resolution for ADC
-const int ANALOG_READ_RESOLUTION = 12;
+const int ANALOG_READ_RESOLUTION = 10;
 // Number of samples to average with each ADC reading.
 const int ANALOG_READ_AVERAGING = 16;
 
@@ -30,17 +30,23 @@ const int ROW_COUNT = 8;
 const int COLUMN_COUNT = 8;
 const int LED_COUNT = ROW_COUNT * COLUMN_COUNT;
 const int LEDS_PER_STRIP = LED_COUNT;
-const int FFT_SIZE = 256;
 const int TURN_OFF_MS = 3000;
 
 // Current state
 Pattern *g_current_pattern = NULL;
 Pattern_huey g_pattern_huey;
 Pattern_counter g_pattern_counter;
+Pattern_spectrum g_pattern_spectrum;
 
+// Modes:
+// - weighted random mode
+// - tour
+// - select specific mode
+// - configuration
 struct Mode g_modes[] = {
     { &g_pattern_huey },
     { &g_pattern_counter },
+    { &g_pattern_spectrum },
 };
 const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 Value g_current_mode(0, 0, MODE_COUNT - 1, true);
@@ -52,16 +58,23 @@ Value g_hue(0, 0, 255, true);
 // Audio acquisition
 ADC *g_adc;
 IntervalTimer g_sampling_timer;
-int16_t g_samples[FFT_SIZE];
-int16_t g_fft_samples[FFT_SIZE * 2];
-int16_t g_magnitudes[FFT_SIZE];
-arm_cfft_radix4_instance_q15 g_fft_inst;
-int g_sample_counter = 0;
-int g_sample_iterations = 0;
+
 int g_sample_rate_hz = 20000;
+int g_sample_counter = 0;
+int g_sample_generation = 0;
+
 float g_level_avg = 0.0;
 float g_level_min = 0.0;
 float g_level_max = 0.0;
+int16_t g_samples[FFT_SIZE];
+
+arm_cfft_radix4_instance_q15 g_fft_inst;
+int16_t g_fft_samples[FFT_SIZE * 2];
+int g_fft_sample_generation = 0;
+int16_t g_magnitudes[MAGNITUDE_COUNT];
+int g_fft_generation = 0;
+int16_t g_bins[BIN_COUNT];
+int g_bin_generation = 0;
 
 // Filter out DC component by keeping a rolling average.
 int g_dc_total = (1 << (ANALOG_READ_RESOLUTION - 1));
@@ -156,7 +169,7 @@ void loop()
 #endif
 #ifdef LOG_RAW_LEVELS
     if (millis() - last_report > 100) {
-	Serial.print(g_sample_iterations);
+	Serial.print(g_sample_generation);
 	Serial.print(": ");
 	Serial.print(g_level_avg);
 	Serial.print(" m=");
@@ -266,7 +279,7 @@ void sampler_callback()
 void sampler_start()
 {
     g_sample_counter = 0;
-    ++g_sample_iterations;
+    ++g_sample_generation;
     g_sampling_timer.begin(sampler_callback, 1000000 / g_sample_rate_hz);
 }
 
@@ -308,12 +321,18 @@ void sampler_loop()
 	fft_process();
 #ifdef PROFILE_FFT
 	int end_process = micros();
+#endif
+	fft_reduce();
+	int end_reduce = micros();
+#ifdef PROFILE_FFT
 	Serial.print("sample ");
 	Serial.print(start_prepare - last);
 	Serial.print(" prepare ");
 	Serial.print(end_prepare - start_prepare);
 	Serial.print(" fft ");
 	Serial.print(end_process - start_process);
+	Serial.print(" reduce ");
+	Serial.print(end_reduce - end_process);
 	Serial.println();
 	last = end_process;
 #endif
@@ -332,6 +351,7 @@ void fft_prepare()
     for (int i=0; i < FFT_SIZE; i++) {
 	*dst++ = *src++;  // real sample plus a zero for imaginary
     }
+    g_fft_sample_generation = g_sample_generation;
 }
 
 void fft_process()
@@ -364,7 +384,7 @@ void fft_process()
     // TODO: Why isn't this working?
     arm_cmplx_mag_q15(g_fft_samples, g_magnitudes, FFT_SIZE);
 #else
-    for (int i = 0; i < FFT_SIZE / 2; ++i) {
+    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
 #if 1
 	uint32_t tmp = *((uint32_t *)g_fft_samples + i);
 	uint32_t magsq = multiply_16tx16t_add_16bx16b(tmp, tmp);
@@ -376,16 +396,44 @@ void fft_process()
     }
 #endif
 
-#define LOG_MAGNITUDES
 #ifdef LOG_MAGNITUDES
     Serial.print("dc=");
     Serial.print(g_dc_total / g_dc_sample_count);
-    for (int i = 0; i < FFT_SIZE / 2; ++i) {
+    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
 	Serial.print(" ");
 	Serial.print(g_magnitudes[i]);
     }
     Serial.println();
 #endif
+
+    g_fft_generation = g_fft_sample_generation;
+}
+
+void fft_reduce()
+{
+    int bin_size = MAGNITUDE_COUNT / BIN_COUNT;
+    int16_t *src = g_magnitudes;
+    for (int i = 0; i < BIN_COUNT; ++i) {
+	g_bins[i] = 0;
+	for (int j = 0; j < bin_size; ++j, ++src) {
+	    g_bins[i] += *src;
+	}
+#if 0
+	g_bins[i] /= bin_size;
+#endif
+    }
+
+#ifdef LOG_BINS
+    Serial.print("dc=");
+    Serial.print(g_dc_total / g_dc_sample_count);
+    for (int i = 0; i < BIN_COUNT; ++i) {
+	Serial.print(" ");
+	Serial.print(g_bins[i]);
+    }
+    Serial.println();
+#endif
+
+    g_bin_generation = g_fft_generation;
 }
 
 void display_loop()
