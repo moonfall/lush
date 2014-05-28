@@ -34,6 +34,9 @@ const int MCP4261_CS_PIN = 10;
 const int ENCODER_1_A_PIN = 0;
 const int ENCODER_1_B_PIN = 1;
 const int ENCODER_1_SW_PIN = 9;
+const int ENCODER_2_A_PIN = 19;
+const int ENCODER_2_B_PIN = 22;
+const int ENCODER_2_SW_PIN = 23;
 
 // Constants
 const int ROW_COUNT = 8;
@@ -105,6 +108,7 @@ bool g_force_update = false;
 
 // UI state
 Encoder encoder1(ENCODER_1_A_PIN, ENCODER_1_B_PIN);
+Encoder encoder2(ENCODER_2_A_PIN, ENCODER_2_B_PIN);
 UI_state g_ui;
 bool g_off = false;
 
@@ -134,6 +138,7 @@ void setup()
     }
 
     pinMode(ENCODER_1_SW_PIN, INPUT_PULLUP);
+    pinMode(ENCODER_2_SW_PIN, INPUT_PULLUP);
 
 #if 0
     // Indicate power status.
@@ -268,13 +273,7 @@ void ui_callback(Element_id id, Element const &element)
 {
     switch (id) {
 	case UI_KNOB1_ENCODER:
-#if 0
 	    g_brightness.modify(element.get_current_change());
-#else
-	    g_gain0.modify(element.get_current_change());
-	    g_gain1.modify(element.get_current_change());
-	    set_gain();
-#endif
 	    break;
 	case UI_KNOB1_BUTTON:
 	    if (element.get_current_change() > 0) {
@@ -291,6 +290,28 @@ void ui_callback(Element_id id, Element const &element)
 		g_brightness = g_resume_brightness;
 	    }
 	    break;
+	case UI_KNOB2_ENCODER:
+	    g_gain0.modify(element.get_current_change());
+	    g_gain1.modify(element.get_current_change());
+	    set_gain();
+	    break;
+	case UI_KNOB2_BUTTON:
+#if 0
+	    if (element.get_current_change() > 0) {
+		// On press: start fading off when pressed
+		g_resume_brightness = g_brightness;
+		g_brightness.set_velocity(-g_brightness.get(), TURN_OFF_MS);
+	    } else if (element.get_current_change() < 0) {
+		// On release: turn off, or switch modes
+		if (!g_off && g_brightness.get() == 0) {
+		    turn_off();
+		} else {
+		    ui_advance_mode();
+		}
+		g_brightness = g_resume_brightness;
+	    }
+#endif
+	    break;
     }
 }
 
@@ -302,7 +323,7 @@ void ui_loop()
 	if (element.get_change(state, element.get_current())) {
 	    element.push(state);
 
-	    Serial.print("new value is ");
+	    Serial.print("encoder1 new value is ");
 	    Serial.print(state.m_value);
 	    Serial.print(" change is ");
 	    Serial.println(element.get_current_change());
@@ -318,11 +339,43 @@ void ui_loop()
 	if (element.get_change(state, element.get_current())) {
 	    element.push(state);
 
+	    Serial.print("encoder1 ");
 	    Serial.print(state.m_value ? "pressed" : "released");
 	    Serial.print(" after ");
 	    Serial.println(element.get_previous_millis());
 
 	    ui_callback(UI_KNOB1_BUTTON, element);
+	}
+    }
+
+    {
+	Element &element = g_ui.m_knob2_encoder;
+	Element_state state(encoder2.read());
+	if (element.get_change(state, element.get_current())) {
+	    element.push(state);
+
+	    Serial.print("encoder2 new value is ");
+	    Serial.print(state.m_value);
+	    Serial.print(" change is ");
+	    Serial.println(element.get_current_change());
+
+	    ui_callback(UI_KNOB2_ENCODER, element);
+	}
+    }
+
+    {
+	Element &element = g_ui.m_knob2_button;
+	int pin = ENCODER_2_SW_PIN;
+	Element_state state(digitalRead(pin) == LOW);
+	if (element.get_change(state, element.get_current())) {
+	    element.push(state);
+
+	    Serial.print("encoder2 ");
+	    Serial.print(state.m_value ? "pressed" : "released");
+	    Serial.print(" after ");
+	    Serial.println(element.get_previous_millis());
+
+	    ui_callback(UI_KNOB2_BUTTON, element);
 	}
     }
 }
