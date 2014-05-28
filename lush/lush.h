@@ -17,11 +17,32 @@ const int MAX_SATURATION = 255;
 const int FONT_WIDTH = 4;
 const int FONT_HEIGHT = 5;
 
-extern int16_t g_fft_samples[FFT_SIZE * 2];
+#define Q15
+#undef Q31
+#undef F32
+
+#if defined(Q15)
+#define arm_cfft_radix4_instance arm_cfft_radix4_instance_q15
+#define arm_cfft_radix4_init arm_cfft_radix4_init_q15
+#define arm_cfft_radix4 arm_cfft_radix4_q15
+typedef int16_t Sample_type;
+#elif defined(Q31)
+#define arm_cfft_radix4_instance arm_cfft_radix4_instance_q31
+#define arm_cfft_radix4_init arm_cfft_radix4_init_q31
+#define arm_cfft_radix4 arm_cfft_radix4_q31
+typedef int32_t Sample_type;
+#else
+#define arm_cfft_radix4_instance arm_cfft_radix4_instance_f32
+#define arm_cfft_radix4_init arm_cfft_radix4_init_f32
+#define arm_cfft_radix4 arm_cfft_radix4_f32
+typedef float Sample_type;
+#endif
+
+extern Sample_type g_fft_samples[FFT_SIZE * 2];
 extern int g_fft_sample_generation;
-extern int16_t g_magnitudes[MAGNITUDE_COUNT];
+extern Sample_type g_magnitudes[FFT_SIZE];
 extern int g_fft_generation;
-extern int16_t g_bins[BIN_COUNT];
+extern Sample_type g_bins[BIN_COUNT];
 extern int g_bin_generation;
 
 // Drawing commands

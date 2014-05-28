@@ -12,6 +12,7 @@
 #include "dspinst.h"
 
 #undef SAMPLE_TEST
+#undef PROFILE_FFT
 #undef LOG_RAW_LEVELS
 #undef LOG_SAMPLES
 #undef LOG_FFT
@@ -24,7 +25,7 @@ const int POWER_LED_PIN = 13;
 // A4 == external, A3 == adafruit internal
 const int AUDIO_INPUT_PIN = A4;
 // Bits of resolution for ADC
-const int ANALOG_READ_RESOLUTION = 10;
+const int ANALOG_READ_RESOLUTION = 12;
 // Number of samples to average with each ADC reading.
 const int ANALOG_READ_AVERAGING = 16;
 
@@ -80,14 +81,14 @@ int g_sample_generation = 0;
 float g_level_avg = 0.0;
 float g_level_min = 0.0;
 float g_level_max = 0.0;
-int16_t g_samples[FFT_SIZE];
+Sample_type g_samples[FFT_SIZE];
 
-arm_cfft_radix4_instance_q15 g_fft_inst;
-int16_t g_fft_samples[FFT_SIZE * 2];
+arm_cfft_radix4_instance g_fft_inst;
+Sample_type g_fft_samples[FFT_SIZE * 2];
 int g_fft_sample_generation = 0;
-int16_t g_magnitudes[MAGNITUDE_COUNT];
+Sample_type g_magnitudes[FFT_SIZE];
 int g_fft_generation = 0;
-int16_t g_bins[BIN_COUNT];
+Sample_type g_bins[BIN_COUNT];
 int g_bin_generation = 0;
 
 // Filter out DC component by keeping a rolling average.
@@ -407,16 +408,24 @@ void sampler_loop()
 
 void fft_setup()
 {
-    arm_cfft_radix4_init_q15(&g_fft_inst, FFT_SIZE, 0, 1);
+    arm_cfft_radix4_init(&g_fft_inst, FFT_SIZE, 0, 1);
 }
 
 void fft_prepare()
 {
-    const uint16_t *src = (const uint16_t *)g_samples;
+    const Sample_type *src = g_samples;
+#ifdef Q15
     uint32_t *dst = (uint32_t *)g_fft_samples;
-    for (int i=0; i < FFT_SIZE; i++) {
+    for (int i = 0; i < FFT_SIZE; i++) {
 	*dst++ = *src++;  // real sample plus a zero for imaginary
     }
+#else
+    Sample_type *dst = g_fft_samples;
+    for (int i = 0; i < FFT_SIZE; i++) {
+	*dst++ = *src++;  // real sample
+	*dst++ = 0; // imaginary
+    }
+#endif
     g_fft_sample_generation = g_sample_generation;
 }
 
@@ -433,7 +442,7 @@ void fft_process()
 #endif
 
     // Perform FFT
-    arm_cfft_radix4_q15(&g_fft_inst, g_fft_samples);
+    arm_cfft_radix4(&g_fft_inst, g_fft_samples);
 
 #ifdef LOG_FFT
     // Raw FFT transform including complex.
@@ -446,12 +455,11 @@ void fft_process()
 #endif
 
     // Calculate magnitudes
-#if 0
-    // TODO: Why isn't this working?
-    arm_cmplx_mag_q15(g_fft_samples, g_magnitudes, FFT_SIZE);
+#if defined(F32)
+    arm_cmplx_mag_f32(g_fft_samples, g_magnitudes, FFT_SIZE);
 #else
     for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
-#if 1
+#if defined(Q15)
 	uint32_t tmp = *((uint32_t *)g_fft_samples + i);
 	uint32_t magsq = multiply_16tx16t_add_16bx16b(tmp, tmp);
 	g_magnitudes[i] = sqrt_uint32_approx(magsq);
@@ -478,15 +486,16 @@ void fft_process()
 void fft_reduce()
 {
     int bin_size = MAGNITUDE_COUNT / BIN_COUNT;
-    int16_t *src = g_magnitudes;
-    for (int i = 0; i < BIN_COUNT; ++i) {
+    bin_size = 1;
+    Sample_type *src = g_magnitudes;
+    Sample_type *src_end = g_magnitudes + MAGNITUDE_COUNT;
+    for (int i = 0; i < BIN_COUNT && src < src_end; ++i) {
 	g_bins[i] = 0;
-	for (int j = 0; j < bin_size; ++j, ++src) {
+	for (int j = 0; j < bin_size && src < src_end; ++j, ++src) {
 	    g_bins[i] += *src;
 	}
-#if 0
 	g_bins[i] /= bin_size;
-#endif
+	bin_size *= 2;
     }
 
 #ifdef LOG_BINS
