@@ -8,7 +8,7 @@ extern const int COLUMN_COUNT;
 extern const int LED_COUNT;
 const int FFT_SIZE = 256;
 const int MAGNITUDE_COUNT = FFT_SIZE / 2;
-const int BIN_COUNT = 8;
+const int MAX_BIN_COUNT = 64;
 extern OctoWS2811 g_octo;
 
 const int MAX_BRIGHTNESS = 255;
@@ -17,9 +17,9 @@ const int MAX_SATURATION = 255;
 const int FONT_WIDTH = 4;
 const int FONT_HEIGHT = 5;
 
-#define Q15
+#undef Q15
 #undef Q31
-#undef F32
+#define F32
 
 #if defined(Q15)
 #define arm_cfft_radix4_instance arm_cfft_radix4_instance_q15
@@ -42,7 +42,7 @@ extern Sample_type g_fft_samples[FFT_SIZE * 2];
 extern int g_fft_sample_generation;
 extern Sample_type g_magnitudes[FFT_SIZE];
 extern int g_fft_generation;
-extern Sample_type g_bins[BIN_COUNT];
+extern Sample_type g_bins[MAX_BIN_COUNT];
 extern int g_bin_generation;
 
 // Drawing commands
@@ -54,9 +54,20 @@ inline Colour make_rgb(uint8_t r, uint8_t g, uint8_t b)
 }
 
 Colour make_hsv(uint8_t h, uint8_t s, uint8_t v);
+Colour make_hsv16(uint8_t h, uint8_t s, uint8_t v);
 inline int get_led(int x, int y)
 {
     return y * COLUMN_COUNT + x;
+}
+
+inline int flip_x(int x)
+{
+    return (COLUMN_COUNT - 1) - x;
+}
+
+inline int flip_y(int y)
+{
+    return (ROW_COUNT - 1) - y;
 }
 
 inline void get_xy(int led, int &x, int &y)
@@ -148,6 +159,7 @@ class Value
 
 extern Value g_brightness;
 extern Value g_hue;
+extern Value g_bin_count;
 
 inline Colour make_hue(uint8_t h)
 {
@@ -166,7 +178,14 @@ class Pattern
     {
     }
 
-    virtual void setup() = 0;
+    virtual void setup()
+    {
+    }
+
+    virtual void activate()
+    {
+    }
+
     virtual bool display() = 0;
 };
 
@@ -192,11 +211,27 @@ class Pattern_huey
     Value m_hue_offset;
 };
 
-class Pattern_spectrum
+class Pattern_spectrum_bars
     : public Pattern
 {
   public:
-    virtual void setup();
+    virtual void activate();
+    virtual bool display();
+};
+
+class Pattern_spectrum_field
+    : public Pattern
+{
+  public:
+    virtual void activate();
+    virtual bool display();
+};
+
+class Pattern_spectrum_timeline
+    : public Pattern
+{
+  public:
+    virtual void activate();
     virtual bool display();
 };
 
@@ -285,6 +320,14 @@ class UI_state
     Encoder_element	m_knob2_encoder;
     Element		m_knob2_button;
 };
+
+template <class T>
+T running_average(T &sum, int count, T sample)
+{
+    T mean = sum / count;
+    sum += sample - mean;
+    return mean;
+}
 
 extern UI_state g_ui;
 

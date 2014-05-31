@@ -18,6 +18,7 @@
 #undef LOG_FFT
 #undef LOG_MAGNITUDES
 #undef LOG_BINS
+#define LOG_SUMMARY
 
 // Pin configuration
 const int POWER_LED_PIN = 13;
@@ -27,7 +28,11 @@ const int AUDIO_INPUT_PIN = A4;
 // Bits of resolution for ADC
 const int ANALOG_READ_RESOLUTION = 12;
 // Number of samples to average with each ADC reading.
+#if 1
 const int ANALOG_READ_AVERAGING = 16;
+#else
+const int ANALOG_READ_AVERAGING = 1;
+#endif
 
 const int MCP4261_CS_PIN = 10;
 
@@ -49,7 +54,9 @@ const int TURN_OFF_MS = 3000;
 Pattern *g_current_pattern = NULL;
 Pattern_huey g_pattern_huey;
 Pattern_counter g_pattern_counter;
-Pattern_spectrum g_pattern_spectrum;
+Pattern_spectrum_bars g_pattern_spectrum_bars;
+Pattern_spectrum_field g_pattern_spectrum_field;
+Pattern_spectrum_timeline g_pattern_spectrum_timeline;
 
 // Modes:
 // - weighted random mode
@@ -59,7 +66,9 @@ Pattern_spectrum g_pattern_spectrum;
 struct Mode g_modes[] = {
     { &g_pattern_huey },
     { &g_pattern_counter },
-    { &g_pattern_spectrum },
+    { &g_pattern_spectrum_bars },
+    { &g_pattern_spectrum_field },
+    { &g_pattern_spectrum_timeline },
 };
 const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 Value g_current_mode(0, 0, MODE_COUNT - 1, true);
@@ -70,8 +79,8 @@ Value g_hue(0, 0, 255, true);
 
 // Audio gain control
 MCP4261 g_mcp4261(MCP4261_CS_PIN, 100000);
-Value g_gain0(128, 0, 255);
-Value g_gain1(128, 0, 255);
+Value g_gain0(220, 0, 255);
+Value g_gain1(220, 0, 255);
 
 // Audio acquisition
 ADC *g_adc;
@@ -89,14 +98,20 @@ Sample_type g_samples[FFT_SIZE];
 arm_cfft_radix4_instance g_fft_inst;
 Sample_type g_fft_samples[FFT_SIZE * 2];
 int g_fft_sample_generation = 0;
+Sample_type *g_window = NULL;
+Sample_type g_window_data[FFT_SIZE];
 Sample_type g_magnitudes[FFT_SIZE];
 int g_fft_generation = 0;
-Sample_type g_bins[BIN_COUNT];
+Sample_type g_bins[MAX_BIN_COUNT];
 int g_bin_generation = 0;
+
+Value g_min_db(55.0);
+Value g_max_db(65.0);
+Value g_bin_count(8);
 
 // Filter out DC component by keeping a rolling average.
 int g_dc_total = (1 << (ANALOG_READ_RESOLUTION - 1));
-const int g_dc_sample_count = 1024;
+const int g_dc_sample_count = 32 * 1024;
 
 // Output
 // 24 bytes == 6 words for each LED of each strip.
@@ -152,6 +167,9 @@ void setup()
 
     g_pattern_counter.setup();
     g_pattern_huey.setup();
+    g_pattern_spectrum_bars.setup();
+    g_pattern_spectrum_field.setup();
+    g_pattern_spectrum_timeline.setup();
     update_pattern();
 
     // Start cycling colours by default
@@ -256,6 +274,7 @@ void loop()
 void update_pattern()
 {
     g_current_pattern = g_modes[g_current_mode.get()].m_pattern;
+    g_current_pattern->activate();
 }
 
 void ui_advance_mode()
@@ -273,8 +292,15 @@ void ui_callback(Element_id id, Element const &element)
 {
     switch (id) {
 	case UI_KNOB1_ENCODER:
-	    g_brightness.modify(element.get_current_change());
+	    if (g_ui.m_knob2_button.get_current().m_value) {
+		g_brightness.modify(element.get_current_change());
+	    } else {
+		g_gain0.modify(element.get_current_change());
+		g_gain1.modify(element.get_current_change());
+		set_gain();
+	    }
 	    break;
+
 	case UI_KNOB1_BUTTON:
 	    if (element.get_current_change() > 0) {
 		// On press: start fading off when pressed
@@ -290,27 +316,29 @@ void ui_callback(Element_id id, Element const &element)
 		g_brightness = g_resume_brightness;
 	    }
 	    break;
+
 	case UI_KNOB2_ENCODER:
-	    g_gain0.modify(element.get_current_change());
-	    g_gain1.modify(element.get_current_change());
-	    set_gain();
-	    break;
-	case UI_KNOB2_BUTTON:
-#if 0
-	    if (element.get_current_change() > 0) {
-		// On press: start fading off when pressed
-		g_resume_brightness = g_brightness;
-		g_brightness.set_velocity(-g_brightness.get(), TURN_OFF_MS);
-	    } else if (element.get_current_change() < 0) {
-		// On release: turn off, or switch modes
-		if (!g_off && g_brightness.get() == 0) {
-		    turn_off();
-		} else {
-		    ui_advance_mode();
+	    if (g_ui.m_knob2_button.get_current().m_value) {
+		g_max_db.modify(element.get_current_change());
+		if (g_max_db.get() <= g_min_db.get()) {
+		    g_min_db.set(g_max_db.get() - 1);
 		}
-		g_brightness = g_resume_brightness;
+	    } else {
+		g_min_db.modify(element.get_current_change());
+		if (g_min_db.get() >= g_max_db.get()) {
+		    g_max_db.set(g_min_db.get() + 1);
+		}
 	    }
-#endif
+
+	    Serial.print("db range ");
+	    Serial.print(g_min_db.get());
+	    Serial.print("-");
+	    Serial.print(g_max_db.get());
+	    Serial.println();
+	    break;
+
+	case UI_KNOB2_BUTTON:
+	    // No action, just modify KNOB2 encoder
 	    break;
     }
 }
@@ -383,10 +411,15 @@ void ui_loop()
 void sampler_callback()
 {
     int sample = g_adc->analogRead(AUDIO_INPUT_PIN);
-    int dc_mean = g_dc_total / g_dc_sample_count;
-    g_dc_total = g_dc_total + sample - dc_mean;
+
+#define REMOVE_DC_BIAS_SAMPLER
+#ifdef REMOVE_DC_BIAS_SAMPLER
+    // TODO: Consider just ignoring this during FFT.
+    int dc_mean = running_average(g_dc_total, g_dc_sample_count, sample);
     sample -= dc_mean;
-    g_samples[g_sample_counter] = sample;
+#endif
+
+    g_samples[g_sample_counter] = (Sample_type) sample;
 
     ++g_sample_counter;
 
@@ -411,18 +444,6 @@ bool sampler_done()
 void sampler_loop()
 {
     if (sampler_done()) {
-	float sum = 0;
-	float min = g_samples[0];
-	float max = g_samples[0];
-	for (int i = 0; i < FFT_SIZE; ++i) {
-	    sum += abs(g_samples[i]);
-	    min = min(min, g_samples[i]);
-	    max = max(max, g_samples[i]);
-	}
-	g_level_avg = sum / FFT_SIZE;
-	g_level_min = min;
-	g_level_max = max;
-
 #ifdef PROFILE_FFT
 	static int last = 0;
 	int start_prepare = micros();
@@ -435,8 +456,36 @@ void sampler_loop()
 	// Start sampling all over again.
 	sampler_start();
 
+#ifdef REMOVE_DC_BIAS_POST_SAMPLER
+	float sum = 0;
+#endif
+	float abs_sum = 0;
+	float min = g_fft_samples[0];
+	float max = g_fft_samples[0];
+	for (int i = 0; i < FFT_SIZE * 2; i += 2) {
+#ifdef REMOVE_DC_BIAS_POST_SAMPLER
+	    sum += g_fft_samples[i];
+#endif
+	    abs_sum += abs(g_fft_samples[i]);
+	    min = min(min, g_fft_samples[i]);
+	    max = max(max, g_fft_samples[i]);
+	}
+	g_level_avg = abs_sum / FFT_SIZE;
+	g_level_min = min;
+	g_level_max = max;
+#ifdef REMOVE_DC_BIAS_POST_SAMPLER
+	float avg = sum / FFT_SIZE;
+	for (int i = 0; i < FFT_SIZE * 2; i += 2) {
+	    g_fft_samples[i] -= avg;
+	}
+#endif
+
 #ifdef PROFILE_FFT
-	int start_process = micros();
+	int start_window = micros();
+#endif
+	fft_window();
+#ifdef PROFILE_FFT
+	int end_window = micros();
 #endif
 	fft_process();
 #ifdef PROFILE_FFT
@@ -449,12 +498,61 @@ void sampler_loop()
 	Serial.print(start_prepare - last);
 	Serial.print(" prepare ");
 	Serial.print(end_prepare - start_prepare);
+	Serial.print(" window ");
+	Serial.print(end_window - start_window);
 	Serial.print(" fft ");
-	Serial.print(end_process - start_process);
+	Serial.print(end_process - end_window);
 	Serial.print(" reduce ");
 	Serial.print(end_reduce - end_process);
 	Serial.println();
 	last = end_process;
+#endif
+
+
+#ifdef LOG_SUMMARY
+#if 0
+	static Sample_type g_magnitude_sums[FFT_SIZE];
+	const int g_magnitude_avg_count = 1000;
+	static int g_magnitude_avg_gathered = 0;
+
+	if (g_magnitude_avg_gathered < g_magnitude_avg_count) {
+	    for (int i = 0; i < FFT_SIZE; ++i) {
+		g_magnitude_sums[i] += g_magnitudes[i];
+	    }
+	} else {
+	    for (int i = 0; i < FFT_SIZE; ++i) {
+		running_average(g_magnitude_sums[i], g_magnitude_avg_count,
+				g_magnitudes[i]);
+	    }
+	}
+	++g_magnitude_avg_gathered;
+#endif
+
+	static int last_log = 0;
+	if (millis() > last_log + 100) {
+	    Serial.print(g_sample_generation);
+	    Serial.print(": ");
+	    Serial.print("dc=");
+	    Serial.print(g_dc_total / g_dc_sample_count);
+	    Serial.print(" avg=");
+	    Serial.print(g_level_avg, 0);
+	    Serial.print(" D=");
+	    Serial.print(g_level_max - g_level_min, 0);
+#if 0
+	    Serial.print(" mags");
+	    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
+		Serial.print(" ");
+		Serial.print(g_magnitude_sums[i] / g_magnitude_avg_count, 0);
+	    }
+#endif
+	    Serial.print(" bins");
+	    for (int i = 0; i < g_bin_count.get(); ++i) {
+		Serial.print(" ");
+		Serial.print(g_bins[i]);
+	    }
+	    Serial.println();
+	    last_log = millis();
+	}
 #endif
     }
 }
@@ -462,6 +560,29 @@ void sampler_loop()
 void fft_setup()
 {
     arm_cfft_radix4_init(&g_fft_inst, FFT_SIZE, 0, 1);
+    fft_window_setup();
+}
+
+void fft_window_setup()
+{
+#define WINDOW_HAMMING
+
+#ifdef WINDOW_HANNING
+    // Hanning window
+    float *window = g_window_data;
+    for (int i = 0; i < FFT_SIZE; ++i, ++window) {
+	*window = 0.5 * (1 - cos(2.0 * M_PI * i / (FFT_SIZE - 1)));
+    }
+    g_window = g_window_data;
+#endif
+#ifdef WINDOW_HAMMING
+    // Hamming window
+    float *window = g_window_data;
+    for (int i = 0; i < FFT_SIZE; ++i, ++window) {
+	*window = 0.54 - 0.46 * cos(2.0 * M_PI * i / (FFT_SIZE - 1));
+    }
+    g_window = g_window_data;
+#endif
 }
 
 void fft_prepare()
@@ -469,17 +590,37 @@ void fft_prepare()
     const Sample_type *src = g_samples;
 #ifdef Q15
     uint32_t *dst = (uint32_t *)g_fft_samples;
-    for (int i = 0; i < FFT_SIZE; i++) {
-	*dst++ = *src++;  // real sample plus a zero for imaginary
+    for (int i = 0; i < FFT_SIZE; ++i) {
+	*dst = *src;  // real sample plus a zero for imaginary
+	++dst;
+	++src;
     }
 #else
     Sample_type *dst = g_fft_samples;
-    for (int i = 0; i < FFT_SIZE; i++) {
-	*dst++ = *src++;  // real sample
-	*dst++ = 0; // imaginary
+    for (int i = 0; i < FFT_SIZE; ++i) {
+	*dst = *src;  // real sample
+	++dst;
+	++src;
+	*dst = 0; // imaginary
+	++dst;
     }
 #endif
     g_fft_sample_generation = g_sample_generation;
+}
+
+void fft_window()
+{
+    if (!g_window) {
+	return;
+    }
+
+#ifdef F32
+    float *sample = g_fft_samples;
+    float *window = g_window;
+    for (int i = 0; i < FFT_SIZE; ++i, ++sample, ++window) {
+	*sample *= *window;
+    }
+#endif;
 }
 
 void fft_process()
@@ -538,23 +679,98 @@ void fft_process()
 
 void fft_reduce()
 {
-    int bin_size = MAGNITUDE_COUNT / BIN_COUNT;
+#if 0
+    int bin_size = MAGNITUDE_COUNT / g_bin_count.get();
+#ifdef LOGARITHMIC_BINS
     bin_size = 1;
+#endif
     Sample_type *src = g_magnitudes;
     Sample_type *src_end = g_magnitudes + MAGNITUDE_COUNT;
-    for (int i = 0; i < BIN_COUNT && src < src_end; ++i) {
+    for (int i = 0; i < g_bin_count.get() && src < src_end; ++i) {
 	g_bins[i] = 0;
 	for (int j = 0; j < bin_size && src < src_end; ++j, ++src) {
 	    g_bins[i] += *src;
 	}
 	g_bins[i] /= bin_size;
+#ifdef LOGARITHMIC_BINS
 	bin_size *= 2;
+#endif
+#ifdef F32
+	g_bins[i] = 20.0 * log10(g_bins[i]);
+	g_bins[i] -= (Sample_type) g_min_db.get();
+	g_bins[i] = g_bins[i] < 0.0 ? 0.0 : g_bins[i];
+	g_bins[i] /= (Sample_type) (g_max_db.get() - g_min_db.get());
+	g_bins[i] = g_bins[i] > 1.0 ? 1.0 : g_bins[i];
+#endif
     }
+#endif
+
+#if 1
+    const float scale = 0.05;
+    const float gamma = 2.0;
+    const float smoothing_factor = 0.00007;
+    const float smoothing = powf(smoothing_factor, (float) FFT_SIZE / 60.0);
+    int f_start = 0;
+    for (int i = 0; i < g_bin_count.get(); ++i) {
+	int f_end = round(powf(((float)(i + 1)) / (float) g_bin_count.get(),
+			       gamma) * MAGNITUDE_COUNT);
+	if (f_end > MAGNITUDE_COUNT) {
+	    f_end = MAGNITUDE_COUNT;
+	}
+	int f_width = f_end - f_start;
+	if (f_width <= 0) {
+	    f_width = 1;
+	}
+#if 0
+	Serial.print("bin ");
+	Serial.print(i);
+	Serial.print(" width ");
+	Serial.print(f_width);
+#endif
+
+	float bin_power = 0.0;
+	for (int j = 0; j < f_width; ++j) {
+	    float p = g_magnitudes[f_start + j];
+	    if (p > bin_power) {
+		bin_power = p;
+	    }
+	}
+#if 0
+	Serial.print(" power ");
+	Serial.print(bin_power);
+#endif
+
+#if 0
+	bin_power = log(bin_power);
+	if (bin_power < 0.0) {
+	    bin_power = 0.0;
+	}
+
+	g_bins[i] = g_bins[i] * smoothing +
+		    (bin_power * scale * (1.0 - smoothing));
+#else
+	bin_power = 20.0 * log10(bin_power);
+	bin_power -= (Sample_type) g_min_db.get();
+	bin_power = bin_power < 0.0 ? 0.0 : bin_power;
+	bin_power /= (Sample_type) (g_max_db.get() - g_min_db.get());
+	bin_power = bin_power > 1.0 ? 1.0 : bin_power;
+	g_bins[i] = bin_power;
+#endif
+
+#if 0
+	Serial.print(" logpower ");
+	Serial.print(bin_power);
+	Serial.println();
+#endif
+
+	f_start = f_end;
+    }
+#endif
 
 #ifdef LOG_BINS
     Serial.print("dc=");
     Serial.print(g_dc_total / g_dc_sample_count);
-    for (int i = 0; i < BIN_COUNT; ++i) {
+    for (int i = 0; i < g_bin_count.get(); ++i) {
 	Serial.print(" ");
 	Serial.print(g_bins[i]);
     }
