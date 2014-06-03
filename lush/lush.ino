@@ -19,6 +19,7 @@
 #undef LOG_MAGNITUDES
 #undef LOG_BINS
 #define LOG_SUMMARY
+#define MAGNITUDE_AVERAGE
 
 // Pin configuration
 const int POWER_LED_PIN = 13;
@@ -79,8 +80,8 @@ Value g_hue(0, 0, 255, true);
 
 // Audio gain control
 MCP4261 g_mcp4261(MCP4261_CS_PIN, 100000);
-Value g_gain0(220, 0, 255);
-Value g_gain1(220, 0, 255);
+Value g_gain0(128, 0, 255);
+Value g_gain1(128, 0, 255);
 
 // Audio acquisition
 ADC *g_adc;
@@ -104,6 +105,12 @@ Sample_type g_magnitudes[FFT_SIZE];
 int g_fft_generation = 0;
 Sample_type g_bins[MAX_BIN_COUNT];
 int g_bin_generation = 0;
+
+const float GAIN_R1 = 10000;
+const float GAIN_R2 = 100000;
+const float GAIN_RAB = 100000;
+const float GAIN_RS_COUNT = 256;
+const float GAIN_RS_TYP = GAIN_RAB / GAIN_RS_COUNT;
 
 Value g_min_db(55.0);
 Value g_max_db(65.0);
@@ -213,6 +220,12 @@ uint16_t set_wiper(int wiper, int pos)
   return data;
 }
 
+#ifdef MAGNITUDE_AVERAGE
+static Sample_type g_magnitude_sums[FFT_SIZE];
+const int g_magnitude_avg_count = 1000;
+static int g_magnitude_avg_gathered = 0;
+#endif
+
 void set_gain()
 {
     int gain0 = set_wiper(0, g_gain0.get());
@@ -221,6 +234,13 @@ void set_gain()
     Serial.print(gain0);
     Serial.print("/");
     Serial.println(gain1);
+
+#ifdef MAGNITUDE_AVERAGE
+    g_magnitude_avg_gathered = 0;
+    for (int i = 0; i < FFT_SIZE; ++i) {
+	g_magnitude_sums[i] = 0;
+    }
+#endif
 }
 
 void idle() {
@@ -510,11 +530,8 @@ void sampler_loop()
 
 
 #ifdef LOG_SUMMARY
-#if 0
-	static Sample_type g_magnitude_sums[FFT_SIZE];
-	const int g_magnitude_avg_count = 1000;
-	static int g_magnitude_avg_gathered = 0;
 
+#ifdef MAGNITUDE_AVERAGE
 	if (g_magnitude_avg_gathered < g_magnitude_avg_count) {
 	    for (int i = 0; i < FFT_SIZE; ++i) {
 		g_magnitude_sums[i] += g_magnitudes[i];
@@ -532,19 +549,29 @@ void sampler_loop()
 	if (millis() > last_log + 100) {
 	    Serial.print(g_sample_generation);
 	    Serial.print(": ");
-	    Serial.print("dc=");
+#ifdef MAGNITUDE_AVERAGE
+	    Serial.print(g_magnitude_avg_gathered);
+	    Serial.print(": ");
+#endif
+	    Serial.print("gain=");
+	    Serial.print(g_gain0.get());
+	    Serial.print("/");
+	    Serial.print(g_gain1.get());
+	    Serial.print(" dc=");
 	    Serial.print(g_dc_total / g_dc_sample_count);
 	    Serial.print(" avg=");
 	    Serial.print(g_level_avg, 0);
 	    Serial.print(" D=");
 	    Serial.print(g_level_max - g_level_min, 0);
-#if 0
 	    Serial.print(" mags");
 	    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
 		Serial.print(" ");
+#ifdef MAGNITUDE_AVERAGE
 		Serial.print(g_magnitude_sums[i] / g_magnitude_avg_count, 0);
-	    }
+#else
+		Serial.print(g_magnitudes[i], 0);
 #endif
+	    }
 	    Serial.print(" bins");
 	    for (int i = 0; i < g_bin_count.get(); ++i) {
 		Serial.print(" ");
@@ -623,6 +650,20 @@ void fft_window()
 #endif;
 }
 
+float calculate_actual_gain(int wiper)
+{
+    return ((GAIN_RS_TYP * (float) wiper) + GAIN_R2) /
+	   (((GAIN_RS_COUNT - (float) wiper) * GAIN_RS_TYP) + GAIN_R1) +
+	   1;
+}
+
+float calculate_floor(float gain, int bin)
+{
+    float intercept = GAIN_INTERCEPTS[bin];
+    float slope = GAIN_SLOPES[bin];
+    return powf(10, sqrt(gain) * slope + intercept);
+}
+
 void fft_process()
 {
 #ifdef LOG_SAMPLES
@@ -674,6 +715,36 @@ void fft_process()
     Serial.println();
 #endif
 
+#ifdef APPLY_FLOOR
+    float gain = calculate_actual_gain(g_gain0.get()) *
+		 calculate_actual_gain(g_gain1.get());
+#ifdef LOG_FLOORS
+    Serial.print("gain=");
+    Serial.print(gain);
+    Serial.print("/");
+    Serial.print(calculate_actual_gain(g_gain0.get()));
+    Serial.print("/");
+    Serial.print(calculate_actual_gain(g_gain1.get()));
+#endif
+    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
+	float floor = calculate_floor(gain, i);
+#ifdef LOG_FLOORS
+	Serial.print(" ");
+	Serial.print(g_magnitudes[i]);
+	Serial.print("-");
+	Serial.print(floor);
+#endif
+	if (g_magnitudes[i] < floor) {
+	    g_magnitudes[i] = 0.0;
+	} else {
+	    g_magnitudes[i] -= floor;
+	}
+    }
+#ifdef LOG_FLOORS
+    Serial.println();
+#endif
+#endif
+    
     g_fft_generation = g_fft_sample_generation;
 }
 
@@ -684,7 +755,7 @@ void fft_reduce()
 #ifdef LOGARITHMIC_BINS
     bin_size = 1;
 #endif
-    Sample_type *src = g_magnitudes;
+    Sample_type *src = g_magnitudes + 1;
     Sample_type *src_end = g_magnitudes + MAGNITUDE_COUNT;
     for (int i = 0; i < g_bin_count.get() && src < src_end; ++i) {
 	g_bins[i] = 0;
@@ -703,14 +774,12 @@ void fft_reduce()
 	g_bins[i] = g_bins[i] > 1.0 ? 1.0 : g_bins[i];
 #endif
     }
-#endif
-
-#if 1
+#else
     const float scale = 0.05;
     const float gamma = 2.0;
     const float smoothing_factor = 0.00007;
     const float smoothing = powf(smoothing_factor, (float) FFT_SIZE / 60.0);
-    int f_start = 0;
+    int f_start = 1;
     for (int i = 0; i < g_bin_count.get(); ++i) {
 	int f_end = round(powf(((float)(i + 1)) / (float) g_bin_count.get(),
 			       gamma) * MAGNITUDE_COUNT);

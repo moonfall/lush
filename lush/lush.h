@@ -17,6 +17,9 @@ const int MAX_SATURATION = 255;
 const int FONT_WIDTH = 4;
 const int FONT_HEIGHT = 5;
 
+extern const float GAIN_INTERCEPTS[MAGNITUDE_COUNT];
+extern const float GAIN_SLOPES[MAGNITUDE_COUNT];
+
 #undef Q15
 #undef Q31
 #define F32
