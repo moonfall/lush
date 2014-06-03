@@ -18,7 +18,7 @@
 #undef LOG_FFT
 #undef LOG_MAGNITUDES
 #undef LOG_BINS
-#define LOG_SUMMARY
+#undef LOG_SUMMARY
 #define MAGNITUDE_AVERAGE
 
 // Pin configuration
@@ -58,6 +58,7 @@ Pattern_counter g_pattern_counter;
 Pattern_spectrum_bars g_pattern_spectrum_bars;
 Pattern_spectrum_field g_pattern_spectrum_field;
 Pattern_spectrum_timeline g_pattern_spectrum_timeline;
+Pattern_synthesia_plasma_complex g_pattern_synthesia_plasma_complex;
 
 // Modes:
 // - weighted random mode
@@ -70,6 +71,7 @@ struct Mode g_modes[] = {
     { &g_pattern_spectrum_bars },
     { &g_pattern_spectrum_field },
     { &g_pattern_spectrum_timeline },
+    { &g_pattern_synthesia_plasma_complex },
 };
 const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 Value g_current_mode(0, 0, MODE_COUNT - 1, true);

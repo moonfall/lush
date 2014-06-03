@@ -100,3 +100,34 @@ Colour make_hsv16(uint16_t h, uint16_t s, uint16_t v)
 
     return make_rgb(r >> 8, g >> 8, b >> 8);
 }
+
+Colour make_wheel(uint16_t wheel, uint8_t brightness)
+{
+    int region = wheel / 256;
+    int position = wheel % 256;
+
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+
+    switch (region) {
+	case 0:
+		r = 255 - position;
+		g = position;
+		b = 0;
+	    break;
+	case 1:
+		g = 255 - position;
+		b = position;
+		r = 0;
+	    break;
+	case 2:
+		b = 255 - position;
+		r = position;
+		g = 0;
+	    break;
+    }
+
+    return make_rgb(r, g, b, brightness);
+}
+

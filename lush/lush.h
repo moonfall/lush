@@ -55,9 +55,18 @@ inline Colour make_rgb(uint8_t r, uint8_t g, uint8_t b)
 {
     return (r << 16) | (g << 8) | b;
 }
+inline Colour make_rgb(int r, int g, int b, uint8_t brightness)
+{
+    return make_rgb(r * brightness / MAX_BRIGHTNESS,
+		    g * brightness / MAX_BRIGHTNESS,
+		    b * brightness / MAX_BRIGHTNESS);
+}
 
 Colour make_hsv(uint8_t h, uint8_t s, uint8_t v);
 Colour make_hsv16(uint8_t h, uint8_t s, uint8_t v);
+// wheel 0..767
+Colour make_wheel(uint16_t wheel, uint8_t brightness);
+
 inline int get_led(int x, int y)
 {
     return y * COLUMN_COUNT + x;
@@ -236,6 +245,18 @@ class Pattern_spectrum_timeline
   public:
     virtual void activate();
     virtual bool display();
+};
+
+class Pattern_synthesia_plasma_complex
+    : public Pattern
+{
+  public:
+    Pattern_synthesia_plasma_complex();
+
+    virtual void setup();
+    virtual bool display();
+
+    Value m_time;
 };
 
 struct Mode
