@@ -3,9 +3,10 @@
 
 #include <stdint.h>
 
-extern const int ROW_COUNT;
-extern const int COLUMN_COUNT;
-extern const int LED_COUNT;
+const int ROW_COUNT = 8;
+const int COLUMN_COUNT = 8;
+const int LED_COUNT = ROW_COUNT * COLUMN_COUNT;
+const int LEDS_PER_STRIP = LED_COUNT;
 const int FFT_SIZE = 256;
 const int MAGNITUDE_COUNT = FFT_SIZE / 2;
 const int MAX_BIN_COUNT = 64;
@@ -245,6 +246,19 @@ class Pattern_spectrum_timeline
   public:
     virtual void activate();
     virtual bool display();
+};
+
+class Pattern_synthesia_fire
+    : public Pattern
+{
+  public:
+    Pattern_synthesia_fire();
+
+    virtual void setup();
+    virtual bool display();
+
+    int m_matrix_layer1[COLUMN_COUNT][ROW_COUNT];
+    int m_matrix_layer2[COLUMN_COUNT][ROW_COUNT];
 };
 
 class Pattern_synthesia_plasma_complex

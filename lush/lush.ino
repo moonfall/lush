@@ -45,10 +45,6 @@ const int ENCODER_2_B_PIN = 22;
 const int ENCODER_2_SW_PIN = 23;
 
 // Constants
-const int ROW_COUNT = 8;
-const int COLUMN_COUNT = 8;
-const int LED_COUNT = ROW_COUNT * COLUMN_COUNT;
-const int LEDS_PER_STRIP = LED_COUNT;
 const int TURN_OFF_MS = 3000;
 
 // Current state
@@ -58,6 +54,7 @@ Pattern_counter g_pattern_counter;
 Pattern_spectrum_bars g_pattern_spectrum_bars;
 Pattern_spectrum_field g_pattern_spectrum_field;
 Pattern_spectrum_timeline g_pattern_spectrum_timeline;
+Pattern_synthesia_fire g_pattern_synthesia_fire;
 Pattern_synthesia_plasma_complex g_pattern_synthesia_plasma_complex;
 
 // Modes:
@@ -71,6 +68,7 @@ struct Mode g_modes[] = {
     { &g_pattern_spectrum_bars },
     { &g_pattern_spectrum_field },
     { &g_pattern_spectrum_timeline },
+    { &g_pattern_synthesia_fire },
     { &g_pattern_synthesia_plasma_complex },
 };
 const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
