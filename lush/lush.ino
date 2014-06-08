@@ -365,6 +365,20 @@ void ui_callback(Element_id id, Element const &element)
 
 void ui_loop()
 {
+    while (Serial.available() > 0) {
+	switch (Serial.read()) {
+	    case 'b':
+		g_brightness.modify(-1);
+		break;
+	    case 'B':
+		g_brightness.modify(1);
+		break;
+	    case 'm':
+		ui_advance_mode();
+		break;
+	}
+    }
+
     {
 	Element &element = g_ui.m_knob1_encoder;
 	Element_state state(encoder1.read());
