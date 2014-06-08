@@ -25,7 +25,7 @@
 const int POWER_LED_PIN = 13;
 
 // A4 == external, A3 == adafruit internal
-const int AUDIO_INPUT_PIN = A4;
+const int AUDIO_INPUT_PIN = A3;
 // Bits of resolution for ADC
 const int ANALOG_READ_RESOLUTION = 12;
 // Number of samples to average with each ADC reading.
