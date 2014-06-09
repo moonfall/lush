@@ -92,7 +92,7 @@ Colour make_hsv16(uint16_t h, uint16_t s, uint16_t v)
             break;
         case 4:
             r = t; g = p; b = v;
-            break;
+	    break;
         default:
             r = v; g = p; b = q;
             break;
@@ -101,7 +101,152 @@ Colour make_hsv16(uint16_t h, uint16_t s, uint16_t v)
     return make_rgb(r >> 8, g >> 8, b >> 8);
 }
 
+template<int REGION_SIZE>
+void set_wheel_region(uint8_t position, uint8_t &a, uint8_t &b, uint8_t &c) 
+{
+    a = (REGION_SIZE - 1) - position;
+    b = position;
+    c = 0;
+}
+
+template<int REGION_SIZE>
+void set_wheel_colour(uint8_t region, uint8_t position,
+	       uint8_t &r, uint8_t &g, uint8_t &b) 
+{
+    switch (region) {
+	// R->G
+	case 0:
+	    set_wheel_region<REGION_SIZE>(position, r, g, b);
+	    break;
+	// G->B
+	case 1:
+	    set_wheel_region<REGION_SIZE>(position, g, b, r);
+	    break;
+	// B->R
+	case 2:
+	    set_wheel_region<REGION_SIZE>(position, b, r, g);
+	    break;
+	// R->B
+	case 3:
+	    set_wheel_region<REGION_SIZE>(position, r, b, g);
+	    break;
+	// B->G
+	case 4:
+	    set_wheel_region<REGION_SIZE>(position, b, g, r);
+	    break;
+	// G->R
+	case 5:
+	    set_wheel_region<REGION_SIZE>(position, g, r, b);
+	    break;
+    }
+}
+
+template<int REGION_SIZE>
 Colour make_wheel(uint16_t wheel, uint8_t brightness)
+{
+    int region = wheel / REGION_SIZE;
+    int position = wheel % REGION_SIZE;
+
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    set_wheel_colour<REGION_SIZE>(region, position, r, g, b);
+
+    // If not full scale wheel, scale up each component.
+    const int SCALE = 256 / REGION_SIZE;
+    return make_rgb(r * SCALE, g * SCALE, b * SCALE, brightness);
+}
+
+template<int REGION_SIZE>
+Colour make_reverse_wheel(uint16_t wheel, uint8_t brightness)
+{
+    int region = wheel / REGION_SIZE;
+    switch (region) {
+	case 0:
+	    region = 2;
+	    break;
+	case 2:
+	    region = 0;
+	    break;
+	case 3:
+	    region = 5;
+	    break;
+	case 5:
+	    region = 3;
+	    break;
+    }
+    int position = wheel % REGION_SIZE;
+
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    set_wheel_colour<REGION_SIZE>(region, position, r, g, b);
+
+    // If not full scale wheel, scale up each component.
+    const int SCALE = 256 / REGION_SIZE;
+    return make_rgb(r * SCALE, g * SCALE, b * SCALE, brightness);
+}
+
+Colour make_wheel(uint16_t wheel, uint8_t brightness)
+{
+    return make_wheel<256>(wheel, brightness);
+}
+
+Colour make_reverse_wheel(uint16_t wheel, uint8_t brightness)
+{
+    return make_reverse_wheel<256>(wheel, brightness);
+}
+
+Colour make_wheel7(uint16_t wheel, uint8_t brightness)
+{
+    return make_wheel<128>(wheel, brightness);
+}
+
+Colour make_reverse_wheel7(uint16_t wheel, uint8_t brightness)
+{
+    return make_reverse_wheel<128>(wheel, brightness);
+}
+
+#if 0
+void set_wheel384(uint8_t position, uint8_t &a, uint8_t &b, uint8_t &c)
+{
+    a = 127 - position;
+    b = position;
+    c = 0;
+}
+
+Colour make_wheel384(uint16_t wheel, uint8_t brightness)
+{
+    int region = wheel / 128;
+    int position = wheel % 128;
+
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+
+    switch (region) {
+	case 0:
+	    set_wheel384(position, r, g, b);
+	    break;
+	case 1:
+	    set_wheel384(position, g, b, r);
+	    break;
+	case 2:
+	    set_wheel384(position, b, r, g);
+	    break;
+    }
+
+    return make_rgb(r * 2, g * 2, b * 2, brightness);
+}
+
+void set_wheel768(uint8_t position, uint8_t &a, uint8_t &b, uint8_t &c)
+{
+    a = 255 - position;
+    b = position;
+    c = 0;
+}
+
+Colour make_wheel768(uint16_t wheel, uint8_t brightness)
 {
     int region = wheel / 256;
     int position = wheel % 256;
@@ -112,22 +257,105 @@ Colour make_wheel(uint16_t wheel, uint8_t brightness)
 
     switch (region) {
 	case 0:
-		r = 255 - position;
-		g = position;
-		b = 0;
+	    set_wheel768(position, r, g, b);
 	    break;
 	case 1:
-		g = 255 - position;
-		b = position;
-		r = 0;
+	    set_wheel768(position, g, b, r);
 	    break;
 	case 2:
-		b = 255 - position;
-		r = position;
-		g = 0;
+	    set_wheel768(position, b, r, g);
 	    break;
     }
 
     return make_rgb(r, g, b, brightness);
 }
 
+Colour make_inverse_wheel384(uint16_t wheel, uint8_t brightness)
+{
+    int region = wheel / 128;
+    int position = wheel % 128;
+
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+
+    switch (region) {
+	case 0:
+	    set_wheel384(position, b, r, g);
+	    break;
+	case 1:
+	    set_wheel384(position, g, b, r);
+	    break;
+	case 2:
+	    set_wheel384(position, r, g, b);
+	    break;
+    }
+
+    return make_rgb(r * 2, g * 2, b * 2, brightness);
+}
+
+Colour make_inverse_wheel768(uint16_t wheel, uint8_t brightness)
+{
+    int region = wheel / 256;
+    int position = wheel % 256;
+
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+
+    switch (region) {
+	case 0:
+	    set_wheel768(position, b, r, g);
+	    break;
+	case 1:
+	    set_wheel768(position, g, b, r);
+	    break;
+	case 2:
+	    set_wheel768(position, r, g, b);
+	    break;
+    }
+
+    return make_rgb(r, g, b, brightness);
+}
+#endif
+
+#if 0
+// This doesn't quite make sense...
+Colour make_bg_wheel384(uint16_t wheel, uint8_t brightness)
+{
+    int region = wheel / 128;
+    int position = wheel % 128;
+
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+
+    switch (region) {
+	case 0:
+	    r = 0;
+	    g = position;
+	    b = 0;
+	    break;
+	case 1:
+#if 1
+	    set_wheel384(position, g, b, r);
+#else
+	    g = 127 - position;
+	    b = position;
+	    r = 0;
+#endif
+	    break;
+	case 2:
+#if 1
+	    set_wheel384(position, b, g, r);
+#else
+	    b = 127 - position;
+	    r = 0;
+	    g = position;
+#endif
+	    break;
+    }
+
+    return make_rgb(r * 2, g * 2, b * 2, brightness);
+}
+#endif

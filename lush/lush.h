@@ -65,8 +65,14 @@ inline Colour make_rgb(int r, int g, int b, uint8_t brightness)
 
 Colour make_hsv(uint8_t h, uint8_t s, uint8_t v);
 Colour make_hsv16(uint8_t h, uint8_t s, uint8_t v);
-// wheel 0..767
+// wheel == 0 .. 1535 (6 * 256 - 1)
 Colour make_wheel(uint16_t wheel, uint8_t brightness);
+Colour make_reverse_wheel(uint16_t wheel, uint8_t brightness);
+
+// make_wheel384 -> make_wheel7
+// wheel == 0 .. 768
+Colour make_wheel7(uint16_t wheel, uint8_t brightness);
+Colour make_reverse_wheel7(uint16_t wheel, uint8_t brightness);
 
 inline int get_led(int x, int y)
 {
