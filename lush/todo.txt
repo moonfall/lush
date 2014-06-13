@@ -1,0 +1,35 @@
+big questions:
+	what sort of gain range is necessary?
+	what level should gain occur to?
+	is floating point necessary?
+
+convert over existing patterns
+fft window
+disable audio gathering when not necessary
+free-running/interrupt based adc
+	determine sample frequency
+	how many bits?
+	how many reads to average?
+decide on sample type of audio data - q15, q31, f15
+	determines output of fft
+add peak detection
+proper fft sound analysis
+	convert into N bins (constant Q?)
+	http://telemeta.org/browser/telemeta/visualization/octave/spectrogram.m?rev=af09042fab959a97fc0c016e19dde5dd8202b434
+	interpolation ballistic
+	display modes of spectre, ispectrum, bluecat
+three sets of pixel data
+	high level description?
+	>24 bit source (being dithered)
+	24 bit being drawn
+	24 bit being scanned out
+better gain adjustment
+	automatic gain adjustment
+better adjustment of min/max db
+better defaults of min/max db
+user interface to control patterns being displayed
+user interface to configure system
+user input to actual patterns
+allow values to be logged when changed
+eeprom storing of settings
+save/restore of settings via serial
