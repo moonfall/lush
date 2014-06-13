@@ -123,6 +123,7 @@ inline void draw_pixels(Colour c)
     }
 }
 
+void draw_mask(int y, unsigned mask, Colour fg, const Colour *bg);
 void draw_char(int x, int y, char c, Colour fg, const Colour *bg);
 
 inline void show_pixels()
@@ -221,6 +222,13 @@ class Pattern_counter
     Value m_counter;
 };
 
+class Pattern_heart
+    : public Pattern
+{
+  public:
+    virtual bool display();
+};
+
 class Pattern_huey
     : public Pattern
 {
@@ -229,13 +237,6 @@ class Pattern_huey
 };
 
 class Pattern_pulse
-    : public Pattern
-{
-  public:
-    virtual bool display();
-};
-
-class Pattern_wheel
     : public Pattern
 {
   public:
@@ -289,6 +290,13 @@ class Pattern_synthesia_plasma_complex
     virtual bool display();
 
     Value m_time;
+};
+
+class Pattern_wheel
+    : public Pattern
+{
+  public:
+    virtual bool display();
 };
 
 struct Mode

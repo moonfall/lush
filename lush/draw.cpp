@@ -1,6 +1,17 @@
 #include <OctoWS2811.h>
 #include "lush.h"
 
+void draw_mask(int y, unsigned mask, Colour fg, const Colour *bg)
+{
+    for (int x_pos = 0; x_pos < COLUMN_COUNT; ++x_pos) {
+	if (mask & (1 << (COLUMN_COUNT - x_pos - 1))) {
+	    draw_pixel(x_pos, y, fg);
+	} else if (bg) {
+	    draw_pixel(x_pos, y, *bg);
+	}
+    }
+}
+
 void draw_char(int x, int y, char c, Colour fg, const Colour *bg)
 {
   // Each character is 4x5 stored as a word, each nibble represents
