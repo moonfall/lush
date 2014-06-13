@@ -66,6 +66,7 @@ inline Colour make_rgb(int r, int g, int b, uint8_t brightness)
 Colour make_hsv(uint8_t h, uint8_t s, uint8_t v);
 Colour make_hsv16(uint8_t h, uint8_t s, uint8_t v);
 // wheel == 0 .. 1535 (6 * 256 - 1)
+const int MAX_WHEEL = 256 * 6;
 Colour make_wheel(uint16_t wheel, uint8_t brightness);
 Colour make_reverse_wheel(uint16_t wheel, uint8_t brightness);
 
@@ -224,10 +225,21 @@ class Pattern_huey
     : public Pattern
 {
   public:
-    virtual void setup();
     virtual bool display();
-  
-    Value m_hue_offset;
+};
+
+class Pattern_pulse
+    : public Pattern
+{
+  public:
+    virtual bool display();
+};
+
+class Pattern_wheel
+    : public Pattern
+{
+  public:
+    virtual bool display();
 };
 
 class Pattern_spectrum_bars

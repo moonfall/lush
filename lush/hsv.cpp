@@ -144,7 +144,7 @@ void set_wheel_colour(uint8_t region, uint8_t position,
 template<int REGION_SIZE>
 Colour make_wheel(uint16_t wheel, uint8_t brightness)
 {
-    int region = wheel / REGION_SIZE;
+    int region = (wheel / REGION_SIZE) % 6;
     int position = wheel % REGION_SIZE;
 
     uint8_t r;

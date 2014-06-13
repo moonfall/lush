@@ -50,6 +50,8 @@ const int TURN_OFF_MS = 3000;
 // Current state
 Pattern *g_current_pattern = NULL;
 Pattern_huey g_pattern_huey;
+Pattern_pulse g_pattern_pulse;
+Pattern_wheel g_pattern_wheel;
 Pattern_counter g_pattern_counter;
 Pattern_spectrum_bars g_pattern_spectrum_bars;
 Pattern_spectrum_field g_pattern_spectrum_field;
@@ -64,6 +66,8 @@ Pattern_synthesia_plasma_complex g_pattern_synthesia_plasma_complex;
 // - configuration
 struct Mode g_modes[] = {
     { &g_pattern_huey },
+    { &g_pattern_pulse },
+    { &g_pattern_wheel },
     { &g_pattern_counter },
     { &g_pattern_spectrum_bars },
     { &g_pattern_spectrum_field },
@@ -172,11 +176,10 @@ void setup()
     // Begin output.
     g_octo.begin();
 
-    g_pattern_counter.setup();
-    g_pattern_huey.setup();
-    g_pattern_spectrum_bars.setup();
-    g_pattern_spectrum_field.setup();
-    g_pattern_spectrum_timeline.setup();
+    // TODO: Prevent multiple initialization of patterns.
+    for (int i = 0; i < MODE_COUNT; ++i) {
+    	g_modes[g_current_mode.get()].m_pattern->setup();
+    }
     update_pattern();
 
     // Start cycling colours by default
