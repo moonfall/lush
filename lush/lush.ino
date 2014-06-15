@@ -11,6 +11,7 @@
 #include "sqrt_integer.h"
 #include "dspinst.h"
 
+#define DISABLE_AUDIO
 #undef SAMPLE_TEST
 #undef PROFILE_FFT
 #undef LOG_RAW_LEVELS
@@ -53,11 +54,13 @@ Pattern_counter g_pattern_counter;
 Pattern_heart g_pattern_heart;
 Pattern_huey g_pattern_huey;
 Pattern_pulse g_pattern_pulse;
+#ifndef DISABLE_AUDIO
 Pattern_spectrum_bars g_pattern_spectrum_bars;
 Pattern_spectrum_field g_pattern_spectrum_field;
 Pattern_spectrum_timeline g_pattern_spectrum_timeline;
 Pattern_synthesia_fire g_pattern_synthesia_fire;
 Pattern_synthesia_plasma_complex g_pattern_synthesia_plasma_complex;
+#endif
 Pattern_wheel g_pattern_wheel;
 
 // Modes:
@@ -71,11 +74,13 @@ struct Mode g_modes[] = {
     { &g_pattern_pulse },
     { &g_pattern_wheel },
     { &g_pattern_counter },
+#ifndef DISABLE_AUDIO
     { &g_pattern_spectrum_bars },
     { &g_pattern_spectrum_field },
     { &g_pattern_spectrum_timeline },
     { &g_pattern_synthesia_fire },
     { &g_pattern_synthesia_plasma_complex },
+#endif
 };
 const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 Value g_current_mode(0, 0, MODE_COUNT - 1, true);
@@ -102,6 +107,7 @@ float g_level_min = 0.0;
 float g_level_max = 0.0;
 Sample_type g_samples[FFT_SIZE];
 
+#ifndef DISABLE_AUDIO
 arm_cfft_radix4_instance g_fft_inst;
 Sample_type g_fft_samples[FFT_SIZE * 2];
 int g_fft_sample_generation = 0;
@@ -111,6 +117,7 @@ Sample_type g_magnitudes[FFT_SIZE];
 int g_fft_generation = 0;
 Sample_type g_bins[MAX_BIN_COUNT];
 int g_bin_generation = 0;
+#endif
 
 const float GAIN_R1 = 10000;
 const float GAIN_R2 = 100000;
@@ -187,12 +194,14 @@ void setup()
     // Start cycling colours by default
     g_hue.set_velocity(256, 10000);
 
+#ifndef DISABLE_AUDIO
     fft_setup();
 
 #ifndef SAMPLE_TEST
     // Start sampling sound.
     // TODO: Only do this if necessary
     sampler_start();
+#endif
 #endif
 }
 
@@ -259,6 +268,7 @@ int last_report = 0;
 void loop()
 {
     ui_loop();
+#ifndef DISABLE_AUDIO
 #ifdef SAMPLE_TEST
     int min = g_adc->analogRead(AUDIO_INPUT_PIN);
     int max = min;
@@ -289,6 +299,7 @@ void loop()
 	Serial.println(g_level_max - g_level_min);
 	last_report = millis();
     }
+#endif
 #endif
     display_loop();
     if (g_off) {
@@ -447,6 +458,7 @@ void ui_loop()
     }
 }
 
+#ifndef DISABLE_AUDIO
 void sampler_callback()
 {
     int sample = g_adc->analogRead(AUDIO_INPUT_PIN);
@@ -867,6 +879,7 @@ void fft_reduce()
 
     g_bin_generation = g_fft_generation;
 }
+#endif
 
 void display_loop()
 {
