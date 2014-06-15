@@ -11,7 +11,7 @@
 #include "sqrt_integer.h"
 #include "dspinst.h"
 
-#define DISABLE_AUDIO
+#undef DISABLE_AUDIO
 #undef SAMPLE_TEST
 #undef PROFILE_FFT
 #undef LOG_RAW_LEVELS
@@ -50,6 +50,7 @@ const int TURN_OFF_MS = 3000;
 
 // Current state
 Pattern *g_current_pattern = NULL;
+Fader g_fader;
 Pattern_counter g_pattern_counter;
 Pattern_heart g_pattern_heart;
 Pattern_huey g_pattern_huey;
@@ -69,9 +70,10 @@ Pattern_wheel g_pattern_wheel;
 // - select specific mode
 // - configuration
 struct Mode g_modes[] = {
-    { &g_pattern_heart },
     { &g_pattern_huey },
+    { &g_fader },
     { &g_pattern_pulse },
+    { &g_pattern_heart },
     { &g_pattern_wheel },
     { &g_pattern_counter },
 #ifndef DISABLE_AUDIO

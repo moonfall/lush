@@ -2,7 +2,7 @@
 #include "lush.h"
 
 const int DARK_MS = 2000;
-const int PULSE_COUNT = 2;
+const int PULSE_COUNT = 1;
 const int PULSE_MS = 150;
 const int PAUSE_MS = 300;
 const int CYCLE_MS = DARK_MS + PULSE_COUNT * (PULSE_MS + PAUSE_MS);

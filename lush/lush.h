@@ -63,6 +63,13 @@ inline Colour make_rgb(int r, int g, int b, uint8_t brightness)
 		    b * brightness / MAX_BRIGHTNESS);
 }
 
+inline void split_rgb(Colour c, uint8_t &r, uint8_t &g, uint8_t &b)
+{
+    r = (c >> 16) & 0xff;
+    g = (c >> 8) & 0xff;
+    b = (c >> 0) & 0xff;
+}
+
 Colour make_hsv(uint8_t h, uint8_t s, uint8_t v);
 Colour make_hsv16(uint8_t h, uint8_t s, uint8_t v);
 // wheel == 0 .. 1535 (6 * 256 - 1)
@@ -208,6 +215,45 @@ class Pattern
     }
 
     virtual bool display() = 0;
+};
+
+class Fader
+    : public Pattern
+{
+  public:
+    virtual void activate();
+#if 1
+    virtual void reset();
+#endif
+    virtual bool display();
+
+    void set_fade_down();
+    void set_fade_up();
+
+    void set_shuffled_squares();
+    void set_inorder_squares();
+    void set_alternate_ends_squares();
+    void set_back_forth_squares();
+    void set_alternate_back_forth_squares();
+    void set_top_and_bottom();
+    void set_top_and_bottom_reversed();
+    void set_spiral();
+    void set_inner_spiral();
+    void set_inorder_2x2();
+
+    void set_staggered_pixels(int starget, int duration, int count = 1);
+
+    Colour get_initial(int led);
+    Colour get_final(int led);
+    int get_order(int led);
+    int fade_start(int order);
+    int fade_duration(int order);
+    int fade_end(int order);
+
+    int linear_end();
+    int exact_end();
+
+    static Colour linear_fade(Colour initial, Colour final, int t, int total);
 };
 
 class Pattern_counter
