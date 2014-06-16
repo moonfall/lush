@@ -1,5 +1,6 @@
 #include <OctoWS2811.h>
 #include "lush.h"
+#include "blocks.h"
 
 static Colour g_initial[LED_COUNT];
 static Colour g_final[LED_COUNT];
@@ -7,6 +8,9 @@ static Colour g_final[LED_COUNT];
 // TODO: fader order isn't necessary, just determine fade
 // g_fade_order[led] == order
 static int g_order[LED_COUNT];
+
+const int DEFAULT_STAGGER = 25;
+const int DEFAULT_DURATION = 50;
 
 // g_fade_start[order] == ms
 // g_fade_duration[order] == ms
@@ -17,21 +21,34 @@ static int g_start_time = 0;
 
 void Fader::activate()
 {
+#if 0
     set_fade_down();
     set_shuffled_squares();
-    set_staggered_pixels(250, 500);
+    set_staggered_pixels(DEFAULT_STAGGER, DEFAULT_DURATION);
     g_start_time = millis();
 #if 1
+    reset();
+#endif
+#else
     reset();
 #endif
 }
 
 #if 1
-int sequence = 5;
+int sequence = 0;
 void Fader::reset()
 {
+    int start = millis();
+    int x_offset = random(1, 10);
+    int y_offset = random(10, 100);
+    for (int y = 0; y < ROW_COUNT; ++y) {
+	for (int x = 0; x < COLUMN_COUNT; ++x) {
+	    int wheel = start + x * x_offset + y * y_offset;
+	    g_initial[get_led(x, y)] = make_wheel(wheel, g_brightness.get());
+	}
+    }
 #if 1
-    set_staggered_pixels(250, 500);
+    set_staggered_pixels(DEFAULT_STAGGER, DEFAULT_DURATION);
     switch (sequence) {
 	case 0:
 	default:
@@ -44,40 +61,42 @@ void Fader::reset()
 	    set_inorder_squares();
 	    break;
 	case 2:
-	    set_alternate_ends_squares();
-	    break;
-	case 3:
 	    set_back_forth_squares();
 	    break;
-	case 4:
+	case 3:
 	    set_alternate_back_forth_squares();
 	    break;
-	case 5:
+	case 4:
 	    set_top_and_bottom();
-	    set_staggered_pixels(250, 500, 2);
+	    set_staggered_pixels(DEFAULT_STAGGER * 2, DEFAULT_DURATION * 2, 2);
+	    break;
+	case 5:
+	    set_top_and_bottom_reversed();
+	    set_staggered_pixels(DEFAULT_STAGGER * 2, DEFAULT_DURATION * 2, 2);
 	    break;
 	case 6:
-	    set_top_and_bottom_reversed();
-	    set_staggered_pixels(250, 500, 2);
+	    set_inorder_squares();
+	    set_staggered_pixels(DEFAULT_DURATION * COLUMN_COUNT,
+				 DEFAULT_DURATION * COLUMN_COUNT, COLUMN_COUNT);
 	    break;
 	case 7:
 	    set_spiral();
 	    break;
-// Disable not working ones.
 #if 0
-	case 8:
+// Disable not working ones.
+	case 7:
 	    set_inner_spiral();
 	    break;
-	case 9:
+	case 8:
 	    set_inorder_2x2();
-	    set_staggered_pixels(250, 500, 4);
+	    set_staggered_pixels(DEFAULT_STAGGER, DEFAULT_DURATION, 4);
 	    break;
 #endif
     }
     ++sequence;
 #else
 	    set_inner_spiral();
-	    set_staggered_pixels(250, 500);
+	    set_staggered_pixels(DEFAULT_STAGGER, DEFAULT_DURATION);
 #endif
     
     g_start_time = millis();
@@ -160,39 +179,6 @@ void Fader::set_fade_up()
     // TODO
 }
 
-void swap(int &x, int &y)
-{
-    int tmp = x;
-    x = y;
-    y = tmp;
-}
-
-void shuffle_array(int *array, int count)
-{
-    for (int i = 0; i < count; ++i) {
-	int j = random(i, count);
-	swap(array[i], array[j]);
-    }
-}
-
-void reverse_array(int *array, int count)
-{
-    for (int i = 0; i < count / 2; ++i) {
-	swap(array[i], array[count - i - 1]);
-    }
-}
-
-void make_shuffled_array(int *array, int count)
-{
-    for (int i = 0; i < count; ++i) {
-	int j = random(i + 1);
-	if (j != i) {
-	    array[i] = array[j];
-	}
-	array[j] = i;
-    }
-}
-
 void Fader::set_shuffled_squares()
 {
     make_shuffled_array(g_order, LED_COUNT);
@@ -204,42 +190,27 @@ void Fader::set_shuffled_squares()
 // cdef
 void Fader::set_inorder_squares()
 {
-    int x_pos = 0;
-    int y_pos = 0;
+    Simple_counter y(COLUMN_COUNT, true);
+    Simple_counter x(ROW_COUNT, true);
+    For_each_led g(y, x);
 
-    int x_delta = 1;
-    for (int order = 0; order < LED_COUNT; ++order) {
-	g_order[get_led(x_pos, y_pos)] = order;
-	x_pos += x_delta;
-	if (x_pos == COLUMN_COUNT) {
-	    ++y_pos;
-	    x_pos = 0;
-	}
-    }
+    g.fill_array(g_order, LED_COUNT);
 }
 
+// looks bad
 // 0123
 // 89ab
 // cdef
 // 4567
 void Fader::set_alternate_ends_squares()
 {
-    int x_pos = 0;
-    int y_pos = 0;
+    Simple_counter y1(ROW_COUNT / 2, true);
+    Counter y2(ROW_COUNT - 1, ROW_COUNT / 2, -1);
+    Alternator y(y1, y2);
+    Simple_counter x(COLUMN_COUNT, true);
+    For_each_led g(y, x);
 
-    int x_delta = 1;
-    for (int order = 0; order < LED_COUNT; ++order) {
-	g_order[get_led(x_pos, y_pos)] = order;
-	x_pos += x_delta;
-	if (x_pos == COLUMN_COUNT) {
-	    if (y_pos < ROW_COUNT / 2) {
-		y_pos = flip_y(y_pos);
-	    } else {
-		y_pos = flip_y(y_pos) + 1;
-	    }
-	    x_pos = 0;
-	}
-    }
+    g.fill_array(g_order, LED_COUNT);
 }
 
 // 0123
@@ -248,21 +219,13 @@ void Fader::set_alternate_ends_squares()
 // fedc
 void Fader::set_back_forth_squares()
 {
-    int x_pos = 0;
-    int y_pos = 0;
+    Simple_counter y(COLUMN_COUNT, true);
+    Simple_counter x1(ROW_COUNT, true);
+    Simple_counter x2(ROW_COUNT, false);
+    Concatenator x(x1, x2, true);
+    For_each_led g(y, x);
 
-    int x_delta = 1;
-    int x_end = ROW_COUNT;
-    for (int order = 0; order < LED_COUNT; ++order) {
-	g_order[get_led(x_pos, y_pos)] = order;
-	if (x_pos + x_delta == x_end) {
-	    x_delta = -x_delta;
-	    ++y_pos;
-	    x_end = flip_x(x_end);
-	} else {
-	    x_pos += x_delta;
-	}
-    }
+    g.fill_array(g_order, LED_COUNT);
 }
 
 // 0123
@@ -271,25 +234,15 @@ void Fader::set_back_forth_squares()
 // 7654
 void Fader::set_alternate_back_forth_squares()
 {
-    int x_pos = 0;
-    int y_pos = 0;
+    Simple_counter y1(ROW_COUNT / 2, true);
+    Counter y2(ROW_COUNT - 1, ROW_COUNT / 2, -1);
+    Alternator y(y1, y2);
+    Simple_counter x1(COLUMN_COUNT, true);
+    Simple_counter x2(COLUMN_COUNT, false);
+    Concatenator x(x1, x2, true);
+    For_each_led g(y, x);
 
-    int x_delta = 1;
-    int x_end = ROW_COUNT;
-    for (int order = 0; order < LED_COUNT; ++order) {
-	g_order[get_led(x_pos, y_pos)] = order;
-	if (x_pos + x_delta == x_end) {
-	    x_delta = -x_delta;
-	    x_end = flip_x(x_end);
-	    if (y_pos < ROW_COUNT / 2) {
-		y_pos = flip_y(y_pos);
-	    } else {
-		y_pos = flip_y(y_pos) + 1;
-	    }
-	} else {
-	    x_pos += x_delta;
-	}
-    }
+    g.fill_array(g_order, LED_COUNT);
 }
 
 // 0246
@@ -298,19 +251,17 @@ void Fader::set_alternate_back_forth_squares()
 // 1357
 void Fader::set_top_and_bottom()
 {
-    int x_pos = 0;
-    int y_pos = 0;
+    Simple_counter y1(ROW_COUNT / 2, true);
+    Simple_counter x1(COLUMN_COUNT, true);
+    For_each_led g1(y1, x1);
 
-    int x_delta = 1;
-    for (int order = 0; order < LED_COUNT; order += 2) {
-	g_order[get_led(x_pos, y_pos)] = order;
-	g_order[get_led(x_pos, flip_y(y_pos))] = order + 1;
-	x_pos += x_delta;
-	if (x_pos == COLUMN_COUNT) {
-	    ++y_pos;
-	    x_pos = 0;
-	}
-    }
+    Counter y2(ROW_COUNT - 1, ROW_COUNT / 2, -1);
+    Simple_counter x2(COLUMN_COUNT, true);
+    For_each_led g2(y2, x2);
+
+    Alternator g(g1, g2);
+
+    g.fill_array(g_order, LED_COUNT);
 }
 
 // 0246
