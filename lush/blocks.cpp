@@ -31,10 +31,6 @@ void Generator::fill_array(int *array, int count)
 {
     for (int i = 0; i < count; ++i) {
 	array[current()] = i;
-	Serial.print("set ");
-	Serial.print(current());
-	Serial.print(" to ");
-	Serial.println(i);
 	next();
     }
     Serial.println();

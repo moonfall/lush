@@ -218,18 +218,41 @@ class Pattern
 };
 
 class Fader
-    : public Pattern
 {
   public:
-    virtual void activate();
-#if 1
-    virtual void reset();
-#endif
-    virtual bool display();
+    virtual int get_order(int led) = 0;
+    virtual int fade_start(int order) = 0;
+    virtual int fade_duration(int order) = 0;
+    virtual int fade_end(int order) = 0;
 
-    void set_fade_down();
-    void set_fade_up();
+    virtual Colour get_initial(int led) = 0;
+    virtual Colour get_final(int led) = 0;
 
+    // If done is non-NULL, it is set to indicate if the current led
+    // is done.
+    virtual Colour generate(int led, int t, bool *done);
+
+    virtual int determine_duration();
+
+    virtual inline Colour fade(Colour initial, Colour final, int t, int total)
+    {
+	return linear_fade(initial, final, t, total);
+    }
+
+    static Colour linear_fade(Colour initial, Colour final, int t, int total);
+};
+
+typedef int Fade_pattern;
+
+class Fader_fixed
+    : public Fader
+{
+  public:
+    // The following sets both the order and the times.
+    void set_fade_pattern(Fade_pattern fade_pattern,
+			  int stagger, int duration);
+
+    // The following determine the order that each pixel will be faded.
     void set_shuffled_squares();
     void set_inorder_squares();
     void set_alternate_ends_squares();
@@ -241,19 +264,92 @@ class Fader
     void set_inner_spiral();
     void set_inorder_2x2();
 
-    void set_staggered_pixels(int starget, int duration, int count = 1);
+    // The following determines when to start each fade and how long
+    // based on their order.  count specifies the number of consecutive
+    // fades to set to the same times.
+    // scale_times scales them by count if set.
+    void set_staggered_pixels(int stagger, int duration, int count = 1,
+			      bool scale_times = true);
 
-    Colour get_initial(int led);
-    Colour get_final(int led);
-    int get_order(int led);
-    int fade_start(int order);
-    int fade_duration(int order);
-    int fade_end(int order);
+    // Calulcate stagger or duration based on total duration.
+    // returns stagger
+    static int fixed_duration_total_duration(int duration,
+					     int count, int total_duration);
+    // returns duration
+    static int fixed_stagger_total_duration(int stagger,
+					    int count, int total_duration);
+    // proportion is ratio of duration to stagger
+    // returns stagger
+    // duration == stagger * proportion
+    static int proportional_total_duration(float proportion,
+					   int count, int total_duration);
 
-    int linear_end();
-    int exact_end();
+    virtual int get_order(int led);
+    virtual int fade_start(int order);
+    virtual int fade_duration(int order);
+    virtual int fade_end(int order);
 
-    static Colour linear_fade(Colour initial, Colour final, int t, int total);
+    // TODO: remove this
+    int m_order[LED_COUNT];
+
+    // indexed by order, both in ms
+    int m_fade_start[LED_COUNT];
+    int m_fade_duration[LED_COUNT];
+};
+
+#if 0
+class Fader_filter
+    : public Fader_fixed
+{
+};
+#endif
+
+class Fader_static
+    : public Fader_fixed
+{
+  public:
+    Fader_static();
+
+    void set_initial_from_current();
+    void set_colour(bool initial, int led, Colour c)
+    {
+	if (initial) {
+	    m_initial[led] = c;
+	} else {
+	    m_final[led] = c;
+	}
+    }
+    void set_colours(bool initial, Colour c);
+
+    virtual Colour get_initial(int led)
+    {
+	return m_initial[led];
+    }
+
+    virtual Colour get_final(int led)
+    {
+	return m_final[led];
+    }
+
+    Colour m_initial[LED_COUNT];
+    Colour m_final[LED_COUNT];
+};
+
+class Pattern_random_fader
+    : public Pattern
+{
+  public:
+    Pattern_random_fader(Fader_static &fader);
+
+    virtual void activate();
+    virtual bool display();
+
+    void randomize();
+
+    Fader_static &m_fader;
+    int m_fade_pattern;
+    int m_start_time;
+    bool m_fade_out;
 };
 
 class Pattern_counter

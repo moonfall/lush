@@ -50,7 +50,8 @@ const int TURN_OFF_MS = 3000;
 
 // Current state
 Pattern *g_current_pattern = NULL;
-Fader g_fader;
+Fader_static g_fader1;
+Pattern_random_fader g_random_fader(g_fader1);
 Pattern_counter g_pattern_counter;
 Pattern_heart g_pattern_heart;
 Pattern_huey g_pattern_huey;
@@ -71,7 +72,7 @@ Pattern_wheel g_pattern_wheel;
 // - configuration
 struct Mode g_modes[] = {
     { &g_pattern_huey },
-    { &g_fader },
+    { &g_random_fader },
     { &g_pattern_pulse },
     { &g_pattern_heart },
     { &g_pattern_wheel },
