@@ -253,8 +253,9 @@ class Fader_fixed
 			  int stagger, int duration);
 
     // The following determine the order that each pixel will be faded.
-    void set_shuffled_squares();
-    void set_inorder_squares();
+    void set_shuffled(int scale = 1);
+    // Fill in scale * scale squares
+    void set_inorder(int scale = 1);
     void set_alternate_ends_squares();
     void set_back_forth_squares();
     void set_alternate_back_forth_squares();
@@ -262,7 +263,6 @@ class Fader_fixed
     void set_top_and_bottom_reversed();
     void set_spiral();
     void set_inner_spiral();
-    void set_inorder_2x2();
 
     // The following determines when to start each fade and how long
     // based on their order.  count specifies the number of consecutive
@@ -310,7 +310,6 @@ class Fader_static
   public:
     Fader_static();
 
-    void set_initial_from_current();
     void set_colour(bool initial, int led, Colour c)
     {
 	if (initial) {
@@ -320,6 +319,8 @@ class Fader_static
 	}
     }
     void set_colours(bool initial, Colour c);
+    void set_initial_from_current();
+    void set_initial_from_final();
 
     virtual Colour get_initial(int led)
     {
@@ -345,10 +346,13 @@ class Pattern_random_fader
     virtual bool display();
 
     void randomize();
+    void randomize_image(bool initial);
+    void randomize_fade();
 
     Fader_static &m_fader;
     int m_fade_pattern;
     int m_start_time;
+    // fade_out: initial -> black; !fade_out: black -> initial
     bool m_fade_out;
 };
 

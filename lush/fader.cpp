@@ -2,9 +2,6 @@
 #include "lush.h"
 #include "blocks.h"
 
-const int DEFAULT_STAGGER = 25;
-const int DEFAULT_DURATION = 50;
-
 Colour Fader::generate(int led, int t, bool *done)
 {
     // Determine fade state.
@@ -76,13 +73,13 @@ void Fader_fixed::set_fade_pattern(Fade_pattern fade_pattern,
 				   int stagger, int duration)
 {
     set_staggered_pixels(stagger, duration);
-    switch (fade_pattern % 8) {
+    switch (fade_pattern % 10) {
 	case 0:
 	default:
-	    set_shuffled_squares();
+	    set_shuffled();
 	    break;
 	case 1:
-	    set_inorder_squares();
+	    set_inorder();
 	    break;
 	case 2:
 	    set_back_forth_squares();
@@ -95,41 +92,66 @@ void Fader_fixed::set_fade_pattern(Fade_pattern fade_pattern,
 	    set_staggered_pixels(stagger, duration, 2);
 	    break;
 	case 5:
-	    set_inorder_squares();
+	    set_inorder();
 	    set_staggered_pixels(stagger, duration, COLUMN_COUNT);
 	    break;
 	case 6:
 	    set_spiral();
+	    break;
+	case 7:
+	    set_shuffled(2);
+	    set_staggered_pixels(stagger, duration, 4);
+	    break;
+	case 8:
+	    set_inorder(2);
+	    set_staggered_pixels(stagger, duration, 4);
+	    break;
+	case 9:
+	    set_shuffled(4);
+	    set_staggered_pixels(stagger, duration, 4);
 	    break;
 #if 0
 // Disable not working ones.
 	case 7:
 	    set_inner_spiral();
 	    break;
-	case 8:
-	    set_inorder_2x2();
-	    set_staggered_pixels(DEFAULT_STAGGER, DEFAULT_DURATION, 4);
-	    break;
 #endif
     }
 }
 
-void Fader_fixed::set_shuffled_squares()
+void Fader_fixed::set_shuffled(int scale)
 {
-    make_shuffled_array(m_order, LED_COUNT);
+    make_shuffled_array(m_order, LED_COUNT / (scale * scale));
+    if (scale > 1) {
+	expand_array_2d(m_order, COLUMN_COUNT / scale, ROW_COUNT / scale,
+		        scale);
+    }
 }
 
+// scale = 1
 // 0123
 // 4567
 // 89ab
 // cdef
-void Fader_fixed::set_inorder_squares()
+// scale = 2
+// 0145
+// 2367
+// 89cd
+// abef
+void Fader_fixed::set_inorder(int scale)
 {
-    Simple_counter y(COLUMN_COUNT, true);
-    Simple_counter x(ROW_COUNT, true);
-    For_each_led g(y, x);
+    // This fills an array of enough scale*scale squares to fit the target.
+    int unscaled_rows = ROW_COUNT / scale;
+    int unscaled_cols = COLUMN_COUNT / scale;
 
-    g.fill_array(m_order, LED_COUNT);
+    Simple_counter y(unscaled_rows, true);
+    Simple_counter x(unscaled_cols, true);
+    For_each_led g(y, x, unscaled_cols);
+
+    g.fill_array(m_order, unscaled_rows * unscaled_cols);
+    if (scale > 1) {
+	expand_array_2d(m_order, unscaled_cols, unscaled_rows, scale);
+    }
 }
 
 // looks bad
@@ -154,9 +176,9 @@ void Fader_fixed::set_alternate_ends_squares()
 // fedc
 void Fader_fixed::set_back_forth_squares()
 {
-    Simple_counter y(COLUMN_COUNT, true);
-    Simple_counter x1(ROW_COUNT, true);
-    Simple_counter x2(ROW_COUNT, false);
+    Simple_counter y(ROW_COUNT, true);
+    Simple_counter x1(COLUMN_COUNT, true);
+    Simple_counter x2(COLUMN_COUNT, false);
     Concatenator x(x1, x2, true);
     For_each_led g(y, x);
 
@@ -266,33 +288,6 @@ void Fader_fixed::set_inner_spiral()
     reverse_array(m_order, LED_COUNT);
 }
 
-// 0145
-// 2367
-// 89cd
-// abef
-void Fader_fixed::set_inorder_2x2()
-{
-    int x = 0;
-    int y = 0;
-
-    int x_pos = 0;
-    int y_pos = 0;
-    int length = 2;
-
-    int x_delta = 1;
-    for (int order = 0; order < LED_COUNT / (length * length); ++order) {
-	for (int x_pos = length * x; x_pos < length * (x + 1); ++x_pos) {
-	    for (int y_pos = length * y; y_pos < length * (y + 1); ++y_pos) {
-		m_order[get_led(x_pos, y_pos)] = order;
-	    }
-	}
-	x += x_delta;
-	if (x == COLUMN_COUNT / length) {
-	    ++y_pos;
-	}
-    }
-}
-
 void Fader_fixed::set_staggered_pixels(int stagger, int duration, int count,
 				       bool scale_times)
 {
@@ -356,6 +351,13 @@ Fader_static::Fader_static()
     set_colours(false, COLOUR_BLACK);
 }
 
+void Fader_static::set_colours(bool initial, Colour c)
+{
+    for (int led = 0; led < LED_COUNT; ++led) {
+	set_colour(initial, led, c);
+    }
+}
+
 void Fader_static::set_initial_from_current()
 {
     for (int led = 0; led < LED_COUNT; ++led) {
@@ -363,10 +365,10 @@ void Fader_static::set_initial_from_current()
     }
 }
 
-void Fader_static::set_colours(bool initial, Colour c)
+void Fader_static::set_initial_from_final()
 {
     for (int led = 0; led < LED_COUNT; ++led) {
-	set_colour(initial, led, c);
+	m_initial[led] = m_final[led];
     }
 }
 
@@ -379,10 +381,11 @@ void Pattern_random_fader::activate()
 {
     // Start off with something.
     m_fade_out = true;
-    randomize();
+    randomize_image(true);
+    randomize_fade();
 }
 
-void Pattern_random_fader::randomize()
+void Pattern_random_fader::randomize_image(bool initial)
 {
     int start = millis();
     int x_offset = random(1, 10);
@@ -390,13 +393,20 @@ void Pattern_random_fader::randomize()
     for (int y = 0; y < ROW_COUNT; ++y) {
 	for (int x = 0; x < COLUMN_COUNT; ++x) {
 	    int wheel = start + x * x_offset + y * y_offset;
-	    m_fader.set_colour(m_fade_out, get_led(x, y),
+	    m_fader.set_colour(initial, get_led(x, y),
 			       make_wheel(wheel, g_brightness.get()));
 	}
     }
-    m_fader.set_colours(!m_fade_out, COLOUR_BLACK);
+    m_fader.set_colours(!initial, COLOUR_BLACK);
+}
 
+void Pattern_random_fader::randomize_fade()
+{
+#ifdef CYCLE_PATTERNS
+    ++m_fade_pattern;
+#else
     m_fade_pattern = random();
+#endif
     const float DURATION_PROPORTION = 2;
     const int TOTAL_DURATION = 2000;
     int stagger = m_fader.proportional_total_duration(DURATION_PROPORTION,
@@ -406,7 +416,21 @@ void Pattern_random_fader::randomize()
     m_fader.set_fade_pattern(m_fade_pattern, stagger, duration);
     
     m_start_time = millis();
+}
+
+void Pattern_random_fader::randomize()
+{
+    if (m_fade_out) {
+	// Just finished fading out, select something to fade in to.
+	randomize_image(false);
+    } else {
+	// Just finished fading in, fade out from that now.
+	m_fader.set_initial_from_final();
+	m_fader.set_colours(false, COLOUR_BLACK);
+    }
     m_fade_out = !m_fade_out;
+
+    randomize_fade();
 }
 
 bool Pattern_random_fader::display()

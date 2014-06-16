@@ -16,6 +16,23 @@ void shuffle_array(int *array, int count);
 void reverse_array(int *array, int count);
 void make_shuffled_array(int *array, int count);
 
+// In-place expansion and re-numbering.
+// 10
+// 23
+// -> (2)
+// 2301
+// 4567
+void expand_array_1d(int *array, int count, int scale);
+
+// 01
+// 23
+// -> (2)
+// 0145
+// 2367
+// 89cd
+// abef
+void expand_array_2d(int *array, int column_count, int row_count, int scale);
+
 // Object which just generates values in order and will loop around to
 // the beginning when done.
 class Generator
@@ -298,48 +315,12 @@ class Make_led
     int m_columns;
 };
 
-#if 0
-// Can't be advanced
-class Shadow
-    : public Mapper
-{
-  public:
-    Shadow(Generator &a)
-	: Mapper(a)
-    {
-    }
-
-    virtual void next()
-    {
-	// does not advance, just mirrors existing state.
-    }
-};
-#endif
-
-// Can't be advanced
-class Mirror
-    : public Mapper
-{
-  public:
-    Mirror(Generator &a, int total)
-	: Mapper(a, m_f), m_f(total)
-    {
-    }
-
-    virtual void next()
-    {
-	// does not advance, just mirrors existing state.
-    }
-
-    Flip m_f;
-};
-
 class For_each_led
     : public For_each
 {
   public:
-    For_each_led(Generator &a, Generator &b)
-	: For_each(a, b, m_c)
+    For_each_led(Generator &a, Generator &b, int columns = COLUMN_COUNT)
+	: For_each(a, b, m_c), m_c(columns)
     {
     }
 
