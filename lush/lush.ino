@@ -26,7 +26,7 @@
 const int POWER_LED_PIN = 13;
 
 // A4 == external, A3 == adafruit internal
-const int AUDIO_INPUT_PIN = A3;
+const int AUDIO_INPUT_PIN = A4;
 // Bits of resolution for ADC
 const int ANALOG_READ_RESOLUTION = 12;
 // Number of samples to average with each ADC reading.
@@ -189,7 +189,7 @@ void setup()
 
     // TODO: Prevent multiple initialization of patterns.
     for (int i = 0; i < MODE_COUNT; ++i) {
-    	g_modes[g_current_mode.get()].m_pattern->setup();
+    	g_modes[i].m_pattern->setup();
     }
     update_pattern();
 
@@ -313,6 +313,7 @@ void update_pattern()
 {
     g_current_pattern = g_modes[g_current_mode.get()].m_pattern;
     g_current_pattern->activate();
+    g_force_update = true;
 }
 
 void ui_advance_mode()

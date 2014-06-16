@@ -12,6 +12,11 @@ static int wheel = 0;
 
 static Colour g_last_colour = COLOUR_BLACK;
 
+void Pattern_pulse::activate()
+{
+    draw_pixels(COLOUR_BLACK);
+}
+
 bool Pattern_pulse::display()
 {
     int t = millis() % CYCLE_MS;

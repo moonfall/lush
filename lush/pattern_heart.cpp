@@ -22,6 +22,11 @@ const unsigned HEART[] = {
 	0x00,
 };
 
+void Pattern_heart::activate()
+{
+    draw_pixels(COLOUR_BLACK);
+}
+
 bool Pattern_heart::display()
 {
     int t = millis() % CYCLE_MS;

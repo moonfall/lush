@@ -272,6 +272,7 @@ class Pattern_heart
     : public Pattern
 {
   public:
+    virtual void activate();
     virtual bool display();
 };
 
@@ -286,6 +287,7 @@ class Pattern_pulse
     : public Pattern
 {
   public:
+    virtual void activate();
     virtual bool display();
 };
 

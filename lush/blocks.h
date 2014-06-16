@@ -105,11 +105,6 @@ class For_each
 	bool done_a;
 	bool done_b;
 	int value = m_c.combine(m_a.current(&done_a), m_b.current(&done_b));
-	Serial.print(m_a.current());
-	Serial.print("+");
-	Serial.print(m_b.current());
-	Serial.print("=");
-	Serial.println(value);
 	if (done) {
 	    *done = done_a && done_b;
 	}
