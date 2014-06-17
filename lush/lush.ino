@@ -81,9 +81,11 @@ struct Mode g_modes[] = {
     { &g_pattern_spectrum_bars },
     { &g_pattern_spectrum_field },
     { &g_pattern_spectrum_timeline },
-    { &g_pattern_synthesia_fire },
-    { &g_pattern_synthesia_plasma_complex },
 #endif
+#if 0
+    { &g_pattern_synthesia_fire },
+#endif
+    { &g_pattern_synthesia_plasma_complex },
 };
 const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 Value g_current_mode(0, 0, MODE_COUNT - 1, true);
