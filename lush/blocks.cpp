@@ -37,6 +37,10 @@ void Generator::fill_array(int *array, int count)
 
 void expand_array_1d(int *array, int count, int scale)
 {
+    if (scale == 1) {
+	return;
+    }
+
     // Work back to front. 
     for (int i = count - 1; i >= 0; --i) {
 	int orig = array[i];
@@ -46,30 +50,23 @@ void expand_array_1d(int *array, int count, int scale)
     }
 }
 
-static int get_array_index(int column_count, int x, int y)
+void expand_array_2d(int *array, int columns, int rows, int scale)
 {
-    return y * column_count + x;
-}
+    if (scale == 1) {
+	return;
+    }
 
-static void get_array_xy(int column_count, int i, int &x, int &y)
-{
-    x = i % column_count;
-    y = i / column_count;
-}
-
-void expand_array_2d(int *array, int column_count, int row_count, int scale)
-{
     // Work back to front. 
-    for (int i = column_count * row_count - 1; i >= 0; --i) {
+    for (int i = columns * rows - 1; i >= 0; --i) {
 	int orig = array[i];
 	int orig_x;
 	int orig_y;
-	get_array_xy(column_count, i, orig_x, orig_y);
+	get_xy(i, orig_x, orig_y, columns);
 	int j = 0;
 	for (int y = scale * orig_y; y < scale * (orig_y + 1); ++y) {
 	    for (int x = scale * orig_x; x < scale * (orig_x + 1); ++x, ++j) {
 		// New column count after scaling.
-		int index = get_array_index(column_count * scale, x, y);
+		int index = get_led(x, y, columns * scale);
 		array[index] = orig * scale * scale + j;
 	    }
 	}

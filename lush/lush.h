@@ -82,25 +82,25 @@ Colour make_reverse_wheel(uint16_t wheel, uint8_t brightness);
 Colour make_wheel7(uint16_t wheel, uint8_t brightness);
 Colour make_reverse_wheel7(uint16_t wheel, uint8_t brightness);
 
-inline int get_led(int x, int y)
+inline int get_led(int x, int y, int columns = COLUMN_COUNT)
 {
-    return y * COLUMN_COUNT + x;
+    return y * columns + x;
 }
 
-inline int flip_x(int x)
+inline int flip_x(int x, int columns = COLUMN_COUNT)
 {
-    return (COLUMN_COUNT - 1) - x;
+    return (columns - 1) - x;
 }
 
-inline int flip_y(int y)
+inline int flip_y(int y, int rows = ROW_COUNT)
 {
-    return (ROW_COUNT - 1) - y;
+    return (rows - 1) - y;
 }
 
-inline void get_xy(int led, int &x, int &y)
+inline void get_xy(int led, int &x, int &y, int columns = COLUMN_COUNT)
 {
-    x = led % COLUMN_COUNT;
-    y = led / COLUMN_COUNT;
+    x = led % columns;
+    y = led / columns;
 }
 
 inline Colour get_pixel(int led)
@@ -253,16 +253,24 @@ class Fader_fixed
 			  int stagger, int duration);
 
     // The following determine the order that each pixel will be faded.
-    void set_shuffled(int scale = 1);
+    void set_scale(int scale, int &columns, int &rows) {
+	columns = COLUMN_COUNT / scale;
+	rows = ROW_COUNT / scale;
+    }
+    void set_shuffled(int columns = COLUMN_COUNT, int rows = ROW_COUNT);
     // Fill in scale * scale squares
-    void set_inorder(int scale = 1);
-    void set_alternate_ends_squares();
-    void set_back_forth_squares();
-    void set_alternate_back_forth_squares();
-    void set_top_and_bottom();
-    void set_top_and_bottom_reversed();
-    void set_spiral();
+    void set_inorder(int columns = COLUMN_COUNT, int rows = ROW_COUNT);
+    void set_alternate_ends(int columns = COLUMN_COUNT, int rows = ROW_COUNT);
+    void set_back_forth(int columns = COLUMN_COUNT, int rows = ROW_COUNT);
+    void set_alternate_back_forth(int columns = COLUMN_COUNT,
+				  int rows = ROW_COUNT);
+    void set_top_and_bottom(int columns = COLUMN_COUNT, int rows = ROW_COUNT);
+    void set_top_and_bottom_reversed(int columns = COLUMN_COUNT,
+				     int rows = ROW_COUNT);
+    void set_spiral(int columns = COLUMN_COUNT, int rows = ROW_COUNT);
+#if 0
     void set_inner_spiral();
+#endif
 
     // The following determines when to start each fade and how long
     // based on their order.  count specifies the number of consecutive

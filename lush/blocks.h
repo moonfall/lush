@@ -31,7 +31,7 @@ void expand_array_1d(int *array, int count, int scale);
 // 2367
 // 89cd
 // abef
-void expand_array_2d(int *array, int column_count, int row_count, int scale);
+void expand_array_2d(int *array, int columns, int rows, int scale);
 
 // Object which just generates values in order and will loop around to
 // the beginning when done.

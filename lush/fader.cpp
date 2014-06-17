@@ -73,42 +73,96 @@ void Fader_fixed::set_fade_pattern(Fade_pattern fade_pattern,
 				   int stagger, int duration)
 {
     set_staggered_pixels(stagger, duration);
-    switch (fade_pattern % 10) {
+    int scale = 1;
+    int columns = COLUMN_COUNT;
+    int rows = ROW_COUNT;
+    switch (fade_pattern % 14) {
 	case 0:
 	default:
 	    set_shuffled();
 	    break;
-	case 1:
-	    set_inorder();
-	    break;
 	case 2:
-	    set_back_forth_squares();
+	    set_back_forth();
 	    break;
 	case 3:
-	    set_alternate_back_forth_squares();
+	    set_alternate_back_forth();
 	    break;
 	case 4:
 	    set_top_and_bottom_reversed();
 	    set_staggered_pixels(stagger, duration, 2);
 	    break;
 	case 5:
-	    set_inorder();
-	    set_staggered_pixels(stagger, duration, COLUMN_COUNT);
-	    break;
-	case 6:
 	    set_spiral();
 	    break;
+	case 6:
+	    scale = 2;
+	    set_scale(scale, columns, rows);
+
+	    set_shuffled(columns, rows);
+
+	    expand_array_2d(m_order, columns, rows, scale);
+	    set_staggered_pixels(stagger, duration, scale * scale);
+	    break;
 	case 7:
-	    set_shuffled(2);
-	    set_staggered_pixels(stagger, duration, 4);
+	    scale = 2;
+	    set_scale(scale, columns, rows);
+
+	    set_inorder(columns, rows);
+
+	    expand_array_2d(m_order, columns, rows, scale);
+	    set_staggered_pixels(stagger, duration, scale * scale);
 	    break;
 	case 8:
-	    set_inorder(2);
-	    set_staggered_pixels(stagger, duration, 4);
+	    scale = 2;
+	    set_scale(scale, columns, rows);
+
+	    set_back_forth();
+
+	    expand_array_2d(m_order, columns, rows, scale);
+	    set_staggered_pixels(stagger, duration, scale * scale);
 	    break;
 	case 9:
-	    set_shuffled(4);
-	    set_staggered_pixels(stagger, duration, 4);
+	    scale = 2;
+	    set_scale(scale, columns, rows);
+
+	    set_alternate_back_forth(columns, rows);
+
+	    expand_array_2d(m_order, columns, rows, scale);
+	    set_staggered_pixels(stagger, duration, scale * scale);
+	    break;
+	case 10:
+	    scale = 2;
+	    set_scale(scale, columns, rows);
+
+	    set_top_and_bottom_reversed(columns, rows);
+
+	    expand_array_2d(m_order, columns, rows, scale);
+	    set_staggered_pixels(stagger, duration, 2);
+	    break;
+	case 11:
+	    scale = 2;
+	    set_scale(scale, columns, rows);
+
+	    set_spiral(columns, rows);
+
+	    expand_array_2d(m_order, columns, rows, scale);
+	    set_staggered_pixels(stagger, duration, scale * scale);
+	    break;
+
+	case 12:
+	    scale = 4;
+	    set_scale(scale, columns, rows);
+
+	    set_shuffled(columns, rows);
+
+	    expand_array_2d(m_order, columns, rows, scale);
+	    set_staggered_pixels(stagger, duration, scale);
+	    break;
+
+	case 13:
+	    set_inorder();
+
+	    set_staggered_pixels(stagger, duration, COLUMN_COUNT);
 	    break;
 #if 0
 // Disable not working ones.
@@ -119,13 +173,9 @@ void Fader_fixed::set_fade_pattern(Fade_pattern fade_pattern,
     }
 }
 
-void Fader_fixed::set_shuffled(int scale)
+void Fader_fixed::set_shuffled(int columns, int rows)
 {
-    make_shuffled_array(m_order, LED_COUNT / (scale * scale));
-    if (scale > 1) {
-	expand_array_2d(m_order, COLUMN_COUNT / scale, ROW_COUNT / scale,
-		        scale);
-    }
+    make_shuffled_array(m_order, columns * rows);
 }
 
 // scale = 1
@@ -138,20 +188,15 @@ void Fader_fixed::set_shuffled(int scale)
 // 2367
 // 89cd
 // abef
-void Fader_fixed::set_inorder(int scale)
+void Fader_fixed::set_inorder(int columns, int rows)
 {
-    // This fills an array of enough scale*scale squares to fit the target.
-    int unscaled_rows = ROW_COUNT / scale;
-    int unscaled_cols = COLUMN_COUNT / scale;
+    // This fills an array of columns*rows.
 
-    Simple_counter y(unscaled_rows, true);
-    Simple_counter x(unscaled_cols, true);
-    For_each_led g(y, x, unscaled_cols);
+    Simple_counter y(rows, true);
+    Simple_counter x(columns, true);
+    For_each_led g(y, x, columns);
 
-    g.fill_array(m_order, unscaled_rows * unscaled_cols);
-    if (scale > 1) {
-	expand_array_2d(m_order, unscaled_cols, unscaled_rows, scale);
-    }
+    g.fill_array(m_order, rows * columns);
 }
 
 // looks bad
@@ -159,94 +204,92 @@ void Fader_fixed::set_inorder(int scale)
 // 89ab
 // cdef
 // 4567
-void Fader_fixed::set_alternate_ends_squares()
+void Fader_fixed::set_alternate_ends(int columns, int rows)
 {
-    Simple_counter y1(ROW_COUNT / 2, true);
-    Counter y2(ROW_COUNT - 1, ROW_COUNT / 2, -1);
+    Simple_counter y1(rows / 2, true);
+    Counter y2(rows - 1, rows / 2, -1);
     Alternator y(y1, y2);
-    Simple_counter x(COLUMN_COUNT, true);
-    For_each_led g(y, x);
+    Simple_counter x(columns, true);
+    For_each_led g(y, x, columns);
 
-    g.fill_array(m_order, LED_COUNT);
+    g.fill_array(m_order, rows * columns);
 }
 
 // 0123
 // 7654
 // 89ab
 // fedc
-void Fader_fixed::set_back_forth_squares()
+void Fader_fixed::set_back_forth(int columns, int rows)
 {
-    Simple_counter y(ROW_COUNT, true);
-    Simple_counter x1(COLUMN_COUNT, true);
-    Simple_counter x2(COLUMN_COUNT, false);
+    Simple_counter y(rows, true);
+    Simple_counter x1(columns, true);
+    Simple_counter x2(columns, false);
     Concatenator x(x1, x2, true);
-    For_each_led g(y, x);
+    For_each_led g(y, x, columns);
 
-    g.fill_array(m_order, LED_COUNT);
+    g.fill_array(m_order, rows * columns);
 }
 
 // 0123
 // 89ab
 // fedc
 // 7654
-void Fader_fixed::set_alternate_back_forth_squares()
+void Fader_fixed::set_alternate_back_forth(int columns, int rows)
 {
-    Simple_counter y1(ROW_COUNT / 2, true);
-    Counter y2(ROW_COUNT - 1, ROW_COUNT / 2, -1);
+    Simple_counter y1(rows / 2, true);
+    Counter y2(rows - 1, rows / 2, -1);
     Alternator y(y1, y2);
-    Simple_counter x1(COLUMN_COUNT, true);
-    Simple_counter x2(COLUMN_COUNT, false);
+    Simple_counter x1(columns, true);
+    Simple_counter x2(columns, false);
     Concatenator x(x1, x2, true);
-    For_each_led g(y, x);
+    For_each_led g(y, x, columns);
 
-    g.fill_array(m_order, LED_COUNT);
+    g.fill_array(m_order, rows * columns);
 }
 
 // 0246
 // 8ace
 // 9bdf
 // 1357
-void Fader_fixed::set_top_and_bottom()
+void Fader_fixed::set_top_and_bottom(int columns, int rows)
 {
-    Simple_counter y1(ROW_COUNT / 2, true);
-    Simple_counter x1(COLUMN_COUNT, true);
-    For_each_led g1(y1, x1);
+    Simple_counter y1(rows / 2, true);
+    Simple_counter x1(columns, true);
+    For_each_led g1(y1, x1, columns);
 
-    Counter y2(ROW_COUNT - 1, ROW_COUNT / 2, -1);
-    Simple_counter x2(COLUMN_COUNT, true);
-    For_each_led g2(y2, x2);
+    Counter y2(rows - 1, rows / 2, -1);
+    Simple_counter x2(columns, true);
+    For_each_led g2(y2, x2, columns);
 
     Alternator g(g1, g2);
 
-    g.fill_array(m_order, LED_COUNT);
+    g.fill_array(m_order, rows * columns);
 }
 
 // 0246
 // 8ace
 // fdb9
 // 7531
-void Fader_fixed::set_top_and_bottom_reversed()
+void Fader_fixed::set_top_and_bottom_reversed(int columns, int rows)
 {
-    int x_pos = 0;
-    int y_pos = 0;
+    Simple_counter y1(rows / 2, true);
+    Simple_counter x1(columns, true);
+    For_each_led g1(y1, x1, columns);
 
-    int x_delta = 1;
-    for (int order = 0; order < LED_COUNT; order += 2) {
-	m_order[get_led(x_pos, y_pos)] = order;
-	m_order[get_led(flip_x(x_pos), flip_y(y_pos))] = order + 1;
-	x_pos += x_delta;
-	if (x_pos == COLUMN_COUNT) {
-	    ++y_pos;
-	    x_pos = 0;
-	}
-    }
+    Counter y2(rows - 1, rows / 2, -1);
+    Simple_counter x2(columns, false);
+    For_each_led g2(y2, x2, columns);
+
+    Alternator g(g1, g2);
+
+    g.fill_array(m_order, rows * columns);
 }
 
 // 0123
 // bcd4
 // afe5
 // 9876
-void Fader_fixed::set_spiral()
+void Fader_fixed::set_spiral(int columns, int rows)
 {
     int x_pos = 0;
     int y_pos = 0;
@@ -254,30 +297,31 @@ void Fader_fixed::set_spiral()
     int x_delta = 1;
     int y_delta = 0;
 
-    int x_end = COLUMN_COUNT - 1;
-    int y_end = ROW_COUNT - 1;
-    for (int order = 0; order < LED_COUNT; ++order) {
-	m_order[get_led(x_pos, y_pos)] = order;
+    int x_end = columns - 1;
+    int y_end = rows - 1;
+    for (int order = 0; order < rows * columns; ++order) {
+	m_order[get_led(x_pos, y_pos, columns)] = order;
 	x_pos += x_delta;
 	y_pos += y_delta;
 	if (x_delta && x_pos == x_end) {
 	    y_delta = x_delta;
 	    x_delta = 0;
-	    x_end = flip_x(x_pos);
-	    if (x_end > COLUMN_COUNT / 2) {
+	    x_end = flip_x(x_pos, columns);
+	    if (x_end > columns / 2) {
 		--x_end;
 	    }
 	} else if (y_delta && y_pos == y_end) {
 	    x_delta = -y_delta;
 	    y_delta = 0;
-	    y_end = flip_y(y_end);
-	    if (y_end < ROW_COUNT / 2) {
+	    y_end = flip_y(y_end, rows);
+	    if (y_end < rows / 2) {
 		++y_end;
 	    }
 	}
     }
 }
 
+#if 0
 // fdec
 // 432b
 // 501a
@@ -287,6 +331,7 @@ void Fader_fixed::set_inner_spiral()
     set_spiral();
     reverse_array(m_order, LED_COUNT);
 }
+#endif
 
 void Fader_fixed::set_staggered_pixels(int stagger, int duration, int count,
 				       bool scale_times)
