@@ -405,6 +405,7 @@ class Pattern_maze
     void add_wall_list(int x, int y);
     void remove_wall_list(int choice);
     void add_maze(int x, int y, bool add_to_list);
+    void queue_maze(int x, int y);
     bool expand();
 
     uint8_t get_maze(int x, int y) {
@@ -419,6 +420,13 @@ class Pattern_maze
     uint8_t m_maze[LED_COUNT];
     int m_wall_list[LED_COUNT];
     int m_wall_list_count;
+
+    bool m_queued_update;
+    int m_queued_x;
+    int m_queued_y;
+
+    uint16_t m_order[LED_COUNT];
+    int m_count;
 };
 
 class Pattern_plasma

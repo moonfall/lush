@@ -6,6 +6,7 @@ const uint8_t MAZE_VALUE = 1;
 
 const int RESET_MS = 2000;
 const int UPDATE_MS = 100;
+const int HUE_OFFSET = 3;
 
 Pattern_maze::Pattern_maze()
 {
@@ -37,15 +38,17 @@ bool Pattern_maze::display()
 	}
     }
 
+
     for (int y = 0; y < ROW_COUNT; ++y) {
 	for (int x = 0; x < COLUMN_COUNT; ++x) {
 	    int index = get_led(x, y);
-	    Colour c = (m_maze[index] == MAZE_VALUE) ? make_hue(g_hue.get()) :
-						       COLOUR_BLACK;
+	    int hue = g_hue.get() + HUE_OFFSET * m_order[index];
+	    Colour c = (m_maze[index] == MAZE_VALUE) ?
+		       make_hue(hue) : COLOUR_BLACK;
 #ifdef SHOW_POSSIBILITES
 	    for (int i = 0; i < m_wall_list_count; ++i) {
 		if (m_wall_list[i] == index) {
-		    c = make_hue(g_hue.get() + 50);
+		    c = make_hue(hue + 50);
 		}
 	    }
 #endif
@@ -63,6 +66,10 @@ void Pattern_maze::reset()
     }
 
     m_wall_list_count = 0;
+
+    m_queued_update = false;
+
+    m_count = 0;
 
     add_maze(random(COLUMN_COUNT), random(ROW_COUNT), true);
 }
@@ -95,6 +102,9 @@ void Pattern_maze::add_maze(int x, int y, bool add_to_list)
     int index = get_led(x, y);
     m_maze[index] = MAZE_VALUE;
 
+    m_order[index] = m_count;
+    ++m_count;
+
     for (int i = 0; i < m_wall_list_count; ++i) {
 	if (m_wall_list[i] == index) {
 	    remove_wall_list(i);
@@ -122,8 +132,25 @@ void Pattern_maze::add_maze(int x, int y, bool add_to_list)
     }
 }
 
+void Pattern_maze::queue_maze(int x, int y)
+{
+#if 1
+    m_queued_update = true;
+    m_queued_x = x;
+    m_queued_y = y;
+#else
+    add_maze(x, y, true);
+#endif
+}
+
 bool Pattern_maze::expand()
 {
+    if (m_queued_update) {
+	add_maze(m_queued_x, m_queued_y, true);
+	m_queued_update = false;
+	return true;
+    }
+
     while (m_wall_list_count != 0) {
 	int choice = int(random(m_wall_list_count));
 	int index = m_wall_list[choice];
@@ -151,16 +178,16 @@ bool Pattern_maze::expand()
 	    add_maze(x, y, false);
 
 	    if (x > 0 && get_maze(x - 1, y) != WALL_VALUE) {
-		add_maze(x + 1, y, true);
+		queue_maze(x + 1, y);
 	    }
 	    if (x < COLUMN_COUNT - 1 && get_maze(x + 1, y) != WALL_VALUE) {
-		add_maze(x - 1, y, true);
+		queue_maze(x - 1, y);
 	    }
 	    if (y > 0 && get_maze(x, y - 1) != WALL_VALUE) {
-		add_maze(x, y + 1, true);
+		queue_maze(x, y + 1);
 	    }
 	    if (y < ROW_COUNT - 1 && get_maze(x, y + 1) != WALL_VALUE) {
-		add_maze(x, y - 1, true);
+		queue_maze(x, y - 1);
 	    }
 
 	    return true;
