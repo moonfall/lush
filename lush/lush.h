@@ -76,6 +76,7 @@ Colour make_hsv16(uint8_t h, uint8_t s, uint8_t v);
 const int MAX_WHEEL = 256 * 6;
 Colour make_wheel(uint16_t wheel, uint8_t brightness);
 Colour make_reverse_wheel(uint16_t wheel, uint8_t brightness);
+Colour make_palette(uint16_t palette, uint16_t index, uint8_t brightness);
 
 // make_wheel384 -> make_wheel7
 // wheel == 0 .. 768
@@ -389,6 +390,25 @@ class Pattern_huey
 {
   public:
     virtual bool display();
+};
+
+class Pattern_plasma
+    : public Pattern
+{
+  public:
+    Pattern_plasma();
+
+    virtual void activate();
+    virtual bool display();
+
+    void reset_plasma();
+    void layer(double value);
+    double plasma();
+
+    Value m_time;
+    int m_palette;
+    double m_plasma_sum;
+    double m_plasma_count;
 };
 
 class Pattern_pulse

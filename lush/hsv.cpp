@@ -359,3 +359,52 @@ Colour make_bg_wheel384(uint16_t wheel, uint8_t brightness)
     return make_rgb(r * 2, g * 2, b * 2, brightness);
 }
 #endif
+
+Colour make_palette(uint16_t palette, uint16_t index, uint8_t brightness)
+{
+    const int PALETTE_COUNT = 
+#ifdef SOLID_COLOURS
+	3 +
+#endif
+	6 + 6;
+    palette %= PALETTE_COUNT;
+
+#ifdef SOLID_COLOURS
+    // Solid colour of varying brightness.
+    if (palette < 3) {
+	case 0:
+	    return make_rgb(index, 0, 0, brightness);
+	case 1:
+	    return make_rgb(0, index, 0, brightness);
+	case 2:
+	    return make_rgb(0, 0, index, brightness);
+    }
+    palette -= 3;
+#endif
+
+    uint8_t a = 0;
+    uint8_t b = 0;
+    uint8_t c = 0;
+    if (palette < 6) {
+	a = uint8_t(127.5 + 127.5 * sin(M_PI * index / 128.0));
+	b = uint8_t(127.5 + 127.5 * sin(M_PI * index / 16.0));
+	c = 0;
+    } else if (palette < 12) {
+	set_wheel_region<256>(index, a, b, c);
+    }
+
+    switch (palette % 6) {
+	case 0:
+	    return make_rgb(a, b, c, brightness);
+	case 1:
+	    return make_rgb(a, c, b, brightness);
+	case 2:
+	    return make_rgb(b, a, c, brightness);
+	case 3:
+	    return make_rgb(b, c, a, brightness);
+	case 4:
+	    return make_rgb(c, a, b, brightness);
+	case 5:
+	    return make_rgb(c, b, a, brightness);
+    }
+}

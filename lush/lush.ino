@@ -20,13 +20,13 @@
 #undef LOG_MAGNITUDES
 #undef LOG_BINS
 #undef LOG_SUMMARY
-#define MAGNITUDE_AVERAGE
+#undef MAGNITUDE_AVERAGE
 
 // Pin configuration
 const int POWER_LED_PIN = 13;
 
 // A4 == external, A3 == adafruit internal
-const int AUDIO_INPUT_PIN = A4;
+const int AUDIO_INPUT_PIN = A3;
 // Bits of resolution for ADC
 const int ANALOG_READ_RESOLUTION = 12;
 // Number of samples to average with each ADC reading.
@@ -55,6 +55,7 @@ Pattern_random_fader g_random_fader(g_fader1);
 Pattern_counter g_pattern_counter;
 Pattern_heart g_pattern_heart;
 Pattern_huey g_pattern_huey;
+Pattern_plasma g_pattern_plasma;
 Pattern_pulse g_pattern_pulse;
 #ifndef DISABLE_AUDIO
 Pattern_spectrum_bars g_pattern_spectrum_bars;
@@ -73,10 +74,11 @@ Pattern_wheel g_pattern_wheel;
 struct Mode g_modes[] = {
     { &g_pattern_huey },
     { &g_random_fader },
-    { &g_pattern_pulse },
+    { &g_pattern_plasma },
     { &g_pattern_heart },
-    { &g_pattern_wheel },
     { &g_pattern_counter },
+    { &g_pattern_pulse },
+    { &g_pattern_wheel },
 #ifndef DISABLE_AUDIO
     { &g_pattern_spectrum_bars },
     { &g_pattern_spectrum_field },
@@ -134,6 +136,16 @@ Value g_min_db(55.0);
 Value g_max_db(65.0);
 Value g_bin_count(8);
 
+#if 1
+float g_min_dbs[MAX_BIN_COUNT] = {
+    55, 55, 55, 55, 55, 55, 55, 55,
+};
+float g_max_dbs[MAX_BIN_COUNT] = {
+    65, 65, 65, 65, 65, 65, 65, 65,
+};
+int g_current_bin = 0;
+#endif
+
 // Filter out DC component by keeping a rolling average.
 int g_dc_total = (1 << (ANALOG_READ_RESOLUTION - 1));
 const int g_dc_sample_count = 32 * 1024;
@@ -154,7 +166,7 @@ bool g_off = false;
 
 void setup()
 {
-    Serial.begin(38400);
+    Serial.begin(115200);
 
     // Set up SPI to allow control of digital pot for gain control.
     SPI.begin();
@@ -360,6 +372,7 @@ void ui_callback(Element_id id, Element const &element)
 	    break;
 
 	case UI_KNOB2_ENCODER:
+#if 0
 	    if (g_ui.m_knob2_button.get_current().m_value) {
 		g_max_db.modify(element.get_current_change());
 		if (g_max_db.get() <= g_min_db.get()) {
@@ -377,6 +390,27 @@ void ui_callback(Element_id id, Element const &element)
 	    Serial.print("-");
 	    Serial.print(g_max_db.get());
 	    Serial.println();
+#else
+	    if (g_ui.m_knob2_button.get_current().m_value) {
+		g_max_dbs[g_current_bin] += element.get_current_change();
+		if (g_max_dbs[g_current_bin] <= g_min_dbs[g_current_bin]) {
+		    g_min_dbs[g_current_bin] = g_max_dbs[g_current_bin] - 1;
+		}
+	    } else {
+		g_min_dbs[g_current_bin] += element.get_current_change();
+		if (g_min_dbs[g_current_bin] >= g_max_dbs[g_current_bin]) {
+		    g_max_dbs[g_current_bin] = g_min_dbs[g_current_bin] + 1;
+		}
+	    }
+
+	    Serial.print("db range ");
+	    Serial.print(g_current_bin);
+	    Serial.print(" of ");
+	    Serial.print(g_min_dbs[g_current_bin]);
+	    Serial.print("-");
+	    Serial.print(g_max_dbs[g_current_bin]);
+	    Serial.println();
+#endif
 	    break;
 
 	case UI_KNOB2_BUTTON:
@@ -397,6 +431,30 @@ void ui_loop()
 		break;
 	    case 'm':
 		ui_advance_mode();
+		break;
+	    case '0':
+		g_current_bin = 0;
+		break;
+	    case '1':
+		g_current_bin = 1;
+		break;
+	    case '2':
+		g_current_bin = 2;
+		break;
+	    case '3':
+		g_current_bin = 3;
+		break;
+	    case '4':
+		g_current_bin = 4;
+		break;
+	    case '5':
+		g_current_bin = 5;
+		break;
+	    case '6':
+		g_current_bin = 6;
+		break;
+	    case '7':
+		g_current_bin = 7;
 		break;
 	}
     }
@@ -565,9 +623,7 @@ void sampler_loop()
 	last = end_process;
 #endif
 
-
 #ifdef LOG_SUMMARY
-
 #ifdef MAGNITUDE_AVERAGE
 	if (g_magnitude_avg_gathered < g_magnitude_avg_count) {
 	    for (int i = 0; i < FFT_SIZE; ++i) {
@@ -854,11 +910,20 @@ void fft_reduce()
 
 	g_bins[i] = g_bins[i] * smoothing +
 		    (bin_power * scale * (1.0 - smoothing));
-#else
+#endif
+#if 0
 	bin_power = 20.0 * log10(bin_power);
 	bin_power -= (Sample_type) g_min_db.get();
 	bin_power = bin_power < 0.0 ? 0.0 : bin_power;
 	bin_power /= (Sample_type) (g_max_db.get() - g_min_db.get());
+	bin_power = bin_power > 1.0 ? 1.0 : bin_power;
+	g_bins[i] = bin_power;
+#endif
+#if 1
+	bin_power = 20.0 * log10(bin_power);
+	bin_power -= (Sample_type) g_min_dbs[i];
+	bin_power = bin_power < 0.0 ? 0.0 : bin_power;
+	bin_power /= (Sample_type) (g_max_dbs[i] - g_min_dbs[i]);
 	bin_power = bin_power > 1.0 ? 1.0 : bin_power;
 	g_bins[i] = bin_power;
 #endif
@@ -881,6 +946,20 @@ void fft_reduce()
 	Serial.print(g_bins[i]);
     }
     Serial.println();
+#endif
+#if 1
+    static int last_report = 0;
+    int now = millis();
+    if (last_report + 300 > now) {
+	last_report = now;
+	Serial.print("bin=");
+	Serial.print(g_current_bin);
+	for (int i = 0; i < g_bin_count.get(); ++i) {
+	    Serial.print(" ");
+	    Serial.print(g_bins[i]);
+	}
+	Serial.println();
+    }
 #endif
 
     g_bin_generation = g_fft_generation;
