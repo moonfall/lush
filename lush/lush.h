@@ -392,6 +392,35 @@ class Pattern_huey
     virtual bool display();
 };
 
+class Pattern_maze
+    : public Pattern
+{
+  public:
+    Pattern_maze();
+
+    virtual void activate();
+    virtual bool display();
+
+    void reset();
+    void add_wall_list(int x, int y);
+    void remove_wall_list(int choice);
+    void add_maze(int x, int y, bool add_to_list);
+    bool expand();
+
+    uint8_t get_maze(int x, int y) {
+	return m_maze[get_led(x, y)];
+    }
+
+    int m_update_ms;
+    int m_finished_ms;
+
+    // TODO: Shrink down representation
+    // TODO: Use shared scratch space
+    uint8_t m_maze[LED_COUNT];
+    int m_wall_list[LED_COUNT];
+    int m_wall_list_count;
+};
+
 class Pattern_plasma
     : public Pattern
 {

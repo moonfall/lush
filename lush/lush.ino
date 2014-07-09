@@ -55,6 +55,7 @@ Pattern_random_fader g_random_fader(g_fader1);
 Pattern_counter g_pattern_counter;
 Pattern_heart g_pattern_heart;
 Pattern_huey g_pattern_huey;
+Pattern_maze g_pattern_maze;
 Pattern_plasma g_pattern_plasma;
 Pattern_pulse g_pattern_pulse;
 #ifndef DISABLE_AUDIO
@@ -72,6 +73,7 @@ Pattern_wheel g_pattern_wheel;
 // - select specific mode
 // - configuration
 struct Mode g_modes[] = {
+    { &g_pattern_maze },
     { &g_pattern_huey },
     { &g_random_fader },
     { &g_pattern_plasma },
