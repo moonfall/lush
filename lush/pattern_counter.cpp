@@ -1,8 +1,10 @@
 #include <OctoWS2811.h>
 #include "lush.h"
 
+const int HUE_OFFSET = 50;
+
 Pattern_counter::Pattern_counter()
-    : m_counter(0, 0, 99, true)
+    : m_counter(0)
 {
 }
 
@@ -13,15 +15,22 @@ void Pattern_counter::setup()
 
 bool Pattern_counter::display()
 {
-    int counter = m_counter.get();
-    Colour c = make_current_hue();
-    draw_char(0, 0, counter / 10 + '0', c, &COLOUR_BLACK);
-    draw_char(FONT_WIDTH, 0, counter % 10 + '0', c, &COLOUR_BLACK);
-
-    for (int y = FONT_HEIGHT; y < ROW_COUNT; ++y) {
+    for (int y = 0; y < ROW_COUNT; ++y) {
 	for (int x = 0; x < COLUMN_COUNT; ++x) {
 	    draw_pixel(x, y, COLOUR_BLACK);
 	}
+    }
+
+    int counter = m_counter.get() % 100;
+    Colour c = make_current_hue();
+    draw_char(0, 1, counter / 10 + '0', c, &COLOUR_BLACK);
+    draw_char(FONT_WIDTH, 1, counter % 10 + '0', c, &COLOUR_BLACK);
+
+    c = make_hue(g_hue.get() + HUE_OFFSET);
+    int binary = m_counter.get() % (1 << COLUMN_COUNT);
+    for (int x = 0; x < COLUMN_COUNT; ++x) {
+	int bit = flip_x(x);
+	draw_pixel(x, ROW_COUNT - 1, (binary & (1 << bit)) ? c : COLOUR_BLACK);
     }
 
     return true;
