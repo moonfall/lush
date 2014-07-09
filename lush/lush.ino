@@ -1,7 +1,11 @@
+#define DISABLE_AUDIO
+
 #include <arm_math.h>
 #include <stdint.h>
 
+#ifndef DISABLE_AUDIO
 #include <ADC.h>
+#endif
 #include <Encoder.h>
 #include <SPI.h>
 #include <Mcp4261.h>
@@ -11,7 +15,6 @@
 #include "sqrt_integer.h"
 #include "dspinst.h"
 
-#undef DISABLE_AUDIO
 #undef SAMPLE_TEST
 #undef PROFILE_FFT
 #undef LOG_RAW_LEVELS
@@ -63,8 +66,8 @@ Pattern_spectrum_bars g_pattern_spectrum_bars;
 Pattern_spectrum_field g_pattern_spectrum_field;
 Pattern_spectrum_timeline g_pattern_spectrum_timeline;
 Pattern_synthesia_fire g_pattern_synthesia_fire;
-Pattern_synthesia_plasma_complex g_pattern_synthesia_plasma_complex;
 #endif
+Pattern_synthesia_plasma_complex g_pattern_synthesia_plasma_complex;
 Pattern_wheel g_pattern_wheel;
 
 // Modes:
@@ -73,8 +76,8 @@ Pattern_wheel g_pattern_wheel;
 // - select specific mode
 // - configuration
 struct Mode g_modes[] = {
-    { &g_pattern_maze },
     { &g_pattern_huey },
+    { &g_pattern_maze },
     { &g_random_fader },
     { &g_pattern_plasma },
     { &g_pattern_heart },
@@ -104,7 +107,9 @@ Value g_gain0(128, 0, 255);
 Value g_gain1(128, 0, 255);
 
 // Audio acquisition
+#ifndef DISABLE_AUDIO
 ADC *g_adc;
+#endif
 IntervalTimer g_sampling_timer;
 
 int g_sample_rate_hz = 20000;
@@ -178,6 +183,7 @@ void setup()
 
     // Set up ADC and audio input.
     pinMode(AUDIO_INPUT_PIN, INPUT);
+#ifndef DISABLE_AUDIO
     g_adc = new ADC();
     g_adc->setReference(DEFAULT, 0);
     g_adc->setReference(DEFAULT, 1);
@@ -190,6 +196,7 @@ void setup()
     for (int i = 0; i < g_dc_sample_count; ++i) {
 	g_dc_total += g_adc->analogRead(AUDIO_INPUT_PIN);
     }
+#endif
 
     pinMode(ENCODER_1_SW_PIN, INPUT_PULLUP);
     pinMode(ENCODER_2_SW_PIN, INPUT_PULLUP);
