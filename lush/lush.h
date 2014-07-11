@@ -83,6 +83,14 @@ Colour make_palette(uint16_t palette, uint16_t index, uint8_t brightness);
 Colour make_wheel7(uint16_t wheel, uint8_t brightness);
 Colour make_reverse_wheel7(uint16_t wheel, uint8_t brightness);
 
+enum Direction
+{
+    DIR_LEFT,
+    DIR_RIGHT,
+    DIR_UP,
+    DIR_DOWN,
+};
+
 inline int get_led(int x, int y, int columns = COLUMN_COUNT)
 {
     return y * columns + x;
@@ -102,6 +110,24 @@ inline void get_xy(int led, int &x, int &y, int columns = COLUMN_COUNT)
 {
     x = led % columns;
     y = led / columns;
+}
+
+inline void make_neighbour(Direction dir, int &x, int &y)
+{
+    switch (dir) {
+	case DIR_LEFT:
+	    --x;
+	    break;
+	case DIR_RIGHT:
+	    ++x;
+	    break;
+	case DIR_UP:
+	    --y;
+	    break;
+	case DIR_DOWN:
+	    ++y;
+	    break;
+    }
 }
 
 inline Colour get_pixel(int led)
@@ -216,6 +242,59 @@ class Pattern
     }
 
     virtual bool display() = 0;
+};
+
+class Maze
+{
+  public:
+    const uint8_t WALL_VALUE = 0;
+
+    Maze();
+
+    void reset();
+
+    void complete();
+    // Attempts to expand the maze.  Returns true if it was successfully,
+    // expanded.
+    bool expand();
+
+    uint8_t get_order(int index)
+    {
+	return m_maze[index];
+    }
+
+    bool in_bounds(int x, int y)
+    {
+	return x >= 0 && x < COLUMN_COUNT && y >= 0 && y < ROW_COUNT;
+    }
+
+    void add_maze(int x, int y, bool add_to_list);
+    void queue_maze(int x, int y);
+
+    void add_wall_list(int x, int y);
+    void remove_wall_list(int choice);
+    bool in_wall_list(int index);
+
+    uint8_t get_maze(int x, int y)
+    {
+	return in_bounds(x, y) ? m_maze[get_led(x, y)] : WALL_VALUE;
+    }
+
+    uint8_t get_maze(Direction dir, int x, int y)
+    {
+	make_neighbour(dir, x, y);
+	return get_maze(x, y);
+    }
+
+    int m_update_ms;
+    int m_finished_ms;
+
+    // TODO: Shrink down representation
+    // TODO: Use shared scratch space
+    uint8_t m_maze[LED_COUNT];
+    unsigned m_count;
+    uint8_t m_wall_list[LED_COUNT];
+    int m_wall_list_count;
 };
 
 class Fader
@@ -392,98 +471,25 @@ class Pattern_huey
     virtual bool display();
 };
 
-enum Direction
-{
-    DIR_LEFT,
-    DIR_RIGHT,
-    DIR_UP,
-    DIR_DOWN,
-};
-
-inline void make_neighbour(Direction dir, int &x, int &y)
-{
-    switch (dir) {
-	case DIR_LEFT:
-	    --x;
-	    break;
-	case DIR_RIGHT:
-	    ++x;
-	    break;
-	case DIR_UP:
-	    --y;
-	    break;
-	case DIR_DOWN:
-	    ++y;
-	    break;
-    }
-}
-
-class Maze
-{
-  public:
-    const uint8_t WALL_VALUE = 0;
-
-    Maze();
-
-    void reset();
-
-    void complete();
-    // Attempts to expand the maze.  Returns true if it was successfully,
-    // expanded.
-    bool expand();
-
-    uint8_t get_order(int index)
-    {
-	return m_maze[index];
-    }
-
-    bool in_bounds(int x, int y)
-    {
-	return x >= 0 && x < COLUMN_COUNT && y >= 0 && y < ROW_COUNT;
-    }
-
-    void add_maze(int x, int y, bool add_to_list);
-    void queue_maze(int x, int y);
-
-    void add_wall_list(int x, int y);
-    void remove_wall_list(int choice);
-    bool in_wall_list(int index);
-
-    uint8_t get_maze(int x, int y)
-    {
-	return in_bounds(x, y) ? m_maze[get_led(x, y)] : WALL_VALUE;
-    }
-
-    uint8_t get_maze(Direction dir, int x, int y)
-    {
-	make_neighbour(dir, x, y);
-	return get_maze(x, y);
-    }
-
-    int m_update_ms;
-    int m_finished_ms;
-
-    // TODO: Shrink down representation
-    // TODO: Use shared scratch space
-    uint8_t m_maze[LED_COUNT];
-    unsigned m_count;
-    uint8_t m_wall_list[LED_COUNT];
-    int m_wall_list_count;
-};
-
 class Pattern_maze
     : public Pattern
 {
   public:
-    Pattern_maze();
+    Pattern_maze(Fader_static &fader);
 
     virtual void activate();
     virtual bool display();
 
+    virtual void regenerate();
+    virtual void randomize_maze();
+    virtual void randomize_image(bool initial = false);
+    virtual void ordered_image(bool initial = false);
+
+    Fader_static &m_fader;
+
     Maze m_maze;
 
-    int m_update_ms;
-    int m_finished_ms;
+    int m_start_time;
 };
 
 class Pattern_plasma

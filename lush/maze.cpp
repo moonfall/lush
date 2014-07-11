@@ -78,6 +78,9 @@ void Maze::add_maze(int x, int y, bool add_to_list)
     }
 
     int index = get_led(x, y);
+    if (m_maze[index] != WALL_VALUE) {
+	return;
+    }
     ++m_count;
     m_maze[index] = m_count;
 
