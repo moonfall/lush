@@ -392,6 +392,85 @@ class Pattern_huey
     virtual bool display();
 };
 
+enum Direction
+{
+    DIR_LEFT,
+    DIR_RIGHT,
+    DIR_UP,
+    DIR_DOWN,
+};
+
+inline void make_neighbour(Direction dir, int &x, int &y)
+{
+    switch (dir) {
+	case DIR_LEFT:
+	    --x;
+	    break;
+	case DIR_RIGHT:
+	    ++x;
+	    break;
+	case DIR_UP:
+	    --y;
+	    break;
+	case DIR_DOWN:
+	    ++y;
+	    break;
+    }
+}
+
+class Maze
+{
+  public:
+    const uint8_t WALL_VALUE = 0;
+
+    Maze();
+
+    void reset();
+
+    void complete();
+    // Attempts to expand the maze.  Returns true if it was successfully,
+    // expanded.
+    bool expand();
+
+    uint8_t get_order(int index)
+    {
+	return m_maze[index];
+    }
+
+    bool in_bounds(int x, int y)
+    {
+	return x >= 0 && x < COLUMN_COUNT && y >= 0 && y < ROW_COUNT;
+    }
+
+    void add_maze(int x, int y, bool add_to_list);
+    void queue_maze(int x, int y);
+
+    void add_wall_list(int x, int y);
+    void remove_wall_list(int choice);
+    bool in_wall_list(int index);
+
+    uint8_t get_maze(int x, int y)
+    {
+	return in_bounds(x, y) ? m_maze[get_led(x, y)] : WALL_VALUE;
+    }
+
+    uint8_t get_maze(Direction dir, int x, int y)
+    {
+	make_neighbour(dir, x, y);
+	return get_maze(x, y);
+    }
+
+    int m_update_ms;
+    int m_finished_ms;
+
+    // TODO: Shrink down representation
+    // TODO: Use shared scratch space
+    uint8_t m_maze[LED_COUNT];
+    unsigned m_count;
+    uint8_t m_wall_list[LED_COUNT];
+    int m_wall_list_count;
+};
+
 class Pattern_maze
     : public Pattern
 {
@@ -401,32 +480,10 @@ class Pattern_maze
     virtual void activate();
     virtual bool display();
 
-    void reset();
-    void add_wall_list(int x, int y);
-    void remove_wall_list(int choice);
-    void add_maze(int x, int y, bool add_to_list);
-    void queue_maze(int x, int y);
-    bool expand();
-
-    uint8_t get_maze(int x, int y) {
-	return m_maze[get_led(x, y)];
-    }
+    Maze m_maze;
 
     int m_update_ms;
     int m_finished_ms;
-
-    // TODO: Shrink down representation
-    // TODO: Use shared scratch space
-    uint8_t m_maze[LED_COUNT];
-    int m_wall_list[LED_COUNT];
-    int m_wall_list_count;
-
-    bool m_queued_update;
-    int m_queued_x;
-    int m_queued_y;
-
-    uint16_t m_order[LED_COUNT];
-    int m_count;
 };
 
 class Pattern_plasma
