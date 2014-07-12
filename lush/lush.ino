@@ -56,6 +56,7 @@ Pattern *g_current_pattern = NULL;
 Fader_static g_fader1;
 Pattern_random_fader g_random_fader(g_fader1);
 Pattern_counter g_pattern_counter;
+Pattern_dropper g_pattern_dropper;
 Pattern_heart g_pattern_heart;
 Pattern_huey g_pattern_huey;
 Pattern_maze g_pattern_maze(g_fader1);
@@ -77,6 +78,7 @@ Pattern_wheel g_pattern_wheel;
 // - configuration
 struct Mode g_modes[] = {
     { &g_pattern_huey },
+    { &g_pattern_dropper },
     { &g_pattern_maze },
     { &g_random_fader },
     { &g_pattern_plasma },

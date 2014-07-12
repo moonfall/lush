@@ -456,6 +456,32 @@ class Pattern_counter
     Value m_counter;
 };
 
+class Pattern_dropper
+    : public Pattern
+{
+  public:
+    Pattern_dropper();
+
+    virtual void activate();
+    virtual bool display();
+
+    class Drop
+    {
+      public:
+	Drop();
+
+	void reset();
+
+	Colour m_c;
+	Value m_x;
+	Value m_y;
+    };
+
+    Colour m_field[LED_COUNT];
+    Drop m_drop;
+    int m_reset_ms;
+};
+
 class Pattern_heart
     : public Pattern
 {
