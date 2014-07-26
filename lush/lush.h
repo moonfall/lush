@@ -165,7 +165,20 @@ inline void show_pixels()
     g_octo.show();
 }
 
+void set_gain();
+void update_pattern();
 void update_hue();
+
+void ui_advance_mode();
+void ui_loop();
+void turn_on();
+void turn_off();
+
+void sampler_loop();
+bool sampler_done();
+void display_loop();
+
+void fft_reduce();
 
 // Utility functions
 int clamp(int x, int min, int max);
