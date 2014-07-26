@@ -1,0 +1,6 @@
+[submodule "libraries/Audio"]
+	path = libraries/Audio
+	url = https://github.com/moonfall/Audio
+[submodule "libraries/OctoWS2811"]
+	path = libraries/OctoWS2811
+	url = https://github.com/moonfall/OctoWS2811
