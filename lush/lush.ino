@@ -8,11 +8,9 @@
 #endif
 #include <Encoder.h>
 #include <SPI.h>
-#include <Mcp4261.h>
 #include <OctoWS2811.h>
 
 #include "lush.h"
-#include "sqrt_integer.h"
 #include "dspinst.h"
 
 #undef SAMPLE_TEST
@@ -104,7 +102,6 @@ Value g_resume_brightness(16, 0, 255);
 Value g_hue(0, 0, 255, true);
 
 // Audio gain control
-MCP4261 g_mcp4261(MCP4261_CS_PIN, 100000);
 Value g_gain0(128, 0, 255);
 Value g_gain1(128, 0, 255);
 
