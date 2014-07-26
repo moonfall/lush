@@ -74,7 +74,7 @@ Colour make_hsv16(uint16_t h, uint16_t s, uint16_t v)
 
     p = (v * (65536 - s)) >> 16;
     q = (v * (65536 - ((s * remainder) >> 16))) >> 16;
-    t = (v * (65536 - ((s * (65536 - remainder)) >> 116))) >> 16;
+    t = (v * (65536 - ((s * (65536 - remainder)) >> 16))) >> 16;
 
     switch (region)
     {
@@ -407,4 +407,6 @@ Colour make_palette(uint16_t palette, uint16_t index, uint8_t brightness)
 	case 5:
 	    return make_rgb(c, b, a, brightness);
     }
+
+    return COLOUR_BLACK;
 }
