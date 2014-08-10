@@ -1,11 +1,14 @@
-#define DISABLE_AUDIO
+#undef DISABLE_AUDIO
+
+#ifndef DISABLE_AUDIO
+#include <SD.h>
+#include <Wire.h>
+#include <Audio.h>
+#endif
 
 #include <arm_math.h>
 #include <stdint.h>
 
-#ifndef DISABLE_AUDIO
-#include <ADC.h>
-#endif
 #include <Encoder.h>
 #include <SPI.h>
 #include <OctoWS2811.h>
@@ -15,12 +18,8 @@
 
 #undef SAMPLE_TEST
 #undef PROFILE_FFT
-#undef LOG_RAW_LEVELS
-#undef LOG_SAMPLES
-#undef LOG_FFT
-#undef LOG_MAGNITUDES
 #undef LOG_BINS
-#undef LOG_SUMMARY
+#define LOG_SUMMARY
 #undef MAGNITUDE_AVERAGE
 
 // Pin configuration
@@ -58,6 +57,7 @@ Pattern_dropper g_pattern_dropper;
 Pattern_heart g_pattern_heart;
 Pattern_huey g_pattern_huey;
 Pattern_maze g_pattern_maze(g_fader1);
+Pattern_peak g_pattern_peak;
 Pattern_plasma g_pattern_plasma;
 Pattern_pulse g_pattern_pulse;
 #ifndef DISABLE_AUDIO
@@ -75,7 +75,9 @@ Pattern_wheel g_pattern_wheel;
 // - select specific mode
 // - configuration
 struct Mode g_modes[] = {
+    { &g_pattern_peak },
     { &g_pattern_huey },
+    { &g_pattern_spectrum_bars },
     { &g_pattern_dropper },
     { &g_pattern_maze },
     { &g_random_fader },
@@ -85,9 +87,11 @@ struct Mode g_modes[] = {
     { &g_pattern_pulse },
     { &g_pattern_wheel },
 #ifndef DISABLE_AUDIO
+#if 0
     { &g_pattern_spectrum_bars },
     { &g_pattern_spectrum_field },
     { &g_pattern_spectrum_timeline },
+#endif
 #endif
 #if 0
     { &g_pattern_synthesia_fire },
@@ -102,34 +106,80 @@ Value g_resume_brightness(16, 0, 255);
 Value g_hue(0, 0, 255, true);
 
 // Audio gain control
-Value g_gain0(128, 0, 255);
-Value g_gain1(128, 0, 255);
+const int INITIAL_GAIN = 165;
+Value g_gain0(INITIAL_GAIN, 0, 255);
+Value g_gain1(INITIAL_GAIN, 0, 255);
 
 // Audio acquisition
 #ifndef DISABLE_AUDIO
-ADC *g_adc;
+AudioInputAnalog g_audio_input;
+#define COEFF(x) ((int) (x * (float) (1 << 30)))
+// http://forum.pjrc.com/threads/24793-Audio-Library?p=40179&viewfull=1#post40179
+// http://www.earlevel.com/main/2013/10/13/biquad-calculator-v2/
+int g_hp_filter_params[] = {
+// highpass, 1000Hz, Q=0.707
+#if 0
+    COEFF(0.9041514120481504),
+    COEFF(-1.8083028240963008),
+    COEFF(0.9041514120481504),
+    -COEFF(-1.7990948352036202),
+    -COEFF(0.8175108129889815),
 #endif
+
+    // highpass, 3000Hz, Q=0.707
+#if 1
+    COEFF( 0.7385371039326799 ),
+    COEFF( -1.4770742078653598 ),
+    COEFF( 0.7385371039326799 ),
+    -COEFF( -1.407502284220597 ),
+    -COEFF( 0.5466461315101225 ),
+#endif
+
+    // highpass, 10000Hz, Q=0.707
+#if 0
+    COEFF( 0.33699935872014053 ),
+    COEFF( -0.6739987174402811 ),
+    COEFF( 0.33699935872014053 ),
+    -COEFF( -0.17124071441396285 ),
+    -COEFF( 0.1767567204665992 ),
+#endif
+    0,
+    0,
+    0,
+};
+
+AudioFilterBiquad g_hp_filter(g_hp_filter_params);
+AudioAnalyzeFFT256 g_fft;
+AudioPeak g_peak;
+#if 0
+AudioConnection g_audio_conn1(g_audio_input, g_hp_filter);
+AudioConnection g_audio_conn2(g_hp_filter, g_fft);
+#endif
+#if 0
+AudioConnection g_audio_conn1(g_audio_input, g_fft);
+AudioConnection g_audio_conn2(g_audio_input, g_hp_filter);
+AudioConnection g_audio_conn3(g_hp_filter, g_peak);
+#endif
+#if 1
+AudioConnection g_audio_conn1(g_audio_input, g_fft);
+AudioConnection g_audio_conn2(g_audio_input, g_peak);
+#endif
+#endif
+
 IntervalTimer g_sampling_timer;
 
 int g_sample_rate_hz = 20000;
 int g_sample_counter = 0;
-int g_sample_generation = 0;
-
-float g_level_avg = 0.0;
-float g_level_min = 0.0;
-float g_level_max = 0.0;
-Sample_type g_samples[FFT_SIZE];
 
 #ifndef DISABLE_AUDIO
-arm_cfft_radix4_instance g_fft_inst;
-Sample_type g_fft_samples[FFT_SIZE * 2];
-int g_fft_sample_generation = 0;
-Sample_type *g_window = NULL;
-Sample_type g_window_data[FFT_SIZE];
-Sample_type g_magnitudes[FFT_SIZE];
-int g_fft_generation = 0;
-Sample_type g_bins[MAX_BIN_COUNT];
-int g_bin_generation = 0;
+Sample_type g_magnitudes[MAGNITUDE_COUNT];
+Bin_type g_bins[MAX_BIN_COUNT];
+
+#ifdef MAGNITUDE_AVERAGE
+static int32_t g_magnitude_sums[MAGNITUDE_COUNT];
+const int g_magnitude_avg_count = 1000;
+static int g_magnitude_avg_gathered = 0;
+#endif
 #endif
 
 const float GAIN_R1 = 10000;
@@ -151,10 +201,6 @@ float g_max_dbs[MAX_BIN_COUNT] = {
 };
 int g_current_bin = 0;
 #endif
-
-// Filter out DC component by keeping a rolling average.
-int g_dc_total = (1 << (ANALOG_READ_RESOLUTION - 1));
-const int g_dc_sample_count = 32 * 1024;
 
 // Output
 // 24 bytes == 6 words for each LED of each strip.
@@ -181,20 +227,9 @@ void setup()
     set_gain();
 
     // Set up ADC and audio input.
-    pinMode(AUDIO_INPUT_PIN, INPUT);
 #ifndef DISABLE_AUDIO
-    g_adc = new ADC();
-    g_adc->setReference(DEFAULT, 0);
-    g_adc->setReference(DEFAULT, 1);
-    g_adc->setResolution(ANALOG_READ_RESOLUTION, 0);
-    g_adc->setResolution(ANALOG_READ_RESOLUTION, 1);
-    g_adc->setAveraging(ANALOG_READ_AVERAGING, 0);
-    g_adc->setAveraging(ANALOG_READ_AVERAGING, 1);
-
-    g_dc_total = 0;
-    for (int i = 0; i < g_dc_sample_count; ++i) {
-	g_dc_total += g_adc->analogRead(AUDIO_INPUT_PIN);
-    }
+    AudioMemory(12);
+    g_audio_input.begin(AUDIO_INPUT_PIN);
 #endif
 
     pinMode(ENCODER_1_SW_PIN, INPUT_PULLUP);
@@ -218,16 +253,6 @@ void setup()
 
     // Start cycling colours by default
     g_hue.set_velocity(256, 10000);
-
-#ifndef DISABLE_AUDIO
-    fft_setup();
-
-#ifndef SAMPLE_TEST
-    // Start sampling sound.
-    // TODO: Only do this if necessary
-    sampler_start();
-#endif
-#endif
 }
 
 uint16_t spi_issue2(byte b1, byte b2)
@@ -259,12 +284,6 @@ uint16_t set_wiper(int wiper, int pos)
   return data;
 }
 
-#ifdef MAGNITUDE_AVERAGE
-static Sample_type g_magnitude_sums[FFT_SIZE];
-const int g_magnitude_avg_count = 1000;
-static int g_magnitude_avg_gathered = 0;
-#endif
-
 void set_gain()
 {
     int gain0 = set_wiper(0, g_gain0.get());
@@ -276,7 +295,7 @@ void set_gain()
 
 #ifdef MAGNITUDE_AVERAGE
     g_magnitude_avg_gathered = 0;
-    for (int i = 0; i < FFT_SIZE; ++i) {
+    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
 	g_magnitude_sums[i] = 0;
     }
 #endif
@@ -287,44 +306,11 @@ void idle() {
     delay(10);
 }
 
-#ifdef LOG_RAW_LEVELS
-int last_report = 0;
-#endif
 void loop()
 {
     ui_loop();
 #ifndef DISABLE_AUDIO
-#ifdef SAMPLE_TEST
-    int min = g_adc->analogRead(AUDIO_INPUT_PIN);
-    int max = min;
-    for (int i = 0; i < 10000; ++i) {
-	int value = g_adc->analogRead(AUDIO_INPUT_PIN);
-	min = min(min, value);
-	max = max(max, value);
-    }
-    Serial.print("m=");
-    Serial.print(min);
-    Serial.print(" M=");
-    Serial.print(max);
-    Serial.print(" D=");
-    Serial.println(max - min);
-#else
     sampler_loop();
-#endif
-#ifdef LOG_RAW_LEVELS
-    if (millis() - last_report > 100) {
-	Serial.print(g_sample_generation);
-	Serial.print(": ");
-	Serial.print(g_level_avg);
-	Serial.print(" m=");
-	Serial.print(g_level_min);
-	Serial.print(" M=");
-	Serial.print(g_level_max);
-	Serial.print(" D=");
-	Serial.println(g_level_max - g_level_min);
-	last_report = millis();
-    }
-#endif
 #endif
     display_loop();
     if (g_off) {
@@ -531,114 +517,34 @@ void ui_loop()
 }
 
 #ifndef DISABLE_AUDIO
-void sampler_callback()
-{
-    int sample = g_adc->analogRead(AUDIO_INPUT_PIN);
-
-#define REMOVE_DC_BIAS_SAMPLER
-#ifdef REMOVE_DC_BIAS_SAMPLER
-    // TODO: Consider just ignoring this during FFT.
-    int dc_mean = running_average(g_dc_total, g_dc_sample_count, sample);
-    sample -= dc_mean;
-#endif
-
-    g_samples[g_sample_counter] = (Sample_type) sample;
-
-    ++g_sample_counter;
-
-    // Don't collect further samples until these have been processed
-    if (sampler_done()) {
-	g_sampling_timer.end();
-    }
-}
-
-void sampler_start()
-{
-    g_sample_counter = 0;
-    ++g_sample_generation;
-    g_sampling_timer.begin(sampler_callback, 1000000 / g_sample_rate_hz);
-}
-
-bool sampler_done()
-{
-    return g_sample_counter >= FFT_SIZE;
-}
-
 void sampler_loop()
 {
-    if (sampler_done()) {
-#ifdef PROFILE_FFT
-	static int last = 0;
-	int start_prepare = micros();
-#endif
-	fft_prepare();
-#ifdef PROFILE_FFT
-	int end_prepare = micros();
-#endif
+    return;
 
-	// Start sampling all over again.
-	sampler_start();
-
-#ifdef REMOVE_DC_BIAS_POST_SAMPLER
-	float sum = 0;
-#endif
-	float abs_sum = 0;
-	float min = g_fft_samples[0];
-	float max = g_fft_samples[0];
-	for (int i = 0; i < FFT_SIZE * 2; i += 2) {
-#ifdef REMOVE_DC_BIAS_POST_SAMPLER
-	    sum += g_fft_samples[i];
-#endif
-	    abs_sum += abs(g_fft_samples[i]);
-	    min = min(min, g_fft_samples[i]);
-	    max = max(max, g_fft_samples[i]);
+    bool available = g_fft.available();
+    if (available) {
+	for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
+	    g_magnitudes[i] = g_fft.output[i];
 	}
-	g_level_avg = abs_sum / FFT_SIZE;
-	g_level_min = min;
-	g_level_max = max;
-#ifdef REMOVE_DC_BIAS_POST_SAMPLER
-	float avg = sum / FFT_SIZE;
-	for (int i = 0; i < FFT_SIZE * 2; i += 2) {
-	    g_fft_samples[i] -= avg;
-	}
-#endif
 
-#ifdef PROFILE_FFT
-	int start_window = micros();
-#endif
-	fft_window();
-#ifdef PROFILE_FFT
-	int end_window = micros();
-#endif
-	fft_process();
-#ifdef PROFILE_FFT
-	int end_process = micros();
-#endif
-	fft_reduce();
-	int end_reduce = micros();
-#ifdef PROFILE_FFT
-	Serial.print("sample ");
-	Serial.print(start_prepare - last);
-	Serial.print(" prepare ");
-	Serial.print(end_prepare - start_prepare);
-	Serial.print(" window ");
-	Serial.print(end_window - start_window);
-	Serial.print(" fft ");
-	Serial.print(end_process - end_window);
-	Serial.print(" reduce ");
-	Serial.print(end_reduce - end_process);
+#ifdef LOG_MAGNITUDES
+	for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
+	    Serial.print(g_magnitudes[i]);
+	    Serial.print(" ");
+	}
 	Serial.println();
-	last = end_process;
 #endif
+
+	fft_reduce();
 
 #ifdef LOG_SUMMARY
 #ifdef MAGNITUDE_AVERAGE
 	if (g_magnitude_avg_gathered < g_magnitude_avg_count) {
-	    for (int i = 0; i < FFT_SIZE; ++i) {
+	    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
 		g_magnitude_sums[i] += g_magnitudes[i];
 	    }
 	} else {
-	    for (int i = 0; i < FFT_SIZE; ++i) {
+	    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
 		running_average(g_magnitude_sums[i], g_magnitude_avg_count,
 				g_magnitudes[i]);
 	    }
@@ -646,10 +552,8 @@ void sampler_loop()
 	++g_magnitude_avg_gathered;
 #endif
 
-	static int last_log = 0;
+	static uint32_t last_log = 0;
 	if (millis() > last_log + 100) {
-	    Serial.print(g_sample_generation);
-	    Serial.print(": ");
 #ifdef MAGNITUDE_AVERAGE
 	    Serial.print(g_magnitude_avg_gathered);
 	    Serial.print(": ");
@@ -658,19 +562,13 @@ void sampler_loop()
 	    Serial.print(g_gain0.get());
 	    Serial.print("/");
 	    Serial.print(g_gain1.get());
-	    Serial.print(" dc=");
-	    Serial.print(g_dc_total / g_dc_sample_count);
-	    Serial.print(" avg=");
-	    Serial.print(g_level_avg, 0);
-	    Serial.print(" D=");
-	    Serial.print(g_level_max - g_level_min, 0);
 	    Serial.print(" mags");
 	    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
 		Serial.print(" ");
 #ifdef MAGNITUDE_AVERAGE
 		Serial.print(g_magnitude_sums[i] / g_magnitude_avg_count, 0);
 #else
-		Serial.print(g_magnitudes[i], 0);
+		Serial.print(g_magnitudes[i]);
 #endif
 	    }
 	    Serial.print(" bins");
@@ -683,72 +581,6 @@ void sampler_loop()
 	}
 #endif
     }
-}
-
-void fft_setup()
-{
-    arm_cfft_radix4_init(&g_fft_inst, FFT_SIZE, 0, 1);
-    fft_window_setup();
-}
-
-void fft_window_setup()
-{
-#define WINDOW_HAMMING
-
-#ifdef WINDOW_HANNING
-    // Hanning window
-    float *window = g_window_data;
-    for (int i = 0; i < FFT_SIZE; ++i, ++window) {
-	*window = 0.5 * (1 - cos(2.0 * M_PI * i / (FFT_SIZE - 1)));
-    }
-    g_window = g_window_data;
-#endif
-#ifdef WINDOW_HAMMING
-    // Hamming window
-    float *window = g_window_data;
-    for (int i = 0; i < FFT_SIZE; ++i, ++window) {
-	*window = 0.54 - 0.46 * cos(2.0 * M_PI * i / (FFT_SIZE - 1));
-    }
-    g_window = g_window_data;
-#endif
-}
-
-void fft_prepare()
-{
-    const Sample_type *src = g_samples;
-#ifdef Q15
-    uint32_t *dst = (uint32_t *)g_fft_samples;
-    for (int i = 0; i < FFT_SIZE; ++i) {
-	*dst = *src;  // real sample plus a zero for imaginary
-	++dst;
-	++src;
-    }
-#else
-    Sample_type *dst = g_fft_samples;
-    for (int i = 0; i < FFT_SIZE; ++i) {
-	*dst = *src;  // real sample
-	++dst;
-	++src;
-	*dst = 0; // imaginary
-	++dst;
-    }
-#endif
-    g_fft_sample_generation = g_sample_generation;
-}
-
-void fft_window()
-{
-    if (!g_window) {
-	return;
-    }
-
-#ifdef F32
-    float *sample = g_fft_samples;
-    float *window = g_window;
-    for (int i = 0; i < FFT_SIZE; ++i, ++sample, ++window) {
-	*sample *= *window;
-    }
-#endif;
 }
 
 float calculate_actual_gain(int wiper)
@@ -765,92 +597,37 @@ float calculate_floor(float gain, int bin)
     return powf(10, sqrt(gain) * slope + intercept);
 }
 
-void fft_process()
-{
-#ifdef LOG_SAMPLES
-    // Original samples.
-    Serial.print("s ");
-    for (int i = 0; i < FFT_SIZE; ++i) {
-	Serial.print(g_samples[i]);
-	Serial.print(" ");
-    }
-    Serial.println();
-#endif
-
-    // Perform FFT
-    arm_cfft_radix4(&g_fft_inst, g_fft_samples);
-
-#ifdef LOG_FFT
-    // Raw FFT transform including complex.
-    Serial.print("f ");
-    for (int i = 0; i < FFT_SIZE; ++i) {
-	Serial.print(g_fft_samples[i]);
-	Serial.print(" ");
-    }
-    Serial.println();
-#endif
-
-    // Calculate magnitudes
-#if defined(F32)
-    arm_cmplx_mag_f32(g_fft_samples, g_magnitudes, FFT_SIZE);
-#else
-    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
-#if defined(Q15)
-	uint32_t tmp = *((uint32_t *)g_fft_samples + i);
-	uint32_t magsq = multiply_16tx16t_add_16bx16b(tmp, tmp);
-	g_magnitudes[i] = sqrt_uint32_approx(magsq);
-#else
-	g_magnitudes[i] = sqrt(g_fft_samples[2 * i] * g_fft_samples[2 * i] +
-			       g_fft_samples[2 * i + 1] * g_fft_samples[2 * i + 1]);
-#endif
-    }
-#endif
-
-#ifdef LOG_MAGNITUDES
-    Serial.print("dc=");
-    Serial.print(g_dc_total / g_dc_sample_count);
-    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
-	Serial.print(" ");
-	Serial.print(g_magnitudes[i]);
-    }
-    Serial.println();
-#endif
-
-#ifdef APPLY_FLOOR
-    float gain = calculate_actual_gain(g_gain0.get()) *
-		 calculate_actual_gain(g_gain1.get());
-#ifdef LOG_FLOORS
-    Serial.print("gain=");
-    Serial.print(gain);
-    Serial.print("/");
-    Serial.print(calculate_actual_gain(g_gain0.get()));
-    Serial.print("/");
-    Serial.print(calculate_actual_gain(g_gain1.get()));
-#endif
-    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
-	float floor = calculate_floor(gain, i);
-#ifdef LOG_FLOORS
-	Serial.print(" ");
-	Serial.print(g_magnitudes[i]);
-	Serial.print("-");
-	Serial.print(floor);
-#endif
-	if (g_magnitudes[i] < floor) {
-	    g_magnitudes[i] = 0.0;
-	} else {
-	    g_magnitudes[i] -= floor;
-	}
-    }
-#ifdef LOG_FLOORS
-    Serial.println();
-#endif
-#endif
-    
-    g_fft_generation = g_fft_sample_generation;
-}
-
+// g_magnitudes[MAGNITUDE_COUNT] -> g_bins[g_bin_count.get()]
 void fft_reduce()
 {
+#if 1
+    const int nsum[16] = {1, 1, 2, 2, 3, 4, 5, 6, 6, 8, 12, 14, 16, 20, 28, 24};
+    for (int i = 0; i < g_bin_count.get(); ++i ) {
+	g_bins[i] = 0;
+    }
+    int n = 0;
+    int count = 0;
+    for (int i = 1; i < MAGNITUDE_COUNT; ++i) {
+	g_bins[n] += g_magnitudes[i];
+	++count;
+	if (count > nsum[n]) {
+	    ++n;
+	    if (n >= 16) {
+		break;
+	    }
+	    count = 0;
+	}
+    }
+
+    int scale = 2 + 2048 / 7;
+    for (int i = 0; i < g_bin_count.get(); ++i) {
+	g_bins[i] = min(g_bins[i] / scale, 8);
+    }
+
+#endif
+	
+
+#if 0
 #if 0
     int bin_size = MAGNITUDE_COUNT / g_bin_count.get();
 #ifdef LOGARITHMIC_BINS
@@ -900,7 +677,7 @@ void fft_reduce()
 
 	float bin_power = 0.0;
 	for (int j = 0; j < f_width; ++j) {
-	    float p = g_magnitudes[f_start + j];
+	    float p = (float) g_magnitudes[f_start + j];
 	    if (p > bin_power) {
 		bin_power = p;
 	    }
@@ -927,12 +704,16 @@ void fft_reduce()
 	bin_power = bin_power > 1.0 ? 1.0 : bin_power;
 	g_bins[i] = bin_power;
 #endif
-#if 1
+#if 0
 	bin_power = 20.0 * log10(bin_power);
 	bin_power -= (Sample_type) g_min_dbs[i];
 	bin_power = bin_power < 0.0 ? 0.0 : bin_power;
 	bin_power /= (Sample_type) (g_max_dbs[i] - g_min_dbs[i]);
 	bin_power = bin_power > 1.0 ? 1.0 : bin_power;
+	g_bins[i] = bin_power;
+#endif
+#if 0
+	bin_power = 20.0 * log10(bin_power);
 	g_bins[i] = bin_power;
 #endif
 
@@ -955,7 +736,7 @@ void fft_reduce()
     }
     Serial.println();
 #endif
-#if 1
+#if 0
     static int last_report = 0;
     int now = millis();
     if (last_report + 300 > now) {
@@ -969,8 +750,7 @@ void fft_reduce()
 	Serial.println();
     }
 #endif
-
-    g_bin_generation = g_fft_generation;
+#endif
 }
 #endif
 

@@ -21,33 +21,10 @@ const int FONT_HEIGHT = 5;
 extern const float GAIN_INTERCEPTS[MAGNITUDE_COUNT];
 extern const float GAIN_SLOPES[MAGNITUDE_COUNT];
 
-#undef Q15
-#undef Q31
-#define F32
-
-#if defined(Q15)
-#define arm_cfft_radix4_instance arm_cfft_radix4_instance_q15
-#define arm_cfft_radix4_init arm_cfft_radix4_init_q15
-#define arm_cfft_radix4 arm_cfft_radix4_q15
 typedef int16_t Sample_type;
-#elif defined(Q31)
-#define arm_cfft_radix4_instance arm_cfft_radix4_instance_q31
-#define arm_cfft_radix4_init arm_cfft_radix4_init_q31
-#define arm_cfft_radix4 arm_cfft_radix4_q31
-typedef int32_t Sample_type;
-#else
-#define arm_cfft_radix4_instance arm_cfft_radix4_instance_f32
-#define arm_cfft_radix4_init arm_cfft_radix4_init_f32
-#define arm_cfft_radix4 arm_cfft_radix4_f32
-typedef float Sample_type;
-#endif
-
-extern Sample_type g_fft_samples[FFT_SIZE * 2];
-extern int g_fft_sample_generation;
-extern Sample_type g_magnitudes[FFT_SIZE];
-extern int g_fft_generation;
-extern Sample_type g_bins[MAX_BIN_COUNT];
-extern int g_bin_generation;
+typedef int32_t Bin_type;
+extern Sample_type g_magnitudes[MAGNITUDE_COUNT];
+extern Bin_type g_bins[MAX_BIN_COUNT];
 
 // Drawing commands
 typedef int Colour;
@@ -529,6 +506,14 @@ class Pattern_maze
     Maze m_maze;
 
     int m_start_time;
+};
+
+class Pattern_peak
+    : public Pattern
+{
+  public:
+    virtual void activate();
+    virtual bool display();
 };
 
 class Pattern_plasma
