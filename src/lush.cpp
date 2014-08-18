@@ -167,10 +167,11 @@ AudioConnection g_audio_conn2(g_audio_input, g_peak);
 #endif
 #endif
 
-IntervalTimer g_sampling_timer;
-
-int g_sample_rate_hz = 20000;
-int g_sample_counter = 0;
+#define OCTOWS2811_PEAK_HACK
+#ifdef OCTOWS2811_PEAK_HACK
+unsigned g_peak_updates_to_ignore = 0;
+#endif
+Sample_type g_current_peak = 0;
 
 #ifndef DISABLE_AUDIO
 Sample_type g_magnitudes[MAGNITUDE_COUNT];
@@ -209,6 +210,8 @@ DMAMEM int g_display_memory[LEDS_PER_STRIP * 6];
 int g_drawing_memory[LEDS_PER_STRIP * 6];
 OctoWS2811 g_octo(LEDS_PER_STRIP, g_display_memory, g_drawing_memory,
 		  WS2811_GRB | WS2811_800kHz);
+unsigned g_target_fps = 30;
+uint32_t g_last_update = 0;
 bool g_force_update = false;
 
 // UI state
@@ -231,6 +234,7 @@ void setup()
 #ifndef DISABLE_AUDIO
     AudioMemory(12);
     g_audio_input.begin(AUDIO_INPUT_PIN);
+    g_peak.begin();
 #endif
 
     pinMode(ENCODER_1_SW_PIN, INPUT_PULLUP);
@@ -300,6 +304,16 @@ void program_gain()
 	g_magnitude_sums[i] = 0;
     }
 #endif
+}
+
+void set_target_fps(unsigned fps)
+{
+    g_target_fps = fps;
+}
+
+bool should_display()
+{
+    return !g_target_fps || millis() > g_last_update + (1000 / g_target_fps);
 }
 
 void idle() {
@@ -517,10 +531,38 @@ void ui_loop()
     }
 }
 
+void turn_on()
+{
+    Serial.println("hello");
+    g_off = false;
+}
+
+void turn_off()
+{
+    Serial.println("okaybye");
+    draw_pixels(COLOUR_BLACK);
+    g_force_update = true;
+    g_off = true;
+}
+
 #ifndef DISABLE_AUDIO
 void sampler_loop()
 {
-    return;
+#ifdef OCTOWS2811_PEAK_HACK
+    if (g_octo.busy()) {
+	g_peak_updates_to_ignore = 2;
+    } else if (g_peak.update_completed_at) {
+	if (g_peak_updates_to_ignore) {
+	    --g_peak_updates_to_ignore;
+	} else {
+	    g_current_peak = max(g_current_peak, g_peak.Dpp());
+	}
+	g_peak.begin();
+    }
+#else
+    g_current_peak = max(g_current_peak, g_peak.Dpp());
+    g_peak.begin();
+#endif
 
     bool available = g_fft.available();
     if (available) {
@@ -755,32 +797,45 @@ void fft_reduce()
 }
 #endif
 
+void reset_peak()
+{
+    g_current_peak = 0;
+}
+
+Sample_type get_peak()
+{
+    return g_current_peak;
+}
+
+int get_mapped_peak(int max_value)
+{
+    const int MAX_VALUE = 65535;
+    const int NOISE_FLOOR = 19000;
+
+    return max(0,
+	       (g_current_peak - NOISE_FLOOR) * (max_value + 1) /
+	       (MAX_VALUE - NOISE_FLOOR));
+}
+
 void display_loop()
 {
 #ifdef DISABLE_DISPLAY
     return;
 #endif
     bool needs_update = false;
-    if (!g_off && g_current_pattern) {
+    if (!g_off && g_current_pattern && should_display()) {
 	needs_update = g_current_pattern->display();
     }
 
     if (g_force_update || needs_update) {
 	show_pixels();
 	g_force_update = false;
+	g_last_update = millis();
+    }
+
+    if (needs_update) {
+	// TODO: Is this the best place?
+	reset_peak();
     }
 }
 
-void turn_on()
-{
-    Serial.println("hello");
-    g_off = false;
-}
-
-void turn_off()
-{
-    Serial.println("okaybye");
-    draw_pixels(COLOUR_BLACK);
-    g_force_update = true;
-    g_off = true;
-}

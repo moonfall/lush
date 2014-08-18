@@ -145,16 +145,22 @@ inline void show_pixels()
 void program_gain();
 void update_pattern();
 
+void set_target_fps(unsigned fps);
+
 void ui_advance_mode();
 void ui_loop();
 void turn_on();
 void turn_off();
 
 void sampler_loop();
-bool sampler_done();
 void display_loop();
 
 void fft_reduce();
+
+void reset_peak();
+Sample_type get_peak();
+// Maps peak from 0..max_value, accounting for noise floor.
+int get_mapped_peak(int max_value);
 
 // Utility functions
 int clamp(int x, int min, int max);
