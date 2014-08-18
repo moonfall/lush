@@ -150,11 +150,16 @@ int g_hp_filter_params[] = {
 };
 
 AudioFilterBiquad g_hp_filter(g_hp_filter_params);
+#ifdef FFT1024
+AudioAnalyzeFFT1024 g_fft;
+#else
 AudioAnalyzeFFT256 g_fft;
+#endif
 AudioPeak g_peak;
 #if 0
 AudioConnection g_audio_conn1(g_audio_input, g_hp_filter);
 AudioConnection g_audio_conn2(g_hp_filter, g_fft);
+AudioConnection g_audio_conn3(g_audio_input, g_peak);
 #endif
 #if 0
 AudioConnection g_audio_conn1(g_audio_input, g_fft);

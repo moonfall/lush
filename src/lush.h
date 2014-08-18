@@ -7,7 +7,12 @@ const int ROW_COUNT = 8;
 const int COLUMN_COUNT = 8;
 const int LED_COUNT = ROW_COUNT * COLUMN_COUNT;
 const int LEDS_PER_STRIP = LED_COUNT;
+#undef FFT1024
+#ifdef FFT1024
+const int FFT_SIZE = 1024;
+#else
 const int FFT_SIZE = 256;
+#endif
 const int MAGNITUDE_COUNT = FFT_SIZE / 2;
 const int MAX_BIN_COUNT = 64;
 extern OctoWS2811 g_octo;
