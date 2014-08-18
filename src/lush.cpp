@@ -1,3 +1,4 @@
+#undef DISABLE_DISPLAY
 #undef DISABLE_AUDIO
 
 #ifndef DISABLE_AUDIO
@@ -756,6 +757,9 @@ void fft_reduce()
 
 void display_loop()
 {
+#ifdef DISABLE_DISPLAY
+    return;
+#endif
     bool needs_update = false;
     if (!g_off && g_current_pattern) {
 	needs_update = g_current_pattern->display();
