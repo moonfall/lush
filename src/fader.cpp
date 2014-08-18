@@ -422,7 +422,7 @@ Pattern_random_fader::Pattern_random_fader(Fader_static &fader)
 {
 }
 
-void Pattern_random_fader::activate()
+void Pattern_random_fader::activate(void *arg)
 {
     // Start off with something.
     m_fade_out = true;

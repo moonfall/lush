@@ -20,7 +20,7 @@ const unsigned HEART[] = {
 	0x00,
 };
 
-void Pattern_heart::activate()
+void Pattern_heart::activate(void *arg)
 {
     draw_pixels(COLOUR_BLACK);
 }

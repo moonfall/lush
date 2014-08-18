@@ -14,7 +14,7 @@ Pattern_plasma::Pattern_plasma()
     }
 }
 
-void Pattern_plasma::activate()
+void Pattern_plasma::activate(void *arg)
 {
     ++m_palette;
 }

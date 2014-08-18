@@ -1,7 +1,7 @@
 #include <OctoWS2811.h>
 #include "lush.h"
 
-void Pattern_spectrum_field::activate()
+void Pattern_spectrum_field::activate(void *arg)
 {
     g_bin_count.set(LED_COUNT);
 }

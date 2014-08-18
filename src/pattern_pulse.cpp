@@ -12,7 +12,7 @@ static int wheel = 0;
 
 static Colour g_last_colour = COLOUR_BLACK;
 
-void Pattern_pulse::activate()
+void Pattern_pulse::activate(void *arg)
 {
     draw_pixels(COLOUR_BLACK);
 }

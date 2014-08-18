@@ -341,7 +341,7 @@ void loop()
 void update_pattern()
 {
     g_current_pattern = g_modes[g_current_mode.get()].m_pattern;
-    g_current_pattern->activate();
+    g_current_pattern->activate(g_modes[g_current_mode.get()].m_arg);
     g_force_update = true;
 }
 

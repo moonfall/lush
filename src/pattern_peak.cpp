@@ -2,7 +2,7 @@
 #include <Audio.h>
 #include "lush.h"
 
-void Pattern_peak::activate()
+void Pattern_peak::activate(void *arg)
 {
 }
 

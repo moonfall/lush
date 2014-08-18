@@ -13,8 +13,9 @@ Pattern_dropper::Pattern_dropper()
 {
 }
 
-void Pattern_dropper::activate()
+void Pattern_dropper::activate(void *arg)
 {
+    m_activate_arg = arg;	
     for (int led = 0; led < LED_COUNT; ++led) {
 	m_field[led] = COLOUR_BLACK;
     }
@@ -27,7 +28,7 @@ bool Pattern_dropper::display()
     if (m_reset_ms) {
 	// In reset mode.
 	if (millis() > m_reset_ms + HOLD_MS) {
-	    activate();
+	    activate(m_activate_arg);
 	} else {
 	    return false;
 	}

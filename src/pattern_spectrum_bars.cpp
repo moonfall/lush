@@ -1,7 +1,7 @@
 #include <OctoWS2811.h>
 #include "lush.h"
 
-void Pattern_spectrum_bars::activate()
+void Pattern_spectrum_bars::activate(void *arg)
 {
     g_bin_count.set(COLUMN_COUNT);
     g_bin_count.set(COLUMN_COUNT * 2);

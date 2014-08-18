@@ -237,7 +237,7 @@ class Pattern
     {
     }
 
-    virtual void activate()
+    virtual void activate(void *arg)
     {
     }
 
@@ -430,7 +430,7 @@ class Pattern_random_fader
   public:
     Pattern_random_fader(Fader_static &fader);
 
-    virtual void activate();
+    virtual void activate(void *arg);
     virtual bool display();
 
     void randomize();
@@ -462,7 +462,7 @@ class Pattern_dropper
   public:
     Pattern_dropper();
 
-    virtual void activate();
+    virtual void activate(void *arg);
     virtual bool display();
 
     class Drop
@@ -477,6 +477,7 @@ class Pattern_dropper
 	Value m_y;
     };
 
+    void *m_activate_arg;
     Colour m_field[LED_COUNT];
     Drop m_drop;
     uint32_t m_reset_ms;
@@ -486,7 +487,7 @@ class Pattern_heart
     : public Pattern
 {
   public:
-    virtual void activate();
+    virtual void activate(void *arg);
     virtual bool display();
 };
 
@@ -503,7 +504,7 @@ class Pattern_maze
   public:
     Pattern_maze(Fader_static &fader);
 
-    virtual void activate();
+    virtual void activate(void *arg);
     virtual bool display();
 
     virtual void regenerate();
@@ -522,7 +523,7 @@ class Pattern_peak
     : public Pattern
 {
   public:
-    virtual void activate();
+    virtual void activate(void *arg);
     virtual bool display();
 };
 
@@ -532,7 +533,7 @@ class Pattern_plasma
   public:
     Pattern_plasma();
 
-    virtual void activate();
+    virtual void activate(void *arg);
     virtual bool display();
 
     void reset_plasma();
@@ -549,7 +550,7 @@ class Pattern_pulse
     : public Pattern
 {
   public:
-    virtual void activate();
+    virtual void activate(void *arg);
     virtual bool display();
 };
 
@@ -557,7 +558,7 @@ class Pattern_spectrum_bars
     : public Pattern
 {
   public:
-    virtual void activate();
+    virtual void activate(void *arg);
     virtual bool display();
 };
 
@@ -565,7 +566,7 @@ class Pattern_spectrum_field
     : public Pattern
 {
   public:
-    virtual void activate();
+    virtual void activate(void *arg);
     virtual bool display();
 };
 
@@ -573,7 +574,7 @@ class Pattern_spectrum_timeline
     : public Pattern
 {
   public:
-    virtual void activate();
+    virtual void activate(void *arg);
     virtual bool display();
 };
 
@@ -612,6 +613,7 @@ class Pattern_wheel
 struct Mode
 {
     Pattern *m_pattern;
+    void *m_arg;
 };
 
 class Element_state

@@ -12,7 +12,7 @@ Pattern_maze::Pattern_maze(Fader_static &fader)
 {
 }
 
-void Pattern_maze::activate()
+void Pattern_maze::activate(void *arg)
 {
     regenerate();
 }

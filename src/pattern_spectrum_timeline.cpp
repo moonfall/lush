@@ -1,7 +1,7 @@
 #include <OctoWS2811.h>
 #include "lush.h"
 
-void Pattern_spectrum_timeline::activate()
+void Pattern_spectrum_timeline::activate(void *arg)
 {
     g_bin_count.set(COLUMN_COUNT);
 }
