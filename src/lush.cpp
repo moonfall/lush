@@ -225,7 +225,7 @@ void setup()
     SPI.begin();
 
     delayMicroseconds(50);
-    set_gain();
+    program_gain();
 
     // Set up ADC and audio input.
 #ifndef DISABLE_AUDIO
@@ -285,7 +285,7 @@ uint16_t set_wiper(int wiper, int pos)
   return data;
 }
 
-void set_gain()
+void program_gain()
 {
     int gain0 = set_wiper(0, g_gain0.get());
     int gain1 = set_wiper(1, g_gain1.get());
@@ -346,7 +346,7 @@ void ui_callback(Element_id id, Element const &element)
 	    } else {
 		g_gain0.modify(element.get_current_change());
 		g_gain1.modify(element.get_current_change());
-		set_gain();
+		program_gain();
 	    }
 	    break;
 

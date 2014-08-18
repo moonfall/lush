@@ -142,9 +142,8 @@ inline void show_pixels()
     g_octo.show();
 }
 
-void set_gain();
+void program_gain();
 void update_pattern();
-void update_hue();
 
 void ui_advance_mode();
 void ui_loop();
