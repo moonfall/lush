@@ -7,8 +7,6 @@ const int PULSE_MS = 250;
 const int PAUSE_MS = 400;
 const int CYCLE_MS = DARK_MS + PULSE_COUNT * (PULSE_MS + PAUSE_MS);
 
-static bool was_dark = true;
-
 static Colour g_last_colour = COLOUR_BLACK;
 
 const unsigned HEART[] = {
