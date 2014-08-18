@@ -1,7 +1,7 @@
 #include <OctoWS2811.h>
 #include "lush.h"
 
-const int HOLD_MS = 1000;
+const uint32_t HOLD_MS = 1000;
 #if 0
 const int PIXEL_VELOCITY = 200;
 #else

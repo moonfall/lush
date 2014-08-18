@@ -469,7 +469,7 @@ class Pattern_dropper
 
     Colour m_field[LED_COUNT];
     Drop m_drop;
-    int m_reset_ms;
+    uint32_t m_reset_ms;
 };
 
 class Pattern_heart
