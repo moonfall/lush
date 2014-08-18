@@ -10,7 +10,7 @@ bool Pattern_spectrum_field::display()
 {
     int hue = g_hue.get();
 
-    float *intensity = g_bins;
+    Bin_type *intensity = g_bins;
     for (int y = ROW_COUNT - 1; y >= 0; --y) {
 	for (int x = 0; x < COLUMN_COUNT; ++x) { 
 	    int lightness = *intensity * g_brightness.get();
