@@ -4,33 +4,32 @@
 void Pattern_spectrum_bars::activate()
 {
     g_bin_count.set(COLUMN_COUNT);
+    g_bin_count.set(COLUMN_COUNT * 2);
 }
 
 #define PEAK_HOLD
 #ifdef PEAK_HOLD
 // TODO: Change to constant.
-float g_peaks[8];
-Colour g_peak_leds[8];
+Sample_type g_peaks[COLUMN_COUNT];
+Colour g_peak_leds[COLUMN_COUNT];
 const float PEAK_FADE = 0.9;
 #endif
 
 bool Pattern_spectrum_bars::display()
 {
-    int hue = g_hue.get();
-
     for (int x = 0; x < COLUMN_COUNT; ++x) {
-	float intensity = g_bins[x];
+	Sample_type bin = g_bins[x];
 #ifdef PEAK_HOLD
-	if (intensity > g_peaks[x]) {
-	    g_peaks[x] = intensity;
+	if (bin > g_peaks[x]) {
+	    g_peaks[x] = bin;
 	    g_peak_leds[x] = make_current_hue();
 	}
 #endif
 	// How many rows are lit up because of the current sample.
-	int rows = intensity * ROW_COUNT;
+	int rows = bin;
 #ifdef PEAK_HOLD
 	// How many rows are lit up because of peak hold.
-	int peak_rows = g_peaks[x] * ROW_COUNT;
+	int peak_rows = g_peaks[x];
 #endif
 	for (int y = 0; y < ROW_COUNT; ++y) {
 	    int led = get_led(x, flip_y(y));
@@ -46,7 +45,9 @@ bool Pattern_spectrum_bars::display()
 	}
 #ifdef PEAK_HOLD
 	// Change to time based.
-	g_peaks[x] = g_peaks[x] * PEAK_FADE;
+	if (g_peaks[x] > 0) {
+	    --g_peaks[x];
+	}
 #endif
     }
 
