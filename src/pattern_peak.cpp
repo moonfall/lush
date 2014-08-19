@@ -25,11 +25,10 @@ bool Pattern_peak::display()
     // Clean slate.
     draw_pixels(COLOUR_BLACK);
 
-    int leds = get_mapped_peak(LED_COUNT);
     Colour c = make_hue(g_hue.get());
 
 #if 0
-    leds = get_mapped_peak((COLUMN_COUNT + 1) * ROW_COUNT / 2);
+    int leds = get_mapped_peak((COLUMN_COUNT + 1) * ROW_COUNT / 2);
     int start_x = 0;
     int x = start_x;
     int y = ROW_COUNT - 1;
@@ -48,8 +47,19 @@ bool Pattern_peak::display()
     }
 #endif
 #if 1
-    leds = get_mapped_peak(LED_COUNT / 2);
+    int leds = get_mapped_peak(LED_COUNT / 2);
 
+#define FADE_PEAK
+#ifdef FADE_PEAK
+    static Value held_leds(0, 0, LED_COUNT / 2);
+    held_leds.set_velocity(-10, 60);
+    if (leds > held_leds.get()) {
+	held_leds.set(leds);
+    }
+    leds = held_leds.get();
+#endif
+
+    // Start drawing out from the bottom middle both up and horizontally.
     int start_x = COLUMN_COUNT / 2;
     int start_y = ROW_COUNT - 1;
     int x = start_x;
