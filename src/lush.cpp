@@ -61,6 +61,7 @@ Pattern_maze g_pattern_maze(g_fader1);
 Pattern_peak g_pattern_peak;
 Pattern_plasma g_pattern_plasma;
 Pattern_pulse g_pattern_pulse;
+Pattern_rain g_pattern_rain;
 #ifndef DISABLE_AUDIO
 Pattern_spectrum_bars g_pattern_spectrum_bars;
 Pattern_spectrum_field g_pattern_spectrum_field;
@@ -76,8 +77,15 @@ Pattern_wheel g_pattern_wheel;
 // - select specific mode
 // - configuration
 struct Mode g_modes[] = {
-    { &g_pattern_peak },
     { &g_pattern_huey },
+    { &g_pattern_rain },
+#if 0
+    { &g_pattern_rain, (void *) Pattern_rain::RAIN_CURRENT_HUE },
+    { &g_pattern_rain, (void *) Pattern_rain::RAIN_RANDOM_COLOUR },
+    { &g_pattern_rain, (void *) Pattern_rain::RAIN_SINGLE_RANDOM_COLOUR },
+    { &g_pattern_rain, (void *) Pattern_rain::RAIN_PURE_WHITE },
+#endif
+    { &g_pattern_peak },
     { &g_pattern_spectrum_bars },
     { &g_pattern_dropper },
     { &g_pattern_maze },

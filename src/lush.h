@@ -554,6 +554,46 @@ class Pattern_pulse
     virtual bool display();
 };
 
+class Pattern_rain
+    : public Pattern
+{
+  public:
+    enum Mode
+    {
+	RAIN_RANDOM,
+	RAIN_RANDOM_COLOUR,
+	RAIN_CURRENT_HUE,
+	RAIN_SINGLE_RANDOM_COLOUR,
+	RAIN_PURE_WHITE,
+
+	// The follow should be last.
+	RAIN_NUM_MODES,
+    };
+
+    Pattern_rain();
+
+    // arg is casted to Mode.
+    virtual void activate(void *arg);
+    virtual bool display();
+    Colour get_colour() const;
+
+    class Drop
+    {
+      public:
+	Drop(Colour c = COLOUR_BLACK);
+
+	void reset(Colour c);
+
+	Colour m_c;
+	Value m_x;
+	Value m_y;
+    };
+
+    Mode m_mode;
+    int m_wheel;
+    Drop m_drop;
+};
+
 class Pattern_spectrum_bars
     : public Pattern
 {
