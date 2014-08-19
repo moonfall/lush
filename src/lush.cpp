@@ -20,7 +20,7 @@
 #undef SAMPLE_TEST
 #undef PROFILE_FFT
 #undef LOG_BINS
-#define LOG_SUMMARY
+#undef LOG_SUMMARY
 #undef MAGNITUDE_AVERAGE
 
 // Pin configuration
@@ -601,7 +601,7 @@ void sampler_loop()
 #endif
 
 	static uint32_t last_log = 0;
-	if (millis() > last_log + 100) {
+	if (millis() > last_log + 0) {
 #ifdef MAGNITUDE_AVERAGE
 	    Serial.print(g_magnitude_avg_gathered);
 	    Serial.print(": ");
@@ -610,15 +610,19 @@ void sampler_loop()
 	    Serial.print(g_gain0.get());
 	    Serial.print("/");
 	    Serial.print(g_gain1.get());
+#if 1
 	    Serial.print(" mags");
 	    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
 		Serial.print(" ");
 #ifdef MAGNITUDE_AVERAGE
 		Serial.print(g_magnitude_sums[i] / g_magnitude_avg_count, 0);
 #else
+		Serial.print(i);
+		Serial.print("=");
 		Serial.print(g_magnitudes[i]);
 #endif
 	    }
+#endif
 	    Serial.print(" bins");
 	    for (int i = 0; i < g_bin_count.get(); ++i) {
 		Serial.print(" ");
@@ -648,8 +652,27 @@ float calculate_floor(float gain, int bin)
 // g_magnitudes[MAGNITUDE_COUNT] -> g_bins[g_bin_count.get()]
 void fft_reduce()
 {
+    g_magnitudes[0] /= 100;
+    g_magnitudes[1] /= 50;
+    g_magnitudes[33] /= 35;
+    g_magnitudes[34] /= 100;
+    g_magnitudes[35] /= 50;
+    g_magnitudes[36] /= 2;
+    g_magnitudes[67] /= 10;
+    g_magnitudes[68] /= 20;
+    g_magnitudes[69] /= 15;
+    g_magnitudes[85] /= 6;
+    g_magnitudes[86] /= 6;
+    g_magnitudes[101] /= 8;
+    g_magnitudes[102] /= 20;
+    g_magnitudes[103] /= 20;
+    g_magnitudes[104] /= 5;
+    g_magnitudes[118] /= 2;
+    g_magnitudes[119] /= 9;
+    g_magnitudes[120] /= 9;
+
 #if 1
-    const int nsum[16] = {1, 1, 2, 2, 3, 4, 5, 6, 6, 8, 12, 14, 16, 20, 28, 24};
+    const int nsum[16] = {1, 1, 2, 2, 3, 4, 5, 6, 6, 8, 12, 14, 16, 18, 18, 24};
     for (int i = 0; i < g_bin_count.get(); ++i ) {
 	g_bins[i] = 0;
     }
@@ -658,19 +681,22 @@ void fft_reduce()
     for (int i = 1; i < MAGNITUDE_COUNT; ++i) {
 	g_bins[n] += g_magnitudes[i];
 	++count;
-	if (count > nsum[n]) {
+	if (count >= nsum[n]) {
 	    ++n;
-	    if (n >= 16) {
+	    if (n >= min(g_bin_count.get(),
+			 (int) (sizeof(nsum) / sizeof(nsum[0])))) {
 		break;
 	    }
 	    count = 0;
 	}
     }
 
+#if 0
     int scale = 2 + 2048 / 7;
     for (int i = 0; i < g_bin_count.get(); ++i) {
 	g_bins[i] = min(g_bins[i] / scale, 8);
     }
+#endif
 
 #endif
 	
