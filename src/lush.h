@@ -163,9 +163,9 @@ void display_loop();
 void fft_reduce();
 
 void reset_peak();
-Sample_type get_peak();
+unsigned get_peak();
 // Maps peak from 0..max_value, accounting for noise floor.
-int get_mapped_peak(int max_value);
+unsigned get_mapped_peak(unsigned max_value);
 
 // Utility functions
 int clamp(int x, int min, int max);

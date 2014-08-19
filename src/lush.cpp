@@ -176,7 +176,7 @@ AudioConnection g_audio_conn2(g_audio_input, g_peak);
 #ifdef OCTOWS2811_PEAK_HACK
 unsigned g_peak_updates_to_ignore = 0;
 #endif
-Sample_type g_current_peak = 0;
+unsigned g_current_peak = 0;
 
 #ifndef DISABLE_AUDIO
 Sample_type g_magnitudes[MAGNITUDE_COUNT];
@@ -833,19 +833,25 @@ void reset_peak()
     g_current_peak = 0;
 }
 
-Sample_type get_peak()
+unsigned get_peak()
 {
     return g_current_peak;
 }
 
-int get_mapped_peak(int max_value)
+unsigned get_mapped_peak(unsigned max_value)
 {
-    const int MAX_VALUE = 65535;
-    const int NOISE_FLOOR = 19000;
+    const unsigned MAX_VALUE = 65535;
+    const unsigned NOISE_FLOOR = 19000;
 
-    return max(0,
-	       (g_current_peak - NOISE_FLOOR) * (max_value + 1) /
-	       (MAX_VALUE - NOISE_FLOOR));
+    if (g_current_peak < NOISE_FLOOR) {
+	return 0;
+    }
+
+    unsigned peak = g_current_peak - NOISE_FLOOR;
+
+    return min(max_value,
+	       peak * (max_value + 1) /
+	       (unsigned) (MAX_VALUE - NOISE_FLOOR));
 }
 
 void display_loop()
