@@ -34,6 +34,15 @@ bool Pattern_dropper::display()
 	}
     }
 
+    if (m_needs_new_drop) {
+	// Don't pick a column that is already full.
+	do {
+	    m_drop.reset();
+	} while(m_field[get_led(m_drop.m_x.get(), WATERMARK_ROW)] !=
+		COLOUR_BLACK);
+	m_needs_new_drop = false;
+    }
+
     for (int led = 0; led < LED_COUNT; ++led) {
 	draw_pixel(led, m_field[led]);
     }
@@ -42,11 +51,13 @@ bool Pattern_dropper::display()
     int y = m_drop.m_y.get();
 
     bool done = false;
-    if (m_field[get_led(x, y)] != COLOUR_BLACK) {
+    while (m_field[get_led(x, y)] != COLOUR_BLACK) {
 	// Collision, back drop up.
 	--y;
 	done = true;
-    } else if (y == ROW_COUNT - 1) {
+    } 
+
+    if (y == ROW_COUNT - 1) {
 	done = true;
     }
 
@@ -66,11 +77,7 @@ bool Pattern_dropper::display()
 	if (filled) {
 	    m_reset_ms = millis();
 	} else {
-	    // Don't pick a column that is already full.
-	    do {
-		m_drop.reset();
-	    } while(m_field[get_led(m_drop.m_x.get(), WATERMARK_ROW)] !=
-		    COLOUR_BLACK);
+	    m_needs_new_drop = true;
 	}
     }
 
@@ -78,6 +85,8 @@ bool Pattern_dropper::display()
 }
 
 Pattern_dropper::Drop::Drop()
+    : m_x(0, 0, COLUMN_COUNT - 1),
+      m_y(0, 0, ROW_COUNT - 1)
 {
     reset();
 }
