@@ -80,15 +80,16 @@ Pattern_wheel g_pattern_wheel;
 struct Mode g_modes[] = {
     { &g_pattern_huey },
     { &g_pattern_rain },
+    { &g_pattern_dropper },
 #if 0
     { &g_pattern_rain, (void *) Pattern_rain::RAIN_CURRENT_HUE },
     { &g_pattern_rain, (void *) Pattern_rain::RAIN_RANDOM_COLOUR },
     { &g_pattern_rain, (void *) Pattern_rain::RAIN_SINGLE_RANDOM_COLOUR },
     { &g_pattern_rain, (void *) Pattern_rain::RAIN_PURE_WHITE },
 #endif
+#ifndef DISABLE_AUDIO
     { &g_pattern_peak },
-    { &g_pattern_spectrum_bars },
-    { &g_pattern_dropper },
+#endif
     { &g_pattern_maze },
     { &g_random_fader },
     { &g_pattern_plasma },
@@ -97,8 +98,8 @@ struct Mode g_modes[] = {
     { &g_pattern_pulse },
     { &g_pattern_wheel },
 #ifndef DISABLE_AUDIO
-#if 0
     { &g_pattern_spectrum_bars },
+#if 0
     { &g_pattern_spectrum_field },
     { &g_pattern_spectrum_timeline },
 #endif
