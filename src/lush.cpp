@@ -47,7 +47,7 @@ const int ENCODER_2_B_PIN = 22;
 const int ENCODER_2_SW_PIN = 23;
 
 // Constants
-const int TURN_OFF_MS = 3000;
+const uint32_t TURN_OFF_MS = 3000;
 const uint32_t BUTTON_DEBOUNCE_MS = 5;
 
 // Current state

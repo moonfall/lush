@@ -703,12 +703,12 @@ class Element
 	return get_change(get_current(), get_previous());
     }
 
-    int get_current_millis() const
+    uint32_t get_current_millis() const
     {
 	return (micros() - get_current().m_micros) / 1000;
     }
 
-    int get_previous_millis() const
+    uint32_t get_previous_millis() const
     {
 	return (get_current().m_micros - get_previous().m_micros) / 1000;
     }

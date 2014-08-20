@@ -1,11 +1,11 @@
 #include <OctoWS2811.h>
 #include "lush.h"
 
-const int PULSE_COUNT = 2;
-const int PULSE_MS = 250;
-const int PAUSE_MS = 400;
-const int DARK_MS = 2000;
-const int CYCLE_MS = PULSE_COUNT * (PULSE_MS + PAUSE_MS) + DARK_MS;
+const unsigned PULSE_COUNT = 2;
+const uint32_t PULSE_MS = 250;
+const uint32_t PAUSE_MS = 400;
+const uint32_t DARK_MS = 2000;
+const uint32_t CYCLE_MS = PULSE_COUNT * (PULSE_MS + PAUSE_MS) + DARK_MS;
 
 const unsigned HEART[] = {
 	0x00,
