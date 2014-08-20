@@ -112,6 +112,9 @@ inline void make_neighbour(Direction dir, int &x, int &y)
     }
 }
 
+// Move along the box that contains (origin,origin)
+void move_along_box(int origin, bool clockwise, int &x, int &y);
+
 inline Colour get_pixel(int led)
 {
     return g_octo.getPixel(led);
@@ -442,6 +445,23 @@ class Pattern_random_fader
     int m_start_time;
     // fade_out: initial -> black; !fade_out: black -> initial
     bool m_fade_out;
+};
+
+class Pattern_border
+    : public Pattern
+{
+  public:
+    virtual void activate(void *arg);
+    virtual bool display();
+
+  private:
+    void display_current();
+
+    int m_origin;
+    bool m_clockwise;
+    int m_x;
+    int m_y;
+    uint32_t m_last_move_ms;
 };
 
 class Pattern_counter

@@ -1,6 +1,31 @@
 #include <OctoWS2811.h>
 #include "lush.h"
 
+void move_along_box(int origin, bool clockwise, int &x, int &y)
+{
+    if (clockwise) {
+	if (y == origin && x < flip_x(origin)) {
+	    ++x;
+	} else if (x == flip_x(origin) && y < flip_y(origin)) {
+	    ++y;
+	} else if (y == flip_y(origin) && x > origin) {
+	    --x;
+	} else {
+	    --y;
+	}
+    } else {
+	if (x == origin && y < flip_y(origin)) {
+	    ++y;
+	} else if (y == flip_y(origin) && x < flip_x(origin)) {
+	    ++x;
+	} else if (x == flip_x(origin) && y > origin) {
+	    --y;
+	} else {
+	    --x;
+	}
+    }
+}
+
 void draw_mask(int y, unsigned mask, Colour fg, const Colour *bg)
 {
     for (int x_pos = 0; x_pos < COLUMN_COUNT; ++x_pos) {
