@@ -490,6 +490,9 @@ class Pattern_heart
   public:
     virtual void activate(void *arg);
     virtual bool display();
+
+    uint32_t m_activate_ms;
+    Colour m_last_colour;
 };
 
 class Pattern_huey
