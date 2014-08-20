@@ -664,11 +664,11 @@ class Element_state
 {
   public:
     Element_state(int value = 0)
-	: m_value(value), m_ms(millis())
+	: m_value(value), m_micros(micros())
     {
     }
     int			m_value;
-    int			m_ms;
+    int			m_micros;
 };
 
 class Element
@@ -687,7 +687,7 @@ class Element
     }
 
     virtual int get_change(Element_state const &current,
-	     Element_state const &previous) const
+			   Element_state const &previous) const
     {
 	return current.m_value - previous.m_value;
     }
@@ -699,12 +699,12 @@ class Element
 
     int get_current_millis() const
     {
-	return millis() - get_current().m_ms;
+	return (micros() - get_current().m_micros) / 1000;
     }
 
     int get_previous_millis() const
     {
-	return get_current().m_ms - get_previous().m_ms;
+	return (get_current().m_micros - get_previous().m_micros) / 1000;
     }
 
     void push(Element_state const &current)

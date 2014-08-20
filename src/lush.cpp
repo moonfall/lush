@@ -48,6 +48,7 @@ const int ENCODER_2_SW_PIN = 23;
 
 // Constants
 const int TURN_OFF_MS = 3000;
+const uint32_t BUTTON_DEBOUNCE_MS = 5;
 
 // Current state
 Pattern *g_current_pattern = NULL;
@@ -500,7 +501,8 @@ void ui_loop()
 	Element &element = g_ui.m_knob1_button;
 	int pin = ENCODER_1_SW_PIN;
 	Element_state state(digitalRead(pin) == LOW);
-	if (element.get_change(state, element.get_current())) {
+	if (element.get_change(state, element.get_current()) &&
+	    element.get_current_millis() >= BUTTON_DEBOUNCE_MS) {
 	    element.push(state);
 
 	    Serial.print("encoder1 ");
@@ -531,7 +533,8 @@ void ui_loop()
 	Element &element = g_ui.m_knob2_button;
 	int pin = ENCODER_2_SW_PIN;
 	Element_state state(digitalRead(pin) == LOW);
-	if (element.get_change(state, element.get_current())) {
+	if (element.get_change(state, element.get_current()) &&
+	    element.get_current_millis() >= BUTTON_DEBOUNCE_MS) {
 	    element.push(state);
 
 	    Serial.print("encoder2 ");
