@@ -556,6 +556,12 @@ class Pattern_pulse
   public:
     virtual void activate(void *arg);
     virtual bool display();
+
+  private:
+    uint32_t m_activate_ms;
+    int m_was_dark;
+    int m_wheel;
+    Colour m_last_colour;
 };
 
 class Pattern_rain

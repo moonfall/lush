@@ -27,11 +27,11 @@ void Pattern_heart::activate(void *arg)
 
 bool Pattern_heart::display()
 {
-    int t = (millis() - m_activate_ms) % CYCLE_MS;
+    uint32_t t = (millis() - m_activate_ms) % CYCLE_MS;
 
     Colour c = COLOUR_BLACK;
     if (t < CYCLE_MS - DARK_MS) {
-	int cycle_t = t % (PULSE_MS + PAUSE_MS);
+	uint32_t cycle_t = t % (PULSE_MS + PAUSE_MS);
 	if (cycle_t >= PULSE_MS) {
 	    c = COLOUR_BLACK;
 	} else {
