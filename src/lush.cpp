@@ -39,12 +39,22 @@ const int ANALOG_READ_AVERAGING = 1;
 
 const int MCP4261_CS_PIN = 10;
 
+#define SWAPPED_ENCODERS
+#ifdef SWAPPED_ENCODERS
+const int ENCODER_1_A_PIN = 19;
+const int ENCODER_1_B_PIN = 22;
+const int ENCODER_1_SW_PIN = 23;
+const int ENCODER_2_A_PIN = 0;
+const int ENCODER_2_B_PIN = 1;
+const int ENCODER_2_SW_PIN = 9;
+#else
 const int ENCODER_1_A_PIN = 0;
 const int ENCODER_1_B_PIN = 1;
 const int ENCODER_1_SW_PIN = 9;
 const int ENCODER_2_A_PIN = 19;
 const int ENCODER_2_B_PIN = 22;
 const int ENCODER_2_SW_PIN = 23;
+#endif
 
 // Constants
 const uint32_t TURN_OFF_MS = 3000;
