@@ -317,6 +317,28 @@ uint16_t set_wiper(int wiper, int pos)
   return data;
 }
 
+void set_gain(int gain)
+{
+    set_gain(gain, gain);
+}
+
+void set_gain(int gain1, int gain2)
+{
+    g_gain0.set(gain1);
+    g_gain1.set(gain2);
+}
+
+void adjust_gain(int adjustment)
+{
+    adjust_gain(adjustment, adjustment);
+}
+
+void adjust_gain(int adjustment1, int adjustment2)
+{
+    g_gain0.modify(adjustment1);
+    g_gain1.modify(adjustment2);
+}
+
 void program_gain()
 {
     int gain0 = set_wiper(0, g_gain0.get());

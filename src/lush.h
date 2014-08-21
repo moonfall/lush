@@ -152,6 +152,10 @@ inline void show_pixels()
     g_octo.show();
 }
 
+void set_gain(int gain);
+void set_gain(int gain1, int gain2);
+void adjust_gain(int adjustment);
+void adjust_gain(int adjustment1, int adjustment2);
 void program_gain();
 void update_pattern();
 
@@ -264,6 +268,13 @@ class Pattern
     }
 
     virtual bool display() = 0;
+};
+
+class Pattern_audio
+    : public Pattern
+{
+  public:
+    virtual void ui_callback(Element_id id, Element const &element);
 };
 
 class Maze
@@ -575,7 +586,7 @@ class Pattern_maze
 };
 
 class Pattern_peak
-    : public Pattern
+    : public Pattern_audio
 {
   public:
     virtual void activate(void *arg);
