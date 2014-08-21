@@ -51,7 +51,6 @@ const uint32_t TURN_OFF_MS = 3000;
 const uint32_t BUTTON_DEBOUNCE_MS = 5;
 
 // Current state
-Pattern *g_current_pattern = NULL;
 Fader_static g_fader1;
 Pattern_random_fader g_random_fader(g_fader1);
 Pattern_border g_pattern_border;
@@ -112,7 +111,9 @@ struct Mode g_modes[] = {
     { &g_pattern_synthesia_plasma_complex },
 };
 const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
-Value g_current_mode(0, 0, MODE_COUNT - 1, true);
+Pattern_static g_pattern_static(g_modes, MODE_COUNT);
+
+Pattern *g_root = &g_pattern_static;
 
 Value g_brightness(16, 0, 255);
 Value g_resume_brightness(16, 0, 255);
@@ -229,13 +230,11 @@ OctoWS2811 g_octo(LEDS_PER_STRIP, g_display_memory, g_drawing_memory,
 		  WS2811_GRB | WS2811_800kHz);
 unsigned g_target_fps = 30;
 uint32_t g_last_update = 0;
-bool g_force_update = false;
 
 // UI state
 Encoder encoder1(ENCODER_1_A_PIN, ENCODER_1_B_PIN);
 Encoder encoder2(ENCODER_2_A_PIN, ENCODER_2_B_PIN);
 UI_state g_ui;
-bool g_off = false;
 
 void setup()
 {
@@ -271,7 +270,7 @@ void setup()
     for (int i = 0; i < MODE_COUNT; ++i) {
     	g_modes[i].m_pattern->setup();
     }
-    update_pattern();
+    g_root->activate(NULL);
 
     // Start cycling colours by default
     g_hue.set_velocity(256, 10000);
@@ -333,11 +332,6 @@ bool should_display()
     return !g_target_fps || millis() > g_last_update + (1000 / g_target_fps);
 }
 
-void idle() {
-    // TODO: Replace this with actual sleep.
-    delay(10);
-}
-
 void loop()
 {
     ui_loop();
@@ -345,29 +339,9 @@ void loop()
     sampler_loop();
 #endif
     display_loop();
-    if (g_off) {
-	idle();
-    }
 }
 
-void update_pattern()
-{
-    g_current_pattern = g_modes[g_current_mode.get()].m_pattern;
-    g_current_pattern->activate(g_modes[g_current_mode.get()].m_arg);
-    g_force_update = true;
-}
-
-void ui_advance_mode()
-{
-    if (g_off) {
-	turn_on();
-    }
-    g_current_mode.modify(1);
-    update_pattern();
-    Serial.print("next mode is ");
-    Serial.println(g_current_mode.get());
-}
-
+#if 0
 void ui_callback(Element_id id, Element const &element)
 {
     switch (id) {
@@ -444,6 +418,7 @@ void ui_callback(Element_id id, Element const &element)
 	    break;
     }
 }
+#endif
 
 void ui_loop()
 {
@@ -455,9 +430,11 @@ void ui_loop()
 	    case 'B':
 		g_brightness.modify(1);
 		break;
+#if 0
 	    case 'm':
 		ui_advance_mode();
 		break;
+#endif
 	    case '0':
 		g_current_bin = 0;
 		break;
@@ -496,7 +473,7 @@ void ui_loop()
 	    Serial.print(" change is ");
 	    Serial.println(element.get_current_change());
 
-	    ui_callback(UI_KNOB1_ENCODER, element);
+	    g_root->ui_callback(UI_KNOB1_ENCODER, element);
 	}
     }
 
@@ -513,7 +490,7 @@ void ui_loop()
 	    Serial.print(" after ");
 	    Serial.println(element.get_previous_millis());
 
-	    ui_callback(UI_KNOB1_BUTTON, element);
+	    g_root->ui_callback(UI_KNOB1_BUTTON, element);
 	}
     }
 
@@ -528,7 +505,7 @@ void ui_loop()
 	    Serial.print(" change is ");
 	    Serial.println(element.get_current_change());
 
-	    ui_callback(UI_KNOB2_ENCODER, element);
+	    g_root->ui_callback(UI_KNOB2_ENCODER, element);
 	}
     }
 
@@ -545,23 +522,11 @@ void ui_loop()
 	    Serial.print(" after ");
 	    Serial.println(element.get_previous_millis());
 
-	    ui_callback(UI_KNOB2_BUTTON, element);
+	    g_root->ui_callback(UI_KNOB2_BUTTON, element);
 	}
     }
-}
 
-void turn_on()
-{
-    Serial.println("hello");
-    g_off = false;
-}
-
-void turn_off()
-{
-    Serial.println("okaybye");
-    draw_pixels(COLOUR_BLACK);
-    g_force_update = true;
-    g_off = true;
+    g_root->ui_hook();
 }
 
 #ifndef DISABLE_AUDIO
@@ -873,18 +838,10 @@ void display_loop()
 #ifdef DISABLE_DISPLAY
     return;
 #endif
-    bool needs_update = false;
-    if (!g_off && g_current_pattern && should_display()) {
-	needs_update = g_current_pattern->display();
-    }
-
-    if (g_force_update || needs_update) {
+    if (should_display() && g_root->display()) {
 	show_pixels();
-	g_force_update = false;
 	g_last_update = millis();
-    }
 
-    if (needs_update) {
 	// TODO: Is this the best place?
 	reset_peak();
     }

@@ -1,6 +1,7 @@
 #ifndef _LUSH_H_INCLUDED
 #define _LUSH_H_INCLUDED
 
+#include <OctoWS2811.h>
 #include <stdint.h>
 
 const int ROW_COUNT = 8;
@@ -229,6 +230,15 @@ inline Colour make_current_hue()
     return make_hsv(g_hue.get(), MAX_SATURATION, g_brightness.get());
 }
 
+enum Element_id
+{
+    UI_KNOB1_ENCODER,
+    UI_KNOB1_BUTTON,
+    UI_KNOB2_ENCODER,
+    UI_KNOB2_BUTTON,
+};
+class Element;
+
 class Pattern
 {
   public:
@@ -237,6 +247,14 @@ class Pattern
     }
 
     virtual void setup()
+    {
+    }
+
+    virtual void ui_callback(Element_id id, Element const &element)
+    {
+    }
+
+    virtual void ui_hook()
     {
     }
 
@@ -680,12 +698,6 @@ class Pattern_wheel
     virtual bool display();
 };
 
-struct Mode
-{
-    Pattern *m_pattern;
-    void *m_arg;
-};
-
 class Element_state
 {
   public:
@@ -750,14 +762,6 @@ class Encoder_element
     }
 };
 
-enum Element_id
-{
-    UI_KNOB1_ENCODER,
-    UI_KNOB1_BUTTON,
-    UI_KNOB2_ENCODER,
-    UI_KNOB2_BUTTON,
-};
-
 class UI_state
 {
   public:
@@ -774,6 +778,55 @@ T running_average(T &sum, int count, T sample)
     sum += sample - mean;
     return mean;
 }
+
+struct Mode
+{
+    Pattern *m_pattern;
+    void *m_arg;
+};
+
+class Pattern_set
+    : public Pattern
+{
+  public:
+    Pattern_set(Mode *modes, unsigned num_modes);
+
+    virtual void ui_callback(Element_id id, Element const &element);
+    virtual void ui_hook();
+
+    virtual void activate(void *arg);
+    virtual bool display();
+
+  protected:
+    Pattern *get_child();
+    void activate_child();
+
+    Mode *m_modes;
+    unsigned m_num_modes;
+    Value m_current_mode;
+
+    bool m_force_update;
+};
+
+class Pattern_static
+    : public Pattern_set
+{
+  public:
+    Pattern_static(Mode *modes, unsigned num_modes);
+
+    virtual void ui_callback(Element_id id, Element const &element);
+    virtual void ui_hook();
+
+    virtual void activate(void *arg);
+    virtual bool display();
+
+  private:
+    void display_status();
+
+    bool m_locked;
+    uint32_t m_unhandled_button_press_ms;
+    uint32_t m_status_start_ms;
+};
 
 extern UI_state g_ui;
 
