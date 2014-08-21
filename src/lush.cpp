@@ -58,6 +58,7 @@ Pattern_counter g_pattern_counter;
 Pattern_dropper g_pattern_dropper;
 Pattern_heart g_pattern_heart;
 Pattern_huey g_pattern_huey;
+Pattern_line g_pattern_line;
 Pattern_maze g_pattern_maze(g_fader1);
 Pattern_peak g_pattern_peak;
 Pattern_plasma g_pattern_plasma;
@@ -78,6 +79,7 @@ Pattern_wheel g_pattern_wheel;
 // - select specific mode
 // - configuration
 struct Mode g_modes[] = {
+    { &g_pattern_line },
     { &g_pattern_border },
     { &g_pattern_huey },
     { &g_pattern_rain },

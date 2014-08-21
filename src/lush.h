@@ -145,6 +145,7 @@ inline void draw_pixels(Colour c)
 
 void draw_mask(int y, unsigned mask, Colour fg, const Colour *bg);
 void draw_char(int x, int y, char c, Colour fg, const Colour *bg);
+void draw_line(int x0, int y0, int x1, int y1, Colour c);
 
 inline void show_pixels()
 {
@@ -538,6 +539,18 @@ class Pattern_huey
 {
   public:
     virtual bool display();
+};
+
+class Pattern_line
+    : public Pattern
+{
+  public:
+    virtual void activate(void *arg);
+    virtual bool display();
+  private:
+    void display_current();
+
+    uint32_t m_last_move_ms;
 };
 
 class Pattern_maze

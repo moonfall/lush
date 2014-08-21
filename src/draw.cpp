@@ -91,3 +91,29 @@ void draw_char(int x, int y, char c, Colour fg, const Colour *bg)
     }
   }
 }
+
+void draw_line(int x0, int y0, int x1, int y1, Colour c)
+{
+    int dx = abs(x1 - x0);
+    int sx = x0 < x1 ? 1 : -1;
+    int dy = abs(y1 - y0);
+    int sy = y0 < y1 ? 1 : -1;
+    int err = (dx > dy ? dx : -dy) / 2;
+    
+    draw_pixel(x0, y0, c);
+    int x = x0;
+    int y = y0;
+    draw_pixel(x, y, c);
+    while (x != x1 || y != y1) {
+	int e2 = err;
+	if (e2 > -dx) {
+	    err -= dy;
+	    x += sx;
+	}
+	if (e2 < dy) {
+	    err += dx;
+	    y += sy;
+	}
+	draw_pixel(x, y, c);
+    }
+}
