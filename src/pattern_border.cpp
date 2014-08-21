@@ -11,6 +11,7 @@ void Pattern_border::activate(void *arg)
     m_y = m_origin;
 
     display_current();
+    m_last_move_ms = millis();
 }
 
 bool Pattern_border::display()
@@ -19,9 +20,9 @@ bool Pattern_border::display()
     if (now <= m_last_move_ms + MOVE_MS) {
 	return false;
     }
+    m_last_move_ms = now;
 
     move_along_box(m_origin, m_clockwise, m_x, m_y);
-    m_last_move_ms = now;
     display_current();
 
     return true;
