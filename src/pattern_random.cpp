@@ -4,13 +4,8 @@ const uint32_t LOCK_MS = 1000;
 const uint32_t SHOW_STATUS_MS = 1000;
 
 Pattern_random::Pattern_random(Mode *modes, unsigned num_modes)
-    : Pattern_set(modes, num_modes)
+    : Pattern_set(modes, num_modes), m_duration_s(10)
 {
-}
-
-void Pattern_random::setup()
-{
-    m_duration_s = 10;
 }
 
 void Pattern_random::ui_callback(Element_id id, Element const &element)

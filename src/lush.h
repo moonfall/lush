@@ -838,8 +838,6 @@ class Pattern_random
   public:
     Pattern_random(Mode *modes, unsigned num_modes);
 
-    virtual void setup();
-
     virtual void ui_callback(Element_id id, Element const &element);
     virtual void ui_hook();
 
