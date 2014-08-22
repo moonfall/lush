@@ -70,6 +70,32 @@ bool Pattern_static::display()
     return needs_update;
 }
 
+const unsigned LOCK[] = {
+    0x00,
+    0x20,
+    0x20,
+    0x20,
+    0x20,
+    0x20,
+    0x3c,
+    0x00,
+};
+
+const unsigned UNLOCK[] = {
+    0x00,
+    0x24,
+    0x24,
+    0x24,
+    0x24,
+    0x24,
+    0x18,
+    0x00,
+};
+
 void Pattern_static::display_status()
 {
+    Colour c = make_rgb(g_brightness.get(), 0, 0);
+    for (int y_pos = 0; y_pos < ROW_COUNT; ++y_pos) {
+	draw_mask(y_pos, m_locked ? LOCK[y_pos] : UNLOCK[y_pos], c, NULL);
+    }
 }
