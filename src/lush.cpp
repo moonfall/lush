@@ -123,14 +123,17 @@ struct Mode g_modes[] = {
     { &g_pattern_synthesia_plasma_complex },
 };
 const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
-Pattern_static g_pattern_static(g_modes, MODE_COUNT);
-Pattern_random g_pattern_random(g_modes, MODE_COUNT);
 
-#if 0
-Pattern *g_root = &g_pattern_static;
-#else
-Pattern *g_root = &g_pattern_random;
-#endif
+Pattern_random g_pattern_random(g_modes, MODE_COUNT);
+Pattern_static g_pattern_static(g_modes, MODE_COUNT);
+struct Mode g_main_modes[] = {
+    { &g_pattern_random, NULL, 'R' },
+    { &g_pattern_static, NULL, 'S' },
+};
+const int MAIN_MODE_COUNT = sizeof(g_main_modes) / sizeof(g_main_modes[0]);
+Pattern_main_menu g_pattern_main_menu(g_main_modes, MAIN_MODE_COUNT);
+
+Pattern *g_root = &g_pattern_main_menu;
 
 Value g_brightness(16, 0, 255);
 Value g_resume_brightness(16, 0, 255);

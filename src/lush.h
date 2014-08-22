@@ -807,6 +807,7 @@ struct Mode
 {
     Pattern *m_pattern;
     void *m_arg;
+    char m_id;
 };
 
 class Pattern_set
@@ -830,6 +831,25 @@ class Pattern_set
     Value m_current_mode;
 
     bool m_force_update;
+};
+
+class Pattern_main_menu
+    : public Pattern_set
+{
+  public:
+    Pattern_main_menu(Mode *modes, unsigned num_modes);
+
+    virtual void ui_callback(Element_id id, Element const &element);
+    virtual void ui_hook();
+
+    virtual void activate(void *arg);
+    virtual bool display();
+
+  private:
+    void display_status();
+
+    uint32_t m_unhandled_button_press_ms;
+    uint32_t m_status_start_ms;
 };
 
 class Pattern_random
