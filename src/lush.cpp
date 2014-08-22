@@ -124,8 +124,13 @@ struct Mode g_modes[] = {
 };
 const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 Pattern_static g_pattern_static(g_modes, MODE_COUNT);
+Pattern_random g_pattern_random(g_modes, MODE_COUNT);
 
+#if 0
 Pattern *g_root = &g_pattern_static;
+#else
+Pattern *g_root = &g_pattern_random;
+#endif
 
 Value g_brightness(16, 0, 255);
 Value g_resume_brightness(16, 0, 255);
@@ -282,6 +287,8 @@ void setup()
     for (int i = 0; i < MODE_COUNT; ++i) {
     	g_modes[i].m_pattern->setup();
     }
+    g_pattern_static.setup();
+    g_pattern_random.setup();
     g_root->activate(NULL);
 
     // Start cycling colours by default

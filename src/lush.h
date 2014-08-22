@@ -832,6 +832,32 @@ class Pattern_set
     bool m_force_update;
 };
 
+class Pattern_random
+    : public Pattern_set
+{
+  public:
+    Pattern_random(Mode *modes, unsigned num_modes);
+
+    virtual void setup();
+
+    virtual void ui_callback(Element_id id, Element const &element);
+    virtual void ui_hook();
+
+    virtual void activate(void *arg);
+    virtual bool display();
+
+  private:
+    void select_next();
+    void display_status();
+
+    uint32_t m_duration_s;
+
+    bool m_locked;
+    uint32_t m_last_select_ms;
+    uint32_t m_unhandled_button_press_ms;
+    uint32_t m_status_start_ms;
+};
+
 class Pattern_static
     : public Pattern_set
 {
