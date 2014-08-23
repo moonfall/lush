@@ -15,11 +15,7 @@ void Pattern_counter::setup()
 
 bool Pattern_counter::display()
 {
-    for (int y = 0; y < ROW_COUNT; ++y) {
-	for (int x = 0; x < COLUMN_COUNT; ++x) {
-	    draw_pixel(x, y, COLOUR_BLACK);
-	}
-    }
+    draw_pixels(COLOUR_BLACK);
 
     int counter = m_counter.get() % 100;
     Colour c = make_current_hue();
