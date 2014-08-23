@@ -29,6 +29,7 @@ void Pattern_random::ui_callback(Element_id id, Element const &element)
 		m_current_mode.modify(element.get_current_change());
 		Serial.printf("mode changed to %d\n", m_current_mode.get());
 		activate_child();
+		m_last_select_ms = millis();
 		return;
 	    default:
 		// fallthrough
