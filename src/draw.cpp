@@ -1,5 +1,25 @@
-#include <OctoWS2811.h>
 #include "lush.h"
+
+void blend_pixel(int led, Colour c)
+{
+    uint8_t a = (c >> 24);
+
+    uint8_t fg_r;
+    uint8_t fg_g;
+    uint8_t fg_b;
+    split_rgb(c, fg_r, fg_g, fg_b);
+
+    uint8_t bg_r;
+    uint8_t bg_g;
+    uint8_t bg_b;
+    split_rgb(get_pixel(led), bg_r, bg_g, bg_b);
+
+    uint8_t r = (a * (unsigned) fg_r + (255 - a) * (unsigned) bg_r) >> 8;
+    uint8_t g = (a * (unsigned) fg_g + (255 - a) * (unsigned) bg_g) >> 8;
+    uint8_t b = (a * (unsigned) fg_b + (255 - a) * (unsigned) bg_b) >> 8;
+
+    g_octo.setPixel(led, make_rgb(r, g, b));
+}
 
 void move_along_box(int origin, bool clockwise, int &x, int &y)
 {

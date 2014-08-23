@@ -39,6 +39,12 @@ inline Colour make_rgb(uint8_t r, uint8_t g, uint8_t b)
 {
     return (r << 16) | (g << 8) | b;
 }
+
+inline Colour make_argb(uint8_t a, uint8_t r, uint8_t g, uint8_t b)
+{
+    return (a << 24) | (r << 16) | (g << 8) | b;
+}
+
 inline Colour make_rgb(int r, int g, int b, uint8_t brightness)
 {
     return make_rgb(r * brightness / MAX_BRIGHTNESS,
@@ -126,9 +132,16 @@ inline Colour get_pixel(int x, int y)
     return get_pixel(get_led(x, y));
 }
 
+void blend_pixel(int led, Colour c);
 inline void draw_pixel(int led, Colour c)
 {
-    g_octo.setPixel(led, c);
+    if (c & 0xff000000) {
+	// Blend pixel
+	blend_pixel(led, c);
+    } else {
+	// Just write pixel.
+	g_octo.setPixel(led, c);
+    }
 }
 
 inline void draw_pixel(int x, int y, Colour c)
