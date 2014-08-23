@@ -27,7 +27,7 @@ const uint32_t FONT_DATA[] = {
 	0x8888e000, 0xeaeaa000, // L M
 	0xcaaaa000, 0xaeaae000, // N O
 	0xeae88000, 0xaeaee000, // P Q
-	0xcacaa000, 0x8ee2e000, // R S
+	0xcacaa000, 0xe8e2e000, // R S
 	0xe4444000, 0xaaaae000, // T U
 	0xaaaa4000, 0xaaeea000, // V W
 	0xaa4aa000, 0xaae44000, // X Y
@@ -80,7 +80,7 @@ void draw_char(int x, int y, char c, Colour fg, const Colour *bg)
     }
 }
 
-void draw_string(int x, int y, char *s, Colour fg, const Colour *bg, 
+void draw_string(int x, int y, const char *s, Colour fg, const Colour *bg, 
 		 Direction dir, unsigned spacing)
 {
     while (*s) {
@@ -104,7 +104,7 @@ void draw_string(int x, int y, char *s, Colour fg, const Colour *bg,
 }
 
 void draw_centered_string(int x, int y, int width, int height,
-			  char *s, Colour fg, const Colour *bg,
+			  const char *s, Colour fg, const Colour *bg,
 			  Direction dir, unsigned spacing)
 {
     unsigned length = strlen(s);
