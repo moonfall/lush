@@ -23,6 +23,9 @@ const int MAX_SATURATION = 255;
 
 const int FONT_WIDTH = 4;
 const int FONT_HEIGHT = 5;
+extern const char FONT_START;
+extern const int FONT_COUNT;
+extern const char FONT_END;
 
 extern const float GAIN_INTERCEPTS[MAGNITUDE_COUNT];
 extern const float GAIN_SLOPES[MAGNITUDE_COUNT];
@@ -493,6 +496,21 @@ class Pattern_random_fader
     int m_start_time;
     // fade_out: initial -> black; !fade_out: black -> initial
     bool m_fade_out;
+};
+
+class Pattern_alphabet
+    : public Pattern
+{
+  public:
+    Pattern_alphabet();
+
+    virtual void setup();
+
+    virtual void ui_callback(Element_id id, Element const &element);
+
+    virtual bool display();
+
+    Value m_counter;
 };
 
 class Pattern_border

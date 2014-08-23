@@ -63,6 +63,7 @@ const uint32_t BUTTON_DEBOUNCE_MS = 5;
 // Current state
 Fader_static g_fader1;
 Pattern_random_fader g_random_fader(g_fader1);
+Pattern_alphabet g_pattern_alphabet;
 Pattern_border g_pattern_border;
 Pattern_counter g_pattern_counter;
 Pattern_dropper g_pattern_dropper;
@@ -89,6 +90,7 @@ Pattern_wheel g_pattern_wheel;
 // - select specific mode
 // - configuration
 struct Mode g_modes[] = {
+    { &g_pattern_alphabet },
     { &g_pattern_plasma },
     { &g_pattern_maze },
     { &g_random_fader },
