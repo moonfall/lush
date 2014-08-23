@@ -96,6 +96,8 @@ void Pattern_static::display_status()
 {
     Colour c = make_rgb(g_brightness.get(), 0, 0);
     for (int y_pos = 0; y_pos < ROW_COUNT; ++y_pos) {
-	draw_mask(y_pos, m_locked ? LOCK[y_pos] : UNLOCK[y_pos], c, NULL);
+	draw_char(COLUMN_COUNT / 2 - FONT_WIDTH / 2,
+		ROW_COUNT / 2 - (FONT_HEIGHT + 1) / 2,
+		m_locked ? 'L' : 'U', c, NULL);
     }
 }
