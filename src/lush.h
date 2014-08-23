@@ -145,6 +145,11 @@ inline void draw_pixels(Colour c)
 
 void draw_mask(int y, unsigned mask, Colour fg, const Colour *bg);
 void draw_char(int x, int y, char c, Colour fg, const Colour *bg);
+void draw_string(int x, int y, char *s, Colour fg, const Colour *bg,
+		 Direction dir = DIR_RIGHT, unsigned spacing = 0);
+void draw_centered_string(int x, int y, int width, int height,
+		          char *s, Colour fg, const Colour *bg,
+			  Direction dir = DIR_RIGHT, unsigned spacing = 0);
 void draw_line(int x0, int y0, int x1, int y1, Colour c);
 
 inline void show_pixels()
