@@ -158,10 +158,10 @@ inline void draw_pixels(Colour c)
 
 void draw_mask(int y, unsigned mask, Colour fg, const Colour *bg);
 void draw_char(int x, int y, char c, Colour fg, const Colour *bg);
-void draw_string(int x, int y, char *s, Colour fg, const Colour *bg,
+void draw_string(int x, int y, const char *s, Colour fg, const Colour *bg,
 		 Direction dir = DIR_RIGHT, unsigned spacing = 0);
 void draw_centered_string(int x, int y, int width, int height,
-		          char *s, Colour fg, const Colour *bg,
+		          const char *s, Colour fg, const Colour *bg,
 			  Direction dir = DIR_RIGHT, unsigned spacing = 0);
 void draw_line(int x0, int y0, int x1, int y1, Colour c);
 
@@ -825,7 +825,7 @@ struct Mode
 {
     Pattern *m_pattern;
     void *m_arg;
-    char m_id;
+    const char *m_id;
 };
 
 class Pattern_set
@@ -843,12 +843,26 @@ class Pattern_set
   protected:
     Pattern *get_child();
     void activate_child();
+    
+    void display_overlay_until(uint32_t ms)
+    {
+	m_overlay_end_ms = ms;
+    }
+
+    void display_overlay_for(uint32_t ms)
+    {
+	display_overlay_until(millis() + ms);
+    }
+
+    virtual void display_overlay();
+    virtual void display_status_string(const char *s);
 
     Mode *m_modes;
     unsigned m_num_modes;
     Value m_current_mode;
 
     bool m_force_update;
+    uint32_t m_overlay_end_ms;
 };
 
 class Pattern_main_menu
@@ -861,13 +875,11 @@ class Pattern_main_menu
     virtual void ui_hook();
 
     virtual void activate(void *arg);
-    virtual bool display();
 
   private:
-    void display_status();
+    void display_overlay();
 
     uint32_t m_unhandled_button_press_ms;
-    uint32_t m_status_start_ms;
 };
 
 class Pattern_random
@@ -880,18 +892,16 @@ class Pattern_random
     virtual void ui_hook();
 
     virtual void activate(void *arg);
-    virtual bool display();
 
   private:
     void select_next();
-    void display_status();
+    void display_overlay();
 
     uint32_t m_duration_s;
 
     bool m_locked;
     uint32_t m_last_select_ms;
     uint32_t m_unhandled_button_press_ms;
-    uint32_t m_status_start_ms;
 };
 
 class Pattern_static
@@ -904,14 +914,12 @@ class Pattern_static
     virtual void ui_hook();
 
     virtual void activate(void *arg);
-    virtual bool display();
 
   private:
-    void display_status();
+    void display_overlay();
 
     bool m_locked;
     uint32_t m_unhandled_button_press_ms;
-    uint32_t m_status_start_ms;
 };
 
 extern UI_state g_ui;

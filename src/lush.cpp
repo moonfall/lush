@@ -127,8 +127,8 @@ const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 Pattern_random g_pattern_random(g_modes, MODE_COUNT);
 Pattern_static g_pattern_static(g_modes, MODE_COUNT);
 struct Mode g_main_modes[] = {
-    { &g_pattern_random, NULL, 'R' },
-    { &g_pattern_static, NULL, 'S' },
+    { &g_pattern_random, NULL, "R" },
+    { &g_pattern_static, NULL, "S" },
 };
 const int MAIN_MODE_COUNT = sizeof(g_main_modes) / sizeof(g_main_modes[0]);
 Pattern_main_menu g_pattern_main_menu(g_main_modes, MAIN_MODE_COUNT);

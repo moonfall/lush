@@ -34,7 +34,7 @@ void Pattern_main_menu::ui_hook()
 	m_current_mode.modify(1);
 	activate_child();
 	m_unhandled_button_press_ms = 0;
-	m_status_start_ms = now;
+	display_overlay_until(now + SHOW_STATUS_MS);
     }
 
     Pattern_set::ui_hook();
@@ -45,20 +45,7 @@ void Pattern_main_menu::activate(void *arg)
     Pattern_set::activate(arg);
 }
 
-bool Pattern_main_menu::display()
+void Pattern_main_menu::display_overlay()
 {
-    bool needs_update = Pattern_set::display();
-    if (millis() < m_status_start_ms + SHOW_STATUS_MS) {
-	display_status();
-	needs_update = true;
-    }
-    return needs_update;
-}
-
-void Pattern_main_menu::display_status()
-{
-    Colour c = make_rgb(g_brightness.get(), 0, 0);
-    draw_char(COLUMN_COUNT / 2 - FONT_WIDTH / 2,
-              ROW_COUNT / 2 - (FONT_HEIGHT + 1) / 2,
-	      m_modes[m_current_mode.get()].m_id, c, NULL);
+    display_status_string(m_modes[m_current_mode.get()].m_id);
 }

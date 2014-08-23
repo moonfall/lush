@@ -48,7 +48,7 @@ void Pattern_static::ui_hook()
 	now > m_unhandled_button_press_ms + LOCK_MS) {
 	m_locked = !m_locked;
 	m_unhandled_button_press_ms = 0;
-	m_status_start_ms = now;
+	display_overlay_until(now + SHOW_STATUS_MS);
     }
 
     Pattern_set::ui_hook();
@@ -60,44 +60,7 @@ void Pattern_static::activate(void *arg)
     Pattern_set::activate(arg);
 }
 
-bool Pattern_static::display()
+void Pattern_static::display_overlay()
 {
-    bool needs_update = Pattern_set::display();
-    if (millis() < m_status_start_ms + SHOW_STATUS_MS) {
-	display_status();
-	needs_update = true;
-    }
-    return needs_update;
-}
-
-const unsigned LOCK[] = {
-    0x00,
-    0x20,
-    0x20,
-    0x20,
-    0x20,
-    0x20,
-    0x3c,
-    0x00,
-};
-
-const unsigned UNLOCK[] = {
-    0x00,
-    0x24,
-    0x24,
-    0x24,
-    0x24,
-    0x24,
-    0x18,
-    0x00,
-};
-
-void Pattern_static::display_status()
-{
-    Colour c = make_rgb(g_brightness.get(), 0, 0);
-    for (int y_pos = 0; y_pos < ROW_COUNT; ++y_pos) {
-	draw_char(COLUMN_COUNT / 2 - FONT_WIDTH / 2,
-		ROW_COUNT / 2 - (FONT_HEIGHT + 1) / 2,
-		m_locked ? 'L' : 'U', c, NULL);
-    }
+    display_status_string(m_locked ? "L" : "U");
 }

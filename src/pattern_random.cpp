@@ -49,7 +49,7 @@ void Pattern_random::ui_hook()
 	m_locked = !m_locked;
 	m_last_select_ms = millis();
 	m_unhandled_button_press_ms = 0;
-	m_status_start_ms = now;
+	display_overlay_until(now + SHOW_STATUS_MS);
     }
 
     if (!m_locked && now > m_last_select_ms + m_duration_s * 1000) {
@@ -67,28 +67,13 @@ void Pattern_random::activate(void *arg)
     Pattern_set::activate(arg);
 }
 
-bool Pattern_random::display()
-{
-    bool needs_update = Pattern_set::display();
-    if (millis() < m_status_start_ms + SHOW_STATUS_MS) {
-	display_status();
-	needs_update = true;
-    }
-    return needs_update;
-}
-
 void Pattern_random::select_next()
 {
     m_current_mode.set(random(m_num_modes));
     m_last_select_ms = millis();
 }
 
-void Pattern_random::display_status()
+void Pattern_random::display_overlay()
 {
-    Colour c = make_rgb(g_brightness.get(), 0, 0);
-    for (int y_pos = 0; y_pos < ROW_COUNT; ++y_pos) {
-	draw_char(COLUMN_COUNT / 2 - FONT_WIDTH / 2,
-		ROW_COUNT / 2 - (FONT_HEIGHT + 1) / 2,
-		m_locked ? 'L' : 'U', c, NULL);
-    }
+    display_status_string(m_locked ? "L" : "U");
 }

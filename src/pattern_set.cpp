@@ -26,6 +26,10 @@ bool Pattern_set::display()
 {
     bool needs_update = get_child()->display() || m_force_update;
     m_force_update = false;
+    if (m_overlay_end_ms && millis() < m_overlay_end_ms) {
+	display_overlay();
+	needs_update = true;
+    }
     return needs_update;
 }
 
@@ -40,4 +44,15 @@ void Pattern_set::activate_child()
     Mode &mode = m_modes[m_current_mode.get()];
     mode.m_pattern->activate(mode.m_arg);
     m_force_update = true;
+}
+
+void Pattern_set::display_overlay()
+{
+}
+
+void Pattern_set::display_status_string(const char *s)
+{
+    Colour c = make_rgb(g_brightness.get(), 0, 0);
+    Colour bg = make_argb(192, 0, 0, 0);
+    draw_centered_string(0, 0, COLUMN_COUNT, ROW_COUNT, s, c, &bg);
 }
