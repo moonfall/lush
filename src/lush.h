@@ -637,6 +637,14 @@ class Pattern_maze
     int m_start_time;
 };
 
+class Pattern_off
+    : public Pattern
+{
+  public:
+    virtual void activate(void *arg);
+    virtual bool display();
+};
+
 class Pattern_peak
     : public Pattern_audio
 {
