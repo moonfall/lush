@@ -20,7 +20,7 @@ Pattern_marquee::Pattern_marquee()
 
 void Pattern_marquee::setup()
 {
-    m_pos.set_velocity(-1, 250);
+    m_pos.set_velocity(-1, 100);
 }
 
 void Pattern_marquee::ui_callback(Element_id id, Element const &element)
