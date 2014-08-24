@@ -3,12 +3,12 @@
 const uint32_t LOCK_MS = 1000;
 const uint32_t SHOW_STATUS_MS = 1000;
 
-Pattern_static::Pattern_static(Mode *modes, unsigned num_modes)
+Pattern_selector::Pattern_selector(Mode *modes, unsigned num_modes)
     : Pattern_set(modes, num_modes)
 {
 }
 
-void Pattern_static::ui_callback(Element_id id, Element const &element)
+void Pattern_selector::ui_callback(Element_id id, Element const &element)
 {
     switch (id) {
 	case UI_KNOB1_BUTTON:
@@ -41,7 +41,7 @@ void Pattern_static::ui_callback(Element_id id, Element const &element)
     Pattern_set::ui_callback(id, element);
 }
 
-void Pattern_static::ui_hook()
+void Pattern_selector::ui_hook()
 {
     uint32_t now = millis();
     if (m_unhandled_button_press_ms &&
@@ -54,13 +54,13 @@ void Pattern_static::ui_hook()
     Pattern_set::ui_hook();
 }
 
-void Pattern_static::activate(void *arg)
+void Pattern_selector::activate(void *arg)
 {
     m_locked = false;
     Pattern_set::activate(arg);
 }
 
-void Pattern_static::display_overlay()
+void Pattern_selector::display_overlay()
 {
     display_status_string(m_locked ? "L" : "U");
 }

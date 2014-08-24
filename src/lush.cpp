@@ -129,11 +129,11 @@ struct Mode g_modes[] = {
 const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 
 Pattern_random g_pattern_random(g_modes, MODE_COUNT);
-Pattern_static g_pattern_static(g_modes, MODE_COUNT);
+Pattern_selector g_pattern_selector(g_modes, MODE_COUNT);
 Pattern_off g_pattern_off;
 struct Mode g_main_modes[] = {
     { &g_pattern_random, NULL, "R" },
-    { &g_pattern_static, NULL, "S" },
+    { &g_pattern_selector, NULL, "S" },
     { &g_pattern_off, NULL, "" },
 };
 const int MAIN_MODE_COUNT = sizeof(g_main_modes) / sizeof(g_main_modes[0]);
@@ -296,7 +296,7 @@ void setup()
     for (int i = 0; i < MODE_COUNT; ++i) {
     	g_modes[i].m_pattern->setup();
     }
-    g_pattern_static.setup();
+    g_pattern_selector.setup();
     g_pattern_random.setup();
     g_root->activate(NULL);
 

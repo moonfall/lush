@@ -946,11 +946,11 @@ class Pattern_random
     uint32_t m_unhandled_button_press_ms;
 };
 
-class Pattern_static
+class Pattern_selector
     : public Pattern_set
 {
   public:
-    Pattern_static(Mode *modes, unsigned num_modes);
+    Pattern_selector(Mode *modes, unsigned num_modes);
 
     virtual void ui_callback(Element_id id, Element const &element);
     virtual void ui_hook();
