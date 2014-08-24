@@ -884,7 +884,7 @@ class Pattern_set
 
   protected:
     Pattern *get_child();
-    void activate_child();
+    virtual void activate_child();
     
     void display_overlay_until(uint32_t ms)
     {
@@ -924,28 +924,6 @@ class Pattern_main_menu
     uint32_t m_unhandled_button_press_ms;
 };
 
-class Pattern_random
-    : public Pattern_set
-{
-  public:
-    Pattern_random(Mode *modes, unsigned num_modes);
-
-    virtual void ui_callback(Element_id id, Element const &element);
-    virtual void ui_hook();
-
-    virtual void activate(void *arg);
-
-  private:
-    void select_next();
-    void display_overlay();
-
-    uint32_t m_duration_s;
-
-    bool m_locked;
-    uint32_t m_last_select_ms;
-    uint32_t m_unhandled_button_press_ms;
-};
-
 class Pattern_selector
     : public Pattern_set
 {
@@ -957,13 +935,32 @@ class Pattern_selector
 
     virtual void activate(void *arg);
 
-  private:
+  protected:
     void display_overlay();
 
     bool m_locked;
     uint32_t m_unhandled_button_press_ms;
 };
 
+class Pattern_random
+    : public Pattern_selector
+{
+  public:
+    Pattern_random(Mode *modes, unsigned num_modes);
+
+    virtual void ui_hook();
+
+    virtual void activate(void *arg);
+
+  private:
+    virtual void activate_child();
+    void select_next();
+    void display_overlay();
+
+    uint32_t m_duration_s;
+
+    uint32_t m_last_select_ms;
+};
 extern UI_state g_ui;
 
 // lock
