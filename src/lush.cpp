@@ -19,6 +19,7 @@
 
 #undef SAMPLE_TEST
 #undef PROFILE_FFT
+#undef LOG_MAGNITUDES
 #undef LOG_BINS
 #undef LOG_SUMMARY
 #undef MAGNITUDE_AVERAGE
@@ -157,6 +158,15 @@ AudioInputAnalog g_audio_input;
 // http://forum.pjrc.com/threads/24793-Audio-Library?p=40179&viewfull=1#post40179
 // http://www.earlevel.com/main/2013/10/13/biquad-calculator-v2/
 int g_hp_filter_params[] = {
+// lowpass, 100Hz, Q=0.707
+#if 1
+    COEFF(0.9899759179893742),
+    COEFF(-1.9799518359787485),
+    COEFF(0.9899759179893742),
+    -COEFF(-1.979851353142371),
+    -COEFF(0.9800523188151258),
+#endif
+
 // highpass, 1000Hz, Q=0.707
 #if 0
     COEFF(0.9041514120481504),
@@ -167,7 +177,7 @@ int g_hp_filter_params[] = {
 #endif
 
     // highpass, 3000Hz, Q=0.707
-#if 1
+#if 0
     COEFF( 0.7385371039326799 ),
     COEFF( -1.4770742078653598 ),
     COEFF( 0.7385371039326799 ),
@@ -208,6 +218,11 @@ AudioConnection g_audio_conn3(g_hp_filter, g_peak);
 #if 1
 AudioConnection g_audio_conn1(g_audio_input, g_fft);
 AudioConnection g_audio_conn2(g_audio_input, g_peak);
+#endif
+#if 0
+AudioConnection g_audio_conn1(g_audio_input, g_hp_filter);
+AudioConnection g_audio_conn2(g_hp_filter, g_fft);
+AudioConnection g_audio_conn3(g_hp_filter, g_peak);
 #endif
 #endif
 
