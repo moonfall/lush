@@ -33,7 +33,9 @@ void Pattern_main_menu::ui_hook()
 	now > m_unhandled_button_press_ms + ADVANCE_MS) {
 	m_current_mode.modify(1);
 	activate_child();
-	m_unhandled_button_press_ms = 0;
+
+	// Let someone hold to advance main menu modes.
+	m_unhandled_button_press_ms = now - ADVANCE_MS + SHOW_STATUS_MS;
 	display_overlay_until(now + SHOW_STATUS_MS);
     }
 
