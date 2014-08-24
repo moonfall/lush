@@ -600,6 +600,22 @@ class Pattern_line
     uint32_t m_last_move_ms;
 };
 
+class Pattern_marquee
+    : public Pattern
+{
+  public:
+    Pattern_marquee();
+
+    virtual void setup();
+
+    virtual void ui_callback(Element_id id, Element const &element);
+
+    virtual bool display();
+
+    Value m_pos;
+    char m_text[64];
+};
+
 class Pattern_maze
     : public Pattern
 {
