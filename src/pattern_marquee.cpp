@@ -15,7 +15,7 @@ const int HUE_OFFSET = 50;
 Pattern_marquee::Pattern_marquee()
     : m_pos(0)
 {
-    strcpy(m_text, "TESTING");
+    strcpy(m_text, "HELLO");
 }
 
 void Pattern_marquee::setup()
