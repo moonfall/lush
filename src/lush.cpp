@@ -244,7 +244,7 @@ static int g_magnitude_avg_gathered = 0;
 #endif
 
 const float GAIN_R1 = 10000;
-const float GAIN_R2 = 100000;
+const float GAIN_R2 = 300000;
 const float GAIN_RAB = 100000;
 const float GAIN_RS_COUNT = 256;
 const float GAIN_RS_TYP = GAIN_RAB / GAIN_RS_COUNT;
