@@ -8,15 +8,14 @@ const uint32_t DARK_MS = 2000;
 const uint32_t CYCLE_MS = PULSE_COUNT * (PULSE_MS + PAUSE_MS) + DARK_MS;
 
 const unsigned HEART[] = {
-	0x00,
 	0x66,
 	0xff,
 	0xff,
 	0x7e,
 	0x3c,
 	0x18,
-	0x00,
 };
+const unsigned HEART_ROWS = sizeof(HEART) / sizeof(HEART[0]);
 
 void Pattern_heart::activate(void *arg)
 {
@@ -48,8 +47,10 @@ bool Pattern_heart::display()
     }
     m_last_colour = c;
 
-    for (int y_pos = 0; y_pos < ROW_COUNT; ++y_pos) {
-	draw_mask(y_pos, HEART[y_pos], c, &COLOUR_BLACK);
+    int start_x = (COLUMN_COUNT - 8) / 2;
+    int start_y = (ROW_COUNT - HEART_ROWS) / 2;
+    for (int y_pos = 0; y_pos < (int) HEART_ROWS; ++y_pos) {
+	draw_mask8(start_x, start_y + y_pos, HEART[y_pos], c, &COLOUR_BLACK);
     }
 
     return true;

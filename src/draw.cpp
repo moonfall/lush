@@ -46,13 +46,13 @@ void move_along_box(int origin, bool clockwise, int &x, int &y)
     }
 }
 
-void draw_mask(int y, unsigned mask, Colour fg, const Colour *bg)
+void draw_mask8(int x, int y, unsigned mask, Colour fg, const Colour *bg)
 {
-    for (int x_pos = 0; x_pos < COLUMN_COUNT; ++x_pos) {
-	if (mask & (1 << (COLUMN_COUNT - x_pos - 1))) {
-	    draw_pixel(x_pos, y, fg);
+    for (int x_pos = 0; x_pos < 8; ++x_pos) {
+	if (mask & (1 << (8 - x_pos - 1))) {
+	    draw_pixel(x + x_pos, y, fg);
 	} else if (bg) {
-	    draw_pixel(x_pos, y, *bg);
+	    draw_pixel(x + x_pos, y, *bg);
 	}
     }
 }

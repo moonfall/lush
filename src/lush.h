@@ -4,8 +4,16 @@
 #include <OctoWS2811.h>
 #include <stdint.h>
 
+#define FLIPPED_X_COORDS
+#define LARGE_MATRIX
+
+#ifdef LARGE_MATRIX
+const int ROW_COUNT = 16;
+const int COLUMN_COUNT = 16;
+#else
 const int ROW_COUNT = 8;
 const int COLUMN_COUNT = 8;
+#endif
 const int LED_COUNT = ROW_COUNT * COLUMN_COUNT;
 const int LEDS_PER_STRIP = LED_COUNT;
 #undef FFT1024
@@ -83,11 +91,6 @@ enum Direction
     DIR_DOWN,
 };
 
-inline int get_led(int x, int y, int columns = COLUMN_COUNT)
-{
-    return y * columns + x;
-}
-
 inline int flip_x(int x, int columns = COLUMN_COUNT)
 {
     return (columns - 1) - x;
@@ -98,10 +101,27 @@ inline int flip_y(int y, int rows = ROW_COUNT)
     return (rows - 1) - y;
 }
 
+inline int get_led(int x, int y, int columns = COLUMN_COUNT)
+{
+#ifdef FLIPPED_X_COORDS
+    if (y % 2 == 0) {
+	x = flip_x(x);
+    }
+#endif
+
+    return y * columns + x;
+}
+
 inline void get_xy(int led, int &x, int &y, int columns = COLUMN_COUNT)
 {
     x = led % columns;
     y = led / columns;
+
+#ifdef FLIPPED_X_COORDS
+    if (y % 2 == 0) {
+	x = flip_x(x);
+    }
+#endif
 }
 
 inline void make_neighbour(Direction dir, int &x, int &y)
@@ -159,7 +179,7 @@ inline void draw_pixels(Colour c)
     }
 }
 
-void draw_mask(int y, unsigned mask, Colour fg, const Colour *bg);
+void draw_mask8(int x, int y, unsigned mask, Colour fg, const Colour *bg);
 void draw_char(int x, int y, char c, Colour fg, const Colour *bg);
 void draw_string(int x, int y, const char *s, Colour fg, const Colour *bg,
 		 Direction dir = DIR_RIGHT, unsigned spacing = 0);
