@@ -706,6 +706,18 @@ class Pattern_pulse
     Colour m_last_colour;
 };
 
+class Pattern_race
+    : public Pattern
+{
+  public:
+    Pattern_race();
+
+    virtual void setup();
+    virtual bool display();
+
+    Value m_counter;
+};
+
 class Pattern_rain
     : public Pattern
 {
