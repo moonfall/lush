@@ -1,21 +1,17 @@
-#include <OctoWS2811.h>
 #include <Audio.h>
 #include "lush.h"
 
-bool Pattern_peak::display()
+bool Pattern_peak_spike::display()
 {
 #define LOG_PEAKS
 #ifdef LOG_PEAKS
-    Serial.print("peak ");
-    Serial.print(get_peak());
     const int max_dots = 64;
     char dots[max_dots + 2];
     memset(dots, ' ', sizeof(dots));
     dots[max_dots] = '|';
     dots[max_dots + 1] = '\0';
     memset(dots, '.', get_mapped_peak(max_dots));
-    Serial.print(" ");
-    Serial.println(dots);
+    Serial.printf("peak %u %s\n", get_peak(), dots);
 #endif
 
     // Clean slate.
@@ -23,26 +19,6 @@ bool Pattern_peak::display()
 
     Colour c = make_hue(g_hue.get());
 
-#if 0
-    int leds = get_mapped_peak((COLUMN_COUNT + 1) * ROW_COUNT / 2);
-    int start_x = 0;
-    int x = start_x;
-    int y = ROW_COUNT - 1;
-    for (int led = 0; led < leds; ++led) {
-	draw_pixel(x, y, c);	
-	--x;
-	--y;
-	if (x < 0) {
-	    ++start_x;
-	    x = start_x;
-	    y = ROW_COUNT - 1;
-	}
-	if (y < 0) {
-	    break;
-	}
-    }
-#endif
-#if 1
     int leds = get_mapped_peak(LED_COUNT / 2);
 
 #define FADE_PEAK
@@ -75,7 +51,6 @@ bool Pattern_peak::display()
 	    y = start_y;
 	}
     }
-#endif
 
     return true;
 }

@@ -86,6 +86,7 @@ Pattern_huey g_pattern_huey;
 Pattern_line g_pattern_line;
 Pattern_marquee g_pattern_marquee;
 Pattern_maze g_pattern_maze(g_fader1);
+Pattern_peak_diagonal g_pattern_peak_diagonal;
 Pattern_peak_spike g_pattern_peak_spike;
 Pattern_plasma g_pattern_plasma;
 Pattern_pulse g_pattern_pulse;
@@ -125,6 +126,7 @@ struct Mode g_modes[] = {
     { &g_pattern_rain, (void *) Pattern_rain::RAIN_PURE_WHITE },
 #endif
 #ifndef DISABLE_AUDIO
+    { &g_pattern_peak_diagonal },
     { &g_pattern_peak_spike },
 #endif
     { &g_pattern_counter },

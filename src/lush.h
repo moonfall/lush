@@ -667,6 +667,13 @@ class Pattern_off
     virtual bool display();
 };
 
+class Pattern_peak_diagonal
+    : public Pattern_audio
+{
+  public:
+    virtual bool display();
+};
+
 class Pattern_peak_spike
     : public Pattern_audio
 {
