@@ -995,6 +995,32 @@ class Pattern_random
 
     uint32_t m_last_select_ms;
 };
+
+class Pattern_config
+    : public Pattern_set
+{
+  public:
+    Pattern_config(Mode *modes, unsigned num_modes);
+
+    virtual void ui_callback(Element_id id, Element const &element);
+};
+
+class Pattern_option
+    : public Pattern
+{
+  public:
+    Pattern_option(char const *name, Value &value, bool show_value);
+
+    virtual void ui_callback(Element_id id, Element const &element);
+
+  private:
+    bool display();
+
+    char const *m_name;
+    Value &m_value;
+    bool m_show_value;
+};
+
 extern UI_state g_ui;
 
 // lock

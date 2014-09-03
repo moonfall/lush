@@ -60,9 +60,22 @@ const int ENCODER_2_SW_PIN = 23;
 // Constants
 const uint32_t TURN_OFF_MS = 3000;
 const uint32_t BUTTON_DEBOUNCE_MS = 5;
+const int INITIAL_GAIN = 165;
 
-// Current state
+// Config options
+Value g_brightness(16, 0, 255);
+Value g_resume_brightness(16, 0, 255);
+Value g_hue(0, 0, 255, true);
+Value g_number(0, 0, 1000, true);
+
+// Audio gain control
+Value g_gain0(INITIAL_GAIN, 0, 255);
+Value g_gain1(INITIAL_GAIN, 0, 255);
+
+// Shared state state
 Fader_static g_fader1;
+
+// Patterns
 Pattern_random_fader g_random_fader(g_fader1);
 Pattern_alphabet g_pattern_alphabet;
 Pattern_border g_pattern_border;
@@ -131,27 +144,33 @@ struct Mode g_modes[] = {
 };
 const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 
+Pattern_option g_option_brightness("BR", g_brightness, true);
+Pattern_option g_option_gain0("G0", g_gain0, true);
+Pattern_option g_option_gain1("G1", g_gain1, true);
+Pattern_option g_option_number("N", g_number, true);
+struct Mode g_config_options[] = {
+    { &g_option_brightness },
+    { &g_option_gain0 },
+    { &g_option_gain1 },
+    { &g_option_number },
+};
+const int CONFIG_OPTION_COUNT = sizeof(g_config_options) /
+				sizeof(g_config_options[0]);
+
 Pattern_random g_pattern_random(g_modes, MODE_COUNT);
 Pattern_selector g_pattern_selector(g_modes, MODE_COUNT);
+Pattern_config g_pattern_config(g_config_options, CONFIG_OPTION_COUNT);
 Pattern_off g_pattern_off;
 struct Mode g_main_modes[] = {
     { &g_pattern_random, NULL, "R" },
     { &g_pattern_selector, NULL, "S" },
+    { &g_pattern_config, NULL, "C" },
     { &g_pattern_off, NULL, "" },
 };
 const int MAIN_MODE_COUNT = sizeof(g_main_modes) / sizeof(g_main_modes[0]);
 Pattern_main_menu g_pattern_main_menu(g_main_modes, MAIN_MODE_COUNT);
 
 Pattern *g_root = &g_pattern_main_menu;
-
-Value g_brightness(16, 0, 255);
-Value g_resume_brightness(16, 0, 255);
-Value g_hue(0, 0, 255, true);
-
-// Audio gain control
-const int INITIAL_GAIN = 165;
-Value g_gain0(INITIAL_GAIN, 0, 255);
-Value g_gain1(INITIAL_GAIN, 0, 255);
 
 // Audio acquisition
 #ifndef DISABLE_AUDIO
@@ -313,8 +332,12 @@ void setup()
     for (int i = 0; i < MODE_COUNT; ++i) {
     	g_modes[i].m_pattern->setup();
     }
-    g_pattern_selector.setup();
-    g_pattern_random.setup();
+    for (int i = 0; i < CONFIG_OPTION_COUNT; ++i) {
+    	g_config_options[i].m_pattern->setup();
+    }
+    for (int i = 0; i < MAIN_MODE_COUNT; ++i) {
+    	g_main_modes[i].m_pattern->setup();
+    }
     g_root->activate(NULL);
 
     // Start cycling colours by default
