@@ -4,8 +4,10 @@
 #include <OctoWS2811.h>
 #include <stdint.h>
 
-#define FLIPPED_X_COORDS
-#define LARGE_MATRIX
+
+// Enable the following for the 16x16 pixel grid
+#undef FLIPPED_X_COORDS
+#undef LARGE_MATRIX
 
 #ifdef LARGE_MATRIX
 const int ROW_COUNT = 16;
