@@ -667,11 +667,10 @@ class Pattern_off
     virtual bool display();
 };
 
-class Pattern_peak
+class Pattern_peak_spike
     : public Pattern_audio
 {
   public:
-    virtual void activate(void *arg);
     virtual bool display();
 };
 

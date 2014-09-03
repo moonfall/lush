@@ -2,10 +2,6 @@
 #include <Audio.h>
 #include "lush.h"
 
-void Pattern_peak::activate(void *arg)
-{
-}
-
 bool Pattern_peak::display()
 {
 #define LOG_PEAKS
