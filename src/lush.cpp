@@ -87,6 +87,10 @@ Pattern_line g_pattern_line;
 Pattern_marquee g_pattern_marquee;
 Pattern_maze g_pattern_maze(g_fader1);
 Pattern_peak_diagonal g_pattern_peak_diagonal;
+Pattern_peak_noise g_pattern_peak_noise(g_fader1);
+#if 0
+Pattern_peak_ordered g_pattern_peak_ordered(g_fader1);
+#endif
 Pattern_peak_spike g_pattern_peak_spike;
 Pattern_plasma g_pattern_plasma;
 Pattern_pulse g_pattern_pulse;
@@ -127,6 +131,10 @@ struct Mode g_modes[] = {
 #endif
 #ifndef DISABLE_AUDIO
     { &g_pattern_peak_diagonal },
+    { &g_pattern_peak_noise },
+#if 0
+    { &g_pattern_peak_ordered },
+#endif
     { &g_pattern_peak_spike },
 #endif
     { &g_pattern_counter },

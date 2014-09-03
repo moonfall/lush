@@ -674,6 +674,28 @@ class Pattern_peak_diagonal
     virtual bool display();
 };
 
+class Pattern_peak_ordered
+    : public Pattern_audio
+{
+  public:
+    Pattern_peak_ordered(Fader_static &fader);
+
+    virtual void activate(void *arg);
+    virtual bool display();
+
+    Fader_static &m_fader;
+};
+
+class Pattern_peak_noise
+    : public Pattern_peak_ordered
+{
+  public:
+    Pattern_peak_noise(Fader_static &fader);
+
+    virtual void activate(void *arg);
+    virtual bool display();
+};
+
 class Pattern_peak_spike
     : public Pattern_audio
 {
