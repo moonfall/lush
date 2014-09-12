@@ -21,7 +21,7 @@ bool Pattern_peak_ordered::display()
     dots[max_dots] = '|';
     dots[max_dots + 1] = '\0';
     memset(dots, '.', get_mapped_peak(max_dots));
-    Serial.printf("peak %u %s\n", get_peak(), dots);
+    Serial.printf("peak %5u %s\n", get_peak(), dots);
 #endif
 
     // Clean slate.
