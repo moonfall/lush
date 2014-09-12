@@ -86,9 +86,9 @@ Pattern_huey g_pattern_huey;
 Pattern_line g_pattern_line;
 Pattern_marquee g_pattern_marquee;
 Pattern_maze g_pattern_maze(g_fader1);
+#if 0
 Pattern_peak_diagonal g_pattern_peak_diagonal;
 Pattern_peak_noise g_pattern_peak_noise(g_fader1);
-#if 0
 Pattern_peak_ordered g_pattern_peak_ordered(g_fader1);
 #endif
 Pattern_peak_spike g_pattern_peak_spike;
@@ -111,6 +111,7 @@ Pattern_wheel g_pattern_wheel;
 // - select specific mode
 // - configuration
 struct Mode g_modes[] = {
+    { &g_pattern_peak_spike },
     { &g_pattern_race },
     { &g_pattern_marquee },
     { &g_pattern_alphabet },
@@ -130,12 +131,11 @@ struct Mode g_modes[] = {
     { &g_pattern_rain, (void *) Pattern_rain::RAIN_PURE_WHITE },
 #endif
 #ifndef DISABLE_AUDIO
+#if 0
     { &g_pattern_peak_diagonal },
     { &g_pattern_peak_noise },
-#if 0
     { &g_pattern_peak_ordered },
 #endif
-    { &g_pattern_peak_spike },
 #endif
     { &g_pattern_counter },
     { &g_pattern_pulse },
