@@ -257,7 +257,7 @@ AudioConnection g_audio_conn3(g_hp_filter, g_peak);
 #endif
 #endif
 
-#define OCTOWS2811_PEAK_HACK
+#undef OCTOWS2811_PEAK_HACK
 #ifdef OCTOWS2811_PEAK_HACK
 unsigned g_peak_updates_to_ignore = 0;
 #endif
