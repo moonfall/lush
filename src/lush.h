@@ -37,9 +37,6 @@ extern const char FONT_START;
 extern const int FONT_COUNT;
 extern const char FONT_END;
 
-extern const float GAIN_INTERCEPTS[MAGNITUDE_COUNT];
-extern const float GAIN_SLOPES[MAGNITUDE_COUNT];
-
 typedef int16_t Sample_type;
 typedef int32_t Bin_type;
 extern Sample_type g_magnitudes[MAGNITUDE_COUNT];

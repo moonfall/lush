@@ -737,13 +737,6 @@ float calculate_actual_gain(int wiper)
 	   1;
 }
 
-float calculate_floor(float gain, int bin)
-{
-    float intercept = GAIN_INTERCEPTS[bin];
-    float slope = GAIN_SLOPES[bin];
-    return powf(10, sqrt(gain) * slope + intercept);
-}
-
 // g_magnitudes[MAGNITUDE_COUNT] -> g_bins[g_bin_count.get()]
 void fft_reduce()
 {
