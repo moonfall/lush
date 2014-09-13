@@ -111,7 +111,6 @@ Pattern_wheel g_pattern_wheel;
 // - select specific mode
 // - configuration
 struct Mode g_modes[] = {
-    { &g_pattern_peak_spike },
     { &g_pattern_race },
     { &g_pattern_marquee },
     { &g_pattern_alphabet },
@@ -130,17 +129,16 @@ struct Mode g_modes[] = {
     { &g_pattern_rain, (void *) Pattern_rain::RAIN_SINGLE_RANDOM_COLOUR },
     { &g_pattern_rain, (void *) Pattern_rain::RAIN_PURE_WHITE },
 #endif
+    { &g_pattern_counter },
+    { &g_pattern_pulse },
+    { &g_pattern_wheel },
 #ifndef DISABLE_AUDIO
+    { &g_pattern_peak_spike },
 #if 0
     { &g_pattern_peak_diagonal },
     { &g_pattern_peak_noise },
     { &g_pattern_peak_ordered },
 #endif
-#endif
-    { &g_pattern_counter },
-    { &g_pattern_pulse },
-    { &g_pattern_wheel },
-#ifndef DISABLE_AUDIO
     { &g_pattern_spectrum_bars },
 #if 0
     { &g_pattern_spectrum_field },
