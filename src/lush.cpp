@@ -189,13 +189,31 @@ AudioInputAnalog g_audio_input;
 // http://forum.pjrc.com/threads/24793-Audio-Library?p=40179&viewfull=1#post40179
 // http://www.earlevel.com/main/2013/10/13/biquad-calculator-v2/
 int g_hp_filter_params[] = {
-// lowpass, 100Hz, Q=0.707
+// highpass, 50Hz, Q=0.707
 #if 1
+    COEFF(0.9949753356833961),
+    COEFF(-1.9899506713667923),
+    COEFF(0.9949753356833961),
+    -COEFF(-1.989925424437758),
+    -COEFF(0.9899759182958264),
+#endif
+
+// highpass, 100Hz, Q=0.707
+#if 0
     COEFF(0.9899759179893742),
     COEFF(-1.9799518359787485),
     COEFF(0.9899759179893742),
     -COEFF(-1.979851353142371),
     -COEFF(0.9800523188151258),
+#endif
+
+// highpass, 200Hz, Q=0.707
+#if 0
+    COEFF(0.9800523027005293),
+    COEFF(-1.9601046054010587),
+    COEFF(0.9800523027005293),
+    -COEFF(-1.9597066626643354),
+    -COEFF(0.960502548137782),
 #endif
 
 // highpass, 1000Hz, Q=0.707
