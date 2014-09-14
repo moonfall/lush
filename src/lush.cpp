@@ -705,23 +705,24 @@ void sampler_loop()
 	    Serial.print(g_gain0.get());
 	    Serial.print("/");
 	    Serial.print(g_gain1.get());
-#if 1
+#if 0
 	    Serial.print(" mags");
 	    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
 		Serial.print(" ");
 #ifdef MAGNITUDE_AVERAGE
 		Serial.print(g_magnitude_sums[i] / g_magnitude_avg_count);
 #else
+#if 0
 		Serial.print(i);
 		Serial.print("=");
+#endif
 		Serial.print(g_magnitudes[i]);
 #endif
 	    }
 #endif
 	    Serial.print(" bins");
 	    for (int i = 0; i < g_bin_count.get(); ++i) {
-		Serial.print(" ");
-		Serial.print(g_bins[i]);
+		Serial.printf(" %u", g_bins[i]);
 	    }
 	    Serial.println();
 	    last_log = millis();
@@ -740,6 +741,8 @@ float calculate_actual_gain(int wiper)
 // g_magnitudes[MAGNITUDE_COUNT] -> g_bins[g_bin_count.get()]
 void fft_reduce()
 {
+#if 0
+    // Some custom EQ
     g_magnitudes[0] /= 100;
     g_magnitudes[1] /= 50;
     g_magnitudes[33] /= 35;
@@ -758,8 +761,10 @@ void fft_reduce()
     g_magnitudes[118] /= 2;
     g_magnitudes[119] /= 9;
     g_magnitudes[120] /= 9;
+#endif
 
-#if 1
+#if 0
+    // From Audio library spectrum analyzer
     const int nsum[16] = {1, 1, 2, 2, 3, 4, 5, 6, 6, 8, 12, 14, 16, 18, 18, 24};
     for (int i = 0; i < g_bin_count.get(); ++i ) {
 	g_bins[i] = 0;
@@ -779,7 +784,7 @@ void fft_reduce()
 	}
     }
 
-#if 0
+#if 1
     int scale = 2 + 2048 / 7;
     for (int i = 0; i < g_bin_count.get(); ++i) {
 	g_bins[i] = min(g_bins[i] / scale, 8);
@@ -788,8 +793,6 @@ void fft_reduce()
 
 #endif
 	
-
-#if 0
 #if 0
     int bin_size = MAGNITUDE_COUNT / g_bin_count.get();
 #ifdef LOGARITHMIC_BINS
@@ -799,10 +802,14 @@ void fft_reduce()
     Sample_type *src_end = g_magnitudes + MAGNITUDE_COUNT;
     for (int i = 0; i < g_bin_count.get() && src < src_end; ++i) {
 	g_bins[i] = 0;
+	int sum_count = 0;
 	for (int j = 0; j < bin_size && src < src_end; ++j, ++src) {
 	    g_bins[i] += *src;
+	    ++sum_count;
 	}
-	g_bins[i] /= bin_size;
+	if (sum_count) {
+	    g_bins[i] /= sum_count;
+	}
 #ifdef LOGARITHMIC_BINS
 	bin_size *= 2;
 #endif
@@ -814,11 +821,19 @@ void fft_reduce()
 	g_bins[i] = g_bins[i] > 1.0 ? 1.0 : g_bins[i];
 #endif
     }
-#else
+#endif
+
+#if 1
+#if 0
     const float scale = 0.05;
+#else
+    const float scale = 1.0;
+#endif
     const float gamma = 2.0;
+#ifdef USE_SMOOTHING
     const float smoothing_factor = 0.00007;
     const float smoothing = powf(smoothing_factor, (float) FFT_SIZE / 60.0);
+#endif
     int f_start = 1;
     for (int i = 0; i < g_bin_count.get(); ++i) {
 	int f_end = round(powf(((float)(i + 1)) / (float) g_bin_count.get(),
@@ -830,33 +845,30 @@ void fft_reduce()
 	if (f_width <= 0) {
 	    f_width = 1;
 	}
-#if 0
-	Serial.print("bin ");
-	Serial.print(i);
-	Serial.print(" width ");
-	Serial.print(f_width);
-#endif
 
-	float bin_power = 0.0;
+	float bin_power = 0;
 	for (int j = 0; j < f_width; ++j) {
 	    float p = (float) g_magnitudes[f_start + j];
 	    if (p > bin_power) {
 		bin_power = p;
 	    }
 	}
-#if 0
-	Serial.print(" power ");
-	Serial.print(bin_power);
-#endif
 
-#if 0
-	bin_power = log(bin_power);
-	if (bin_power < 0.0) {
-	    bin_power = 0.0;
+
+#if 1
+	float log_power = scale * log((float)bin_power);
+	Serial.printf("bin %d width %d %d-%d power %.3f %.3f\n",
+			i, f_width, f_start, f_end, bin_power, log_power);
+	if (log_power < 0.0) {
+	    log_power = 0.0;
 	}
 
-	g_bins[i] = g_bins[i] * smoothing +
-		    (bin_power * scale * (1.0 - smoothing));
+#ifdef USE_SMOOTHING
+	g_bins[i] = (int)((float) g_bins[i] * smoothing +
+		          (log_power * (1.0 - smoothing)));
+#else
+	g_bins[i] = (int) log_power;
+#endif
 #endif
 #if 0
 	bin_power = 20.0 * log10(bin_power);
@@ -898,7 +910,7 @@ void fft_reduce()
     }
     Serial.println();
 #endif
-#if 0
+#if 1
     static int last_report = 0;
     int now = millis();
     if (last_report + 300 > now) {
@@ -912,9 +924,8 @@ void fft_reduce()
 	Serial.println();
     }
 #endif
-#endif
 }
-#endif
+#endif // DISABLE_AUDIO
 
 void reset_peak()
 {
