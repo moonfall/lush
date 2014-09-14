@@ -26,7 +26,7 @@ bool Pattern_rain::display()
     draw_pixels(COLOUR_BLACK);
 
     int y = m_drop.m_y.get();
-    if (y > ROW_COUNT) {
+    if (y >= ROW_COUNT) {
 	m_drop.reset(get_colour());
 	y = m_drop.m_y.get();
     }
