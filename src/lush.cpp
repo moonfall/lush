@@ -61,6 +61,9 @@ const int ENCODER_2_SW_PIN = 23;
 const uint32_t TURN_OFF_MS = 3000;
 const uint32_t BUTTON_DEBOUNCE_MS = 5;
 const int INITIAL_GAIN = 165;
+const int INITIAL_FFT_GAIN = 100;
+const int FFT_GAIN_DENOMINATOR = 1000;
+const int MAX_FFT_GAIN = 10000;
 
 // Config options
 Value g_brightness(16, 0, 255);
@@ -71,6 +74,11 @@ Value g_number(0, 0, 1000, true);
 // Audio gain control
 Value g_gain0(INITIAL_GAIN, 0, 255);
 Value g_gain1(INITIAL_GAIN, 0, 255);
+
+// This controls the amount that the FFT bins are scaled by:
+// 100 == 1.0
+// TODO: find a better name
+Value g_fft_gain(INITIAL_FFT_GAIN, 0, MAX_FFT_GAIN);
 
 // Shared state state
 Fader_static g_fader1;
@@ -281,7 +289,9 @@ unsigned g_current_peak = 0;
 
 #ifndef DISABLE_AUDIO
 Sample_type g_magnitudes[MAGNITUDE_COUNT];
-unsigned g_bin_count;
+unsigned g_bin_count = 0;
+float g_bin_scale = 1.0;
+float g_fft_scale_factor = 0.0;
 Bin_type g_bins[MAX_BIN_COUNT];
 uint8_t g_bin_widths[MAX_BIN_COUNT];
 
@@ -334,6 +344,9 @@ void setup()
 
     delayMicroseconds(50);
     program_gain();
+
+    set_fft_bin_count(0);
+    set_fft_scale_factor(0);
 
     // Set up ADC and audio input.
 #ifndef DISABLE_AUDIO
@@ -437,6 +450,21 @@ void program_gain()
 	g_magnitude_sums[i] = 0;
     }
 #endif
+}
+
+void adjust_fft_gain(int adjustment)
+{
+    g_fft_gain.modify(adjustment);
+    program_fft_bin_scale();
+}
+
+void program_fft_bin_scale()
+{
+    g_bin_scale = (float) g_fft_gain.get() * g_fft_scale_factor /
+		  (float) FFT_GAIN_DENOMINATOR;
+    Serial.printf("fft bin scale %.2f (gain %d/%d, factor %f)\n",
+	          g_bin_scale, g_fft_gain.get(), FFT_GAIN_DENOMINATOR,
+		  g_fft_scale_factor);
 }
 
 void set_target_fps(unsigned fps)
@@ -779,14 +807,19 @@ void set_fft_bin_count(unsigned bin_count)
 #endif
 }
 
+void set_fft_scale_factor(float scale_factor)
+{
+    g_fft_scale_factor = scale_factor;
+    program_fft_bin_scale();
+}
+
 // g_magnitudes[MAGNITUDE_COUNT] -> g_bins[g_bin_count.get()]
 void fft_reduce()
 {
-#if 0
-    const float scale = 0.05;
-#else
-    const float scale = 1.0;
-#endif
+    if (g_bin_count == 0) {
+	return;
+    }
+
 #ifdef USE_SMOOTHING
     const float smoothing_factor = 0.00007;
     const float smoothing = powf(smoothing_factor, (float) FFT_SIZE / 60.0);
@@ -816,10 +849,10 @@ void fft_reduce()
 #endif
 
 #if 1
-	float log_power = scale * log(bin_power);
+	float log_power = g_bin_scale * log(bin_power);
 #endif
 #if 0
-	float log_power = scale * log10(bin_power);
+	float log_power = g_bin_scale * log10(bin_power);
 #endif
 #if 0
 	float log_power = 20.0 * log10(bin_power);

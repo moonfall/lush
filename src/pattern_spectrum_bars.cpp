@@ -4,6 +4,7 @@
 void Pattern_spectrum_bars::activate(void *arg)
 {
     set_fft_bin_count(COLUMN_COUNT);
+    set_fft_scale_factor(ROW_COUNT);
 }
 
 #define PEAK_HOLD

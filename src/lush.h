@@ -199,6 +199,9 @@ void adjust_gain(int adjustment1, int adjustment2);
 void program_gain();
 void update_pattern();
 
+void adjust_fft_gain(int adjustment);
+void program_fft_bin_scale();
+
 void set_target_fps(unsigned fps);
 
 void ui_advance_mode();
@@ -210,6 +213,7 @@ void sampler_loop();
 void display_loop();
 
 void set_fft_bin_count(unsigned bin_count);
+void set_fft_scale_factor(float scale_factor);
 void fft_reduce();
 
 void reset_peak();
