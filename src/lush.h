@@ -608,7 +608,13 @@ class Pattern_huey
     : public Pattern
 {
   public:
+    Pattern_huey();
+
+    virtual void ui_callback(Element_id id, Element const &element);
     virtual bool display();
+
+  private:
+    Value m_hue_offset;
 };
 
 class Pattern_line
