@@ -285,7 +285,7 @@ Bin_type g_bins[MAX_BIN_COUNT];
 
 #ifdef MAGNITUDE_AVERAGE
 static int32_t g_magnitude_sums[MAGNITUDE_COUNT];
-const int g_magnitude_avg_count = 1000;
+const int g_magnitude_avg_count = 100;
 static int g_magnitude_avg_gathered = 0;
 #endif
 #endif
@@ -689,7 +689,7 @@ void sampler_loop()
 	} else {
 	    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
 		running_average(g_magnitude_sums[i], g_magnitude_avg_count,
-				g_magnitudes[i]);
+				(int32_t)g_magnitudes[i]);
 	    }
 	}
 	++g_magnitude_avg_gathered;
@@ -710,7 +710,7 @@ void sampler_loop()
 	    for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
 		Serial.print(" ");
 #ifdef MAGNITUDE_AVERAGE
-		Serial.print(g_magnitude_sums[i] / g_magnitude_avg_count, 0);
+		Serial.print(g_magnitude_sums[i] / g_magnitude_avg_count);
 #else
 		Serial.print(i);
 		Serial.print("=");
