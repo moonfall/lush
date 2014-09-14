@@ -100,28 +100,9 @@ inline int flip_y(int y, int rows = ROW_COUNT)
     return (rows - 1) - y;
 }
 
-inline int get_led(int x, int y, int columns = COLUMN_COUNT)
-{
-#ifdef FLIPPED_X_COORDS
-    if (y % 2 == 0) {
-	x = flip_x(x);
-    }
-#endif
+int get_led(int x, int y, int columns = COLUMN_COUNT);
 
-    return y * columns + x;
-}
-
-inline void get_xy(int led, int &x, int &y, int columns = COLUMN_COUNT)
-{
-    x = led % columns;
-    y = led / columns;
-
-#ifdef FLIPPED_X_COORDS
-    if (y % 2 == 0) {
-	x = flip_x(x);
-    }
-#endif
-}
+void get_xy(int led, int &x, int &y, int columns = COLUMN_COUNT);
 
 inline void make_neighbour(Direction dir, int &x, int &y)
 {
@@ -191,6 +172,8 @@ inline void show_pixels()
 {
     g_octo.show();
 }
+
+void set_up_direction(int direction);
 
 void set_gain(int gain);
 void set_gain(int gain1, int gain2);

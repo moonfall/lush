@@ -1,5 +1,98 @@
 #include "lush.h"
 
+Direction g_up_direction = DIR_UP;
+
+// top == UP
+// 0,0 -> 0,0
+
+// top == RIGHT
+// 0,0 -> 7,0
+// 1,0 -> 7,1
+
+// top == LEFT
+// 0,0 -> 0,7
+// 1,0 -> 0,6
+
+// top == BOTTOM
+// 0,0 -> 7,7
+// 1,0 -> 6,7
+
+void set_up_direction(int up) 
+{
+    g_up_direction = (Direction) up;
+}
+
+int get_led(int x, int y, int columns)
+{
+    if (x < 0 || y < 0 || x > 7 || y > 7) {
+	return 0;
+    }
+
+    switch (g_up_direction) {
+	case DIR_UP:
+	default:
+	    break;
+	case DIR_RIGHT: {
+	    int tmp = flip_y(y);
+	    y = x;
+	    x = tmp;
+	    break;
+	}
+	case DIR_DOWN:
+	    x = flip_x(x);
+	    y = flip_y(y);
+	    break;
+	case DIR_LEFT: {
+	    int tmp = flip_x(x);
+	    x = y;
+	    y = tmp;
+	    break;
+	}
+    }
+
+#ifdef FLIPPED_X_COORDS
+    if (y % 2 == 0) {
+	x = flip_x(x);
+    }
+#endif
+
+    return y * columns + x;
+}
+
+void get_xy(int led, int &x, int &y, int columns)
+{
+    x = led % columns;
+    y = led / columns;
+
+#ifdef FLIPPED_X_COORDS
+    if (y % 2 == 0) {
+	x = flip_x(x);
+    }
+#endif
+
+    switch (g_up_direction) {
+	case DIR_UP:
+	default:
+	    break;
+	case DIR_RIGHT: {
+	    int tmp = flip_x(x);
+	    x = y;
+	    y = tmp;
+	    break;
+	}
+	case DIR_DOWN:
+	    x = flip_x(x);
+	    y = flip_y(y);
+	    break;
+	case DIR_LEFT: {
+	    int tmp = flip_y(y);
+	    y = x;
+	    x = tmp;
+	    break;
+	}
+    }
+}
+
 void blend_pixel(int led, Colour c)
 {
     uint8_t a = (c >> 24);

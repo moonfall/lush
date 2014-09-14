@@ -70,6 +70,7 @@ Value g_brightness(16, 0, 255);
 Value g_resume_brightness(16, 0, 255);
 Value g_hue(0, 0, 255, true);
 Value g_number(0, 0, 1000, true);
+Value g_up(DIR_UP, 0, 3, true);
 
 // Audio gain control
 Value g_gain0(INITIAL_GAIN, 0, 255);
@@ -164,11 +165,13 @@ Pattern_option g_option_brightness("BR", g_brightness, true);
 Pattern_option g_option_gain0("G0", g_gain0, true);
 Pattern_option g_option_gain1("G1", g_gain1, true);
 Pattern_option g_option_number("N", g_number, true);
+Pattern_option g_option_up("UP", g_up, true);
 struct Mode g_config_options[] = {
     { &g_option_brightness },
     { &g_option_gain0 },
     { &g_option_gain1 },
     { &g_option_number },
+    { &g_option_up },
 };
 const int CONFIG_OPTION_COUNT = sizeof(g_config_options) /
 				sizeof(g_config_options[0]);
@@ -382,6 +385,9 @@ void setup()
 
     // Start cycling colours by default
     g_hue.set_velocity(256, 10000);
+
+    // Cache the up value since it's always used
+    g_up.set_callback(set_up_direction);
 }
 
 uint16_t spi_issue2(byte b1, byte b2)
