@@ -60,6 +60,10 @@ void Value::set(int value)
 {
     m_value = bound(value);
     m_value_time = now();
+
+    if (m_callback) {
+	m_callback(value);
+    }
 }
 
 void Value::modify(int delta)
@@ -81,6 +85,11 @@ void Value::set_periodic(int amplitude, int cycle_ms)
     set(get());
     m_periodic = amplitude;
     m_periodic_ms = cycle_ms;
+}
+
+void Value::set_callback(void (*callback)(int value))
+{
+    m_callback = callback;
 }
 
 int Value::get_unbounded()

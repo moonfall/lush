@@ -245,6 +245,8 @@ class Value
     void set_velocity(int delta, int delta_ms);
     void set_periodic(int amplitude, int cycle_ms);
 
+    void set_callback(void (*callback)(int value));
+
     int get_unbounded();
     int get();
 
@@ -264,6 +266,8 @@ class Value
 
     int m_periodic;
     int m_periodic_ms;
+
+    void (*m_callback)(int value);
 };
 
 extern Value g_brightness;
