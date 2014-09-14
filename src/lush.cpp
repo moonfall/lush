@@ -164,12 +164,14 @@ const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 Pattern_option g_option_brightness("BR", g_brightness, true);
 Pattern_option g_option_gain0("G0", g_gain0, true);
 Pattern_option g_option_gain1("G1", g_gain1, true);
+Pattern_option g_option_fft_gain("FG", g_fft_gain, true);
 Pattern_option g_option_number("N", g_number, true);
 Pattern_option g_option_up("UP", g_up, true);
 struct Mode g_config_options[] = {
     { &g_option_brightness },
     { &g_option_gain0 },
     { &g_option_gain1 },
+    { &g_option_fft_gain },
     { &g_option_number },
     { &g_option_up },
 };
