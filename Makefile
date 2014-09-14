@@ -81,8 +81,8 @@ LDFLAGS = -Os -Wl,--gc-sections -mcpu=cortex-m4 -mthumb -T$(LDSCRIPT)
 #CROSS=/Applications/Arduino.app/Contents/Resources/Java/hardware/tools/arm-none-eabi/bin/arm-none-eabi-
 
 # Uncomment to have gcc filter out unused functions to reduce text size
-#CPPFLAGS += -fdata-sections -ffunction-sections
-#LDFLAGS += -Wl,--gc-sections
+CPPFLAGS += -fdata-sections -ffunction-sections
+LDFLAGS += -Wl,--gc-sections
 
 # additional libraries to link
 LIBS = -lm -larm_cortexM4l_math

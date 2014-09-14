@@ -84,7 +84,6 @@ Value g_fft_gain(INITIAL_FFT_GAIN, 0, MAX_FFT_GAIN);
 Fader_static g_fader1;
 
 // Patterns
-Pattern_random_fader g_random_fader(g_fader1);
 Pattern_alphabet g_pattern_alphabet;
 Pattern_border g_pattern_border;
 Pattern_counter g_pattern_counter;
@@ -94,24 +93,27 @@ Pattern_huey g_pattern_huey;
 Pattern_line g_pattern_line;
 Pattern_marquee g_pattern_marquee;
 Pattern_maze g_pattern_maze(g_fader1);
-#if 0
-Pattern_peak_diagonal g_pattern_peak_diagonal;
-Pattern_peak_noise g_pattern_peak_noise(g_fader1);
-Pattern_peak_ordered g_pattern_peak_ordered(g_fader1);
-#endif
-Pattern_peak_spike g_pattern_peak_spike;
 Pattern_plasma g_pattern_plasma;
 Pattern_pulse g_pattern_pulse;
 Pattern_race g_pattern_race;
 Pattern_rain g_pattern_rain;
-#ifndef DISABLE_AUDIO
-Pattern_spectrum_bars g_pattern_spectrum_bars;
-Pattern_spectrum_field g_pattern_spectrum_field;
-Pattern_spectrum_timeline g_pattern_spectrum_timeline;
+Pattern_random_fader g_random_fader(g_fader1);
+#if 0
 Pattern_synthesia_fire g_pattern_synthesia_fire;
 #endif
 Pattern_synthesia_plasma_complex g_pattern_synthesia_plasma_complex;
 Pattern_wheel g_pattern_wheel;
+#ifndef DISABLE_AUDIO
+Pattern_peak_diagonal g_pattern_peak_diagonal;
+#if 0
+Pattern_peak_ordered g_pattern_peak_ordered(g_fader1);
+#endif
+Pattern_peak_noise g_pattern_peak_noise(g_fader1);
+Pattern_peak_spike g_pattern_peak_spike;
+Pattern_spectrum_bars g_pattern_spectrum_bars;
+Pattern_spectrum_field g_pattern_spectrum_field;
+Pattern_spectrum_timeline g_pattern_spectrum_timeline;
+#endif
 
 // Modes:
 // - weighted random mode
@@ -119,17 +121,18 @@ Pattern_wheel g_pattern_wheel;
 // - select specific mode
 // - configuration
 struct Mode g_modes[] = {
-    { &g_pattern_race },
-    { &g_pattern_marquee },
     { &g_pattern_alphabet },
-    { &g_pattern_plasma },
-    { &g_pattern_maze },
-    { &g_random_fader },
-    { &g_pattern_heart },
-    { &g_pattern_line },
-    { &g_pattern_dropper },
     { &g_pattern_border },
+    { &g_pattern_counter },
+    { &g_pattern_dropper },
+    { &g_pattern_heart },
     { &g_pattern_huey },
+    { &g_pattern_line },
+    { &g_pattern_marquee },
+    { &g_pattern_maze },
+    { &g_pattern_plasma },
+    { &g_pattern_pulse },
+    { &g_pattern_race },
     { &g_pattern_rain },
 #if 0
     { &g_pattern_rain, (void *) Pattern_rain::RAIN_CURRENT_HUE },
@@ -137,26 +140,23 @@ struct Mode g_modes[] = {
     { &g_pattern_rain, (void *) Pattern_rain::RAIN_SINGLE_RANDOM_COLOUR },
     { &g_pattern_rain, (void *) Pattern_rain::RAIN_PURE_WHITE },
 #endif
-    { &g_pattern_counter },
-    { &g_pattern_pulse },
-    { &g_pattern_wheel },
-#ifndef DISABLE_AUDIO
-    { &g_pattern_peak_spike },
-#if 0
-    { &g_pattern_peak_diagonal },
-    { &g_pattern_peak_noise },
-    { &g_pattern_peak_ordered },
-#endif
-    { &g_pattern_spectrum_bars },
-#if 0
-    { &g_pattern_spectrum_field },
-    { &g_pattern_spectrum_timeline },
-#endif
-#endif
+    { &g_random_fader },
 #if 0
     { &g_pattern_synthesia_fire },
 #endif
     { &g_pattern_synthesia_plasma_complex },
+    { &g_pattern_wheel },
+#ifndef DISABLE_AUDIO
+    { &g_pattern_peak_diagonal },
+    { &g_pattern_peak_noise },
+#if 0
+    { &g_pattern_peak_ordered },
+#endif
+    { &g_pattern_peak_spike },
+    { &g_pattern_spectrum_bars },
+    { &g_pattern_spectrum_field },
+    { &g_pattern_spectrum_timeline },
+#endif
 };
 const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 
