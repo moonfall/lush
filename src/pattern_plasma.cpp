@@ -14,6 +14,16 @@ Pattern_plasma::Pattern_plasma()
     }
 }
 
+void Pattern_plasma::ui_callback(Element_id id, Element const &element)
+{
+    switch (id) {
+	case UI_KNOB2_ENCODER:
+	    m_palette += element.get_current_change();
+	default:
+	    break;
+    }
+}
+
 void Pattern_plasma::activate(void *arg)
 {
     ++m_palette;

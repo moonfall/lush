@@ -716,6 +716,8 @@ class Pattern_plasma
   public:
     Pattern_plasma();
 
+    virtual void ui_callback(Element_id id, Element const &element);
+
     virtual void activate(void *arg);
     virtual bool display();
 
