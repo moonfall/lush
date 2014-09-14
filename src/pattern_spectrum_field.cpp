@@ -3,7 +3,7 @@
 
 void Pattern_spectrum_field::activate(void *arg)
 {
-    g_bin_count.set(LED_COUNT);
+    set_fft_bin_count(LED_COUNT);
 }
 
 bool Pattern_spectrum_field::display()

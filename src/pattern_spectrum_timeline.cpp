@@ -3,7 +3,7 @@
 
 void Pattern_spectrum_timeline::activate(void *arg)
 {
-    g_bin_count.set(COLUMN_COUNT);
+    set_fft_bin_count(COLUMN_COUNT);
 }
 
 // -1 or +1 for reverse or forward.

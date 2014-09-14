@@ -3,7 +3,7 @@
 
 void Pattern_spectrum_bars::activate(void *arg)
 {
-    g_bin_count.set(COLUMN_COUNT);
+    set_fft_bin_count(COLUMN_COUNT);
 }
 
 #define PEAK_HOLD

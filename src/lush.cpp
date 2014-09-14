@@ -281,7 +281,9 @@ unsigned g_current_peak = 0;
 
 #ifndef DISABLE_AUDIO
 Sample_type g_magnitudes[MAGNITUDE_COUNT];
+unsigned g_bin_count;
 Bin_type g_bins[MAX_BIN_COUNT];
+uint8_t g_bin_widths[MAX_BIN_COUNT];
 
 #ifdef MAGNITUDE_AVERAGE
 static int32_t g_magnitude_sums[MAGNITUDE_COUNT];
@@ -298,7 +300,6 @@ const float GAIN_RS_TYP = GAIN_RAB / GAIN_RS_COUNT;
 
 Value g_min_db(55.0);
 Value g_max_db(65.0);
-Value g_bin_count(8);
 
 #if 1
 float g_min_dbs[MAX_BIN_COUNT] = {
@@ -721,7 +722,7 @@ void sampler_loop()
 	    }
 #endif
 	    Serial.print(" bins");
-	    for (int i = 0; i < g_bin_count.get(); ++i) {
+	    for (int i = 0; i < g_bin_count; ++i) {
 		Serial.printf(" %u", g_bins[i]);
 	    }
 	    Serial.println();
@@ -738,106 +739,18 @@ float calculate_actual_gain(int wiper)
 	   1;
 }
 
-// g_magnitudes[MAGNITUDE_COUNT] -> g_bins[g_bin_count.get()]
-void fft_reduce()
+const unsigned FIRST_BIN = 0;
+void set_fft_bin_count(unsigned bin_count)
 {
-#if 0
-    // Some custom EQ
-    g_magnitudes[0] /= 100;
-    g_magnitudes[1] /= 50;
-    g_magnitudes[33] /= 35;
-    g_magnitudes[34] /= 100;
-    g_magnitudes[35] /= 50;
-    g_magnitudes[36] /= 2;
-    g_magnitudes[67] /= 10;
-    g_magnitudes[68] /= 20;
-    g_magnitudes[69] /= 15;
-    g_magnitudes[85] /= 6;
-    g_magnitudes[86] /= 6;
-    g_magnitudes[101] /= 8;
-    g_magnitudes[102] /= 20;
-    g_magnitudes[103] /= 20;
-    g_magnitudes[104] /= 5;
-    g_magnitudes[118] /= 2;
-    g_magnitudes[119] /= 9;
-    g_magnitudes[120] /= 9;
-#endif
+    g_bin_count = bin_count;
 
-#if 0
-    // From Audio library spectrum analyzer
-    const int nsum[16] = {1, 1, 2, 2, 3, 4, 5, 6, 6, 8, 12, 14, 16, 18, 18, 24};
-    for (int i = 0; i < g_bin_count.get(); ++i ) {
-	g_bins[i] = 0;
-    }
-    int n = 0;
-    int count = 0;
-    for (int i = 1; i < MAGNITUDE_COUNT; ++i) {
-	g_bins[n] += g_magnitudes[i];
-	++count;
-	if (count >= nsum[n]) {
-	    ++n;
-	    if (n >= min(g_bin_count.get(),
-			 (int) (sizeof(nsum) / sizeof(nsum[0])))) {
-		break;
-	    }
-	    count = 0;
-	}
-    }
-
-#if 1
-    int scale = 2 + 2048 / 7;
-    for (int i = 0; i < g_bin_count.get(); ++i) {
-	g_bins[i] = min(g_bins[i] / scale, 8);
-    }
-#endif
-
-#endif
-	
-#if 0
-    int bin_size = MAGNITUDE_COUNT / g_bin_count.get();
-#ifdef LOGARITHMIC_BINS
-    bin_size = 1;
-#endif
-    Sample_type *src = g_magnitudes + 1;
-    Sample_type *src_end = g_magnitudes + MAGNITUDE_COUNT;
-    for (int i = 0; i < g_bin_count.get() && src < src_end; ++i) {
-	g_bins[i] = 0;
-	int sum_count = 0;
-	for (int j = 0; j < bin_size && src < src_end; ++j, ++src) {
-	    g_bins[i] += *src;
-	    ++sum_count;
-	}
-	if (sum_count) {
-	    g_bins[i] /= sum_count;
-	}
-#ifdef LOGARITHMIC_BINS
-	bin_size *= 2;
-#endif
-#ifdef F32
-	g_bins[i] = 20.0 * log10(g_bins[i]);
-	g_bins[i] -= (Sample_type) g_min_db.get();
-	g_bins[i] = g_bins[i] < 0.0 ? 0.0 : g_bins[i];
-	g_bins[i] /= (Sample_type) (g_max_db.get() - g_min_db.get());
-	g_bins[i] = g_bins[i] > 1.0 ? 1.0 : g_bins[i];
-#endif
-    }
-#endif
-
-#if 1
-#if 0
-    const float scale = 0.05;
-#else
-    const float scale = 1.0;
-#endif
+#define GAMMA_BINS
+#ifdef GAMMA_BINS
     const float gamma = 2.0;
-#ifdef USE_SMOOTHING
-    const float smoothing_factor = 0.00007;
-    const float smoothing = powf(smoothing_factor, (float) FFT_SIZE / 60.0);
-#endif
-    int f_start = 1;
-    for (int i = 0; i < g_bin_count.get(); ++i) {
-	int f_end = round(powf(((float)(i + 1)) / (float) g_bin_count.get(),
-			       gamma) * MAGNITUDE_COUNT);
+    int f_start = FIRST_BIN;
+    for (unsigned i = 0; i < g_bin_count; ++i) {
+	int f_end = round(powf(((float)(i + 1)) / (float) g_bin_count, gamma) *
+		          MAGNITUDE_COUNT);
 	if (f_end > MAGNITUDE_COUNT) {
 	    f_end = MAGNITUDE_COUNT;
 	}
@@ -845,20 +758,83 @@ void fft_reduce()
 	if (f_width <= 0) {
 	    f_width = 1;
 	}
+	g_bin_widths[i] = f_width;
+	f_start = f_end;
+    }
+#endif
 
-	float bin_power = 0;
-	for (int j = 0; j < f_width; ++j) {
-	    float p = (float) g_magnitudes[f_start + j];
+#ifdef EQUAL_BINS
+    int bin_size = MAGNITUDE_COUNT / g_bin_count;
+    for (unsigned i = 0; i < g_bin_count; ++i) {
+	g_bin_widths[i] = bin_size;
+    }
+#endif
+
+#ifdef LOGARITHMIC_BINS
+    int bin_size = 1;
+    for (unsigned i = 0; i < g_bin_count; ++i) {
+	g_bin_width[i] = bin_size;
+	bin_size *= 2;
+    }
+#endif
+}
+
+// g_magnitudes[MAGNITUDE_COUNT] -> g_bins[g_bin_count.get()]
+void fft_reduce()
+{
+#if 0
+    const float scale = 0.05;
+#else
+    const float scale = 1.0;
+#endif
+#ifdef USE_SMOOTHING
+    const float smoothing_factor = 0.00007;
+    const float smoothing = powf(smoothing_factor, (float) FFT_SIZE / 60.0);
+#endif
+    int f_start = FIRST_BIN;
+    for (unsigned i = 0; i < g_bin_count; ++i) {
+	float bin_power = 0.0;
+	int bin_width = 0;
+	for (bin_width = 0;
+	     bin_width < g_bin_widths[i] &&
+	     f_start + bin_width < MAGNITUDE_COUNT; ++bin_width) {
+	    float p = (float) g_magnitudes[f_start + bin_width];
+#define MAX_POWER
+#ifdef MAX_POWER
 	    if (p > bin_power) {
 		bin_power = p;
 	    }
+#else
+	    // Average.
+	    bin_power += p;
+#endif
 	}
 
+#ifndef MAX_POWER
+	// Average
+	bin_power /= (float) bin_width;
+#endif
 
 #if 1
-	float log_power = scale * log((float)bin_power);
+	float log_power = scale * log(bin_power);
+#endif
+#if 0
+	float log_power = scale * log10(bin_power);
+#endif
+#if 0
+	float log_power = 20.0 * log10(bin_power);
+#if 0
+	log_power -= (Sample_type) g_min_dbs[i];
+	log_power = log_power < 0.0 ? 0.0 : log_power;
+	log_power /= (Sample_type) (g_max_dbs[i] - g_min_dbs[i]);
+	log_power = log_power > 1.0 ? 1.0 : log_power;
+#endif
+#endif
+#if 0
 	Serial.printf("bin %d width %d %d-%d power %.3f %.3f\n",
-			i, f_width, f_start, f_end, bin_power, log_power);
+		      i, bin_width, f_start, f_start + bin_width, bin_power,
+		      log_power);
+#endif
 	if (log_power < 0.0) {
 	    log_power = 0.0;
 	}
@@ -869,55 +845,26 @@ void fft_reduce()
 #else
 	g_bins[i] = (int) log_power;
 #endif
-#endif
-#if 0
-	bin_power = 20.0 * log10(bin_power);
-	bin_power -= (Sample_type) g_min_db.get();
-	bin_power = bin_power < 0.0 ? 0.0 : bin_power;
-	bin_power /= (Sample_type) (g_max_db.get() - g_min_db.get());
-	bin_power = bin_power > 1.0 ? 1.0 : bin_power;
-	g_bins[i] = bin_power;
-#endif
-#if 0
-	bin_power = 20.0 * log10(bin_power);
-	bin_power -= (Sample_type) g_min_dbs[i];
-	bin_power = bin_power < 0.0 ? 0.0 : bin_power;
-	bin_power /= (Sample_type) (g_max_dbs[i] - g_min_dbs[i]);
-	bin_power = bin_power > 1.0 ? 1.0 : bin_power;
-	g_bins[i] = bin_power;
-#endif
-#if 0
-	bin_power = 20.0 * log10(bin_power);
-	g_bins[i] = bin_power;
-#endif
 
-#if 0
-	Serial.print(" logpower ");
-	Serial.print(bin_power);
-	Serial.println();
-#endif
-
-	f_start = f_end;
+	f_start += bin_width;
     }
-#endif
 
 #ifdef LOG_BINS
     Serial.print("dc=");
     Serial.print(g_dc_total / g_dc_sample_count);
-    for (int i = 0; i < g_bin_count.get(); ++i) {
+    for (int i = 0; i < g_bin_count; ++i) {
 	Serial.print(" ");
 	Serial.print(g_bins[i]);
     }
     Serial.println();
 #endif
-#if 1
+#if 0
     static int last_report = 0;
     int now = millis();
     if (last_report + 300 > now) {
 	last_report = now;
-	Serial.print("bin=");
-	Serial.print(g_current_bin);
-	for (int i = 0; i < g_bin_count.get(); ++i) {
+	Serial.printf("bin=[mod %u]", g_current_bin);
+	for (unsigned i = 0; i < g_bin_count; ++i) {
 	    Serial.print(" ");
 	    Serial.print(g_bins[i]);
 	}

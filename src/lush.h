@@ -209,6 +209,7 @@ void turn_off();
 void sampler_loop();
 void display_loop();
 
+void set_fft_bin_count(unsigned bin_count);
 void fft_reduce();
 
 void reset_peak();
@@ -263,7 +264,6 @@ class Value
 
 extern Value g_brightness;
 extern Value g_hue;
-extern Value g_bin_count;
 
 inline Colour make_hue(uint8_t h)
 {
