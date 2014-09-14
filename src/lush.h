@@ -786,7 +786,7 @@ class Pattern_rain
 };
 
 class Pattern_spectrum_bars
-    : public Pattern
+    : public Pattern_audio
 {
   public:
     virtual void activate(void *arg);
@@ -794,7 +794,7 @@ class Pattern_spectrum_bars
 };
 
 class Pattern_spectrum_field
-    : public Pattern
+    : public Pattern_audio
 {
   public:
     virtual void activate(void *arg);
@@ -802,7 +802,7 @@ class Pattern_spectrum_field
 };
 
 class Pattern_spectrum_timeline
-    : public Pattern
+    : public Pattern_audio
 {
   public:
     virtual void activate(void *arg);
