@@ -25,33 +25,33 @@ bool Maze::expand()
 	get_xy(index, x, y);
 
 	int neighbours = 0;
-	if (get_maze(DIR_LEFT, x, y) != WALL_VALUE) {
+	if (get_maze(DIR_UP, x, y) != WALL_VALUE) {
 	    ++neighbours;
 	}
 	if (get_maze(DIR_RIGHT, x, y) != WALL_VALUE) {
 	    ++neighbours;
 	}
-	if (get_maze(DIR_UP, x, y) != WALL_VALUE) {
+	if (get_maze(DIR_DOWN, x, y) != WALL_VALUE) {
 	    ++neighbours;
 	}
-	if (get_maze(DIR_DOWN, x, y) != WALL_VALUE) {
+	if (get_maze(DIR_LEFT, x, y) != WALL_VALUE) {
 	    ++neighbours;
 	}
 
 	if (neighbours <= 1) {
 	    add_maze(x, y, false);
 
-	    if (get_maze(DIR_LEFT, x, y) != WALL_VALUE) {
-		add_maze(x + 1, y, true);
+	    if (get_maze(DIR_UP, x, y) != WALL_VALUE) {
+		add_maze(x, y + 1, true);
 	    }
 	    if (get_maze(DIR_RIGHT, x, y) != WALL_VALUE) {
 		add_maze(x - 1, y, true);
 	    }
-	    if (get_maze(DIR_UP, x, y) != WALL_VALUE) {
-		add_maze(x, y + 1, true);
-	    }
 	    if (get_maze(DIR_DOWN, x, y) != WALL_VALUE) {
 		add_maze(x, y - 1, true);
+	    }
+	    if (get_maze(DIR_LEFT, x, y) != WALL_VALUE) {
+		add_maze(x + 1, y, true);
 	    }
 
 	    return true;

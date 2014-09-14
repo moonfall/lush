@@ -84,10 +84,10 @@ Colour make_reverse_wheel7(uint16_t wheel, uint8_t brightness);
 
 enum Direction
 {
-    DIR_LEFT,
-    DIR_RIGHT,
     DIR_UP,
+    DIR_RIGHT,
     DIR_DOWN,
+    DIR_LEFT,
 };
 
 inline int flip_x(int x, int columns = COLUMN_COUNT)
@@ -126,17 +126,17 @@ inline void get_xy(int led, int &x, int &y, int columns = COLUMN_COUNT)
 inline void make_neighbour(Direction dir, int &x, int &y)
 {
     switch (dir) {
-	case DIR_LEFT:
-	    --x;
+	case DIR_UP:
+	    --y;
 	    break;
 	case DIR_RIGHT:
 	    ++x;
 	    break;
-	case DIR_UP:
-	    --y;
-	    break;
 	case DIR_DOWN:
 	    ++y;
+	    break;
+	case DIR_LEFT:
+	    --x;
 	    break;
     }
 }

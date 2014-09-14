@@ -328,17 +328,17 @@ void draw_string(int x, int y, const char *s, Colour fg, const Colour *bg,
     while (*s) {
 	draw_char(x, y, *s, fg, bg);
 	switch (dir) {
-	    case DIR_LEFT:
-		x -= (FONT_WIDTH + spacing);
+	    case DIR_UP:
+		y -= (FONT_HEIGHT + spacing);
 		break;
 	    case DIR_RIGHT:
 		x += (FONT_WIDTH + spacing);
 		break;
-	    case DIR_UP:
-		y -= (FONT_HEIGHT + spacing);
-		break;
 	    case DIR_DOWN:
 		y += (FONT_HEIGHT + spacing);
+		break;
+	    case DIR_LEFT:
+		x -= (FONT_WIDTH + spacing);
 		break;
 	}
 	++s;
