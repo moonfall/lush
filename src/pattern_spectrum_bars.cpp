@@ -4,21 +4,19 @@
 void Pattern_spectrum_bars::activate(void *arg)
 {
     g_bin_count.set(COLUMN_COUNT);
-    g_bin_count.set(COLUMN_COUNT * 2);
 }
 
 #define PEAK_HOLD
 #ifdef PEAK_HOLD
 // TODO: Change to constant.
-Sample_type g_peaks[COLUMN_COUNT];
+Bin_type g_peaks[COLUMN_COUNT];
 Colour g_peak_leds[COLUMN_COUNT];
-const float PEAK_FADE = 0.9;
 #endif
 
 bool Pattern_spectrum_bars::display()
 {
     for (int x = 0; x < COLUMN_COUNT; ++x) {
-	Sample_type bin = g_bins[x];
+	Bin_type bin = g_bins[x];
 #ifdef PEAK_HOLD
 	if (bin > g_peaks[x]) {
 	    g_peaks[x] = bin;
