@@ -188,7 +188,7 @@ AudioInputAnalog g_audio_input;
 // http://www.earlevel.com/main/2013/10/13/biquad-calculator-v2/
 int g_hp_filter_params[] = {
 // highpass, 50Hz, Q=0.707
-#if 1
+#if 0
     COEFF(0.9949753356833961),
     COEFF(-1.9899506713667923),
     COEFF(0.9949753356833961),
@@ -224,7 +224,7 @@ int g_hp_filter_params[] = {
 #endif
 
     // highpass, 3000Hz, Q=0.707
-#if 0
+#if 1
     COEFF( 0.7385371039326799 ),
     COEFF( -1.4770742078653598 ),
     COEFF( 0.7385371039326799 ),
@@ -252,19 +252,19 @@ AudioAnalyzeFFT1024 g_fft;
 AudioAnalyzeFFT256 g_fft;
 #endif
 AudioPeak g_peak;
-#if 0
+#define FILTER_AUDIO
+#ifdef FILTER_AUDIO
 AudioConnection g_audio_conn1(g_audio_input, g_hp_filter);
 AudioConnection g_audio_conn2(g_hp_filter, g_fft);
 AudioConnection g_audio_conn3(g_audio_input, g_peak);
+#else
+AudioConnection g_audio_conn1(g_audio_input, g_fft);
+AudioConnection g_audio_conn2(g_audio_input, g_peak);
 #endif
 #if 0
 AudioConnection g_audio_conn1(g_audio_input, g_fft);
 AudioConnection g_audio_conn2(g_audio_input, g_hp_filter);
 AudioConnection g_audio_conn3(g_hp_filter, g_peak);
-#endif
-#if 1
-AudioConnection g_audio_conn1(g_audio_input, g_fft);
-AudioConnection g_audio_conn2(g_audio_input, g_peak);
 #endif
 #if 0
 AudioConnection g_audio_conn1(g_audio_input, g_hp_filter);
