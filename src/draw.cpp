@@ -22,13 +22,16 @@ void set_up_direction(int up)
     g_up_direction = (Direction) up;
 }
 
-int get_led(int x, int y, int columns)
+int get_led_dir(Direction dir, int x, int y, int columns)
 {
-    if (x < 0 || y < 0 || x > 7 || y > 7) {
+#if 1
+    if (x < 0 || y < 0 || x > COLUMN_COUNT || y > ROW_COUNT) {
+	Serial.printf("bad pixel %d,%d\n", x, y);
 	return 0;
     }
+#endif
 
-    switch (g_up_direction) {
+    switch (dir) {
 	case DIR_UP:
 	default:
 	    break;
@@ -59,7 +62,7 @@ int get_led(int x, int y, int columns)
     return y * columns + x;
 }
 
-void get_xy(int led, int &x, int &y, int columns)
+void get_xy_dir(Direction dir, int led, int &x, int &y, int columns)
 {
     x = led % columns;
     y = led / columns;
@@ -70,7 +73,7 @@ void get_xy(int led, int &x, int &y, int columns)
     }
 #endif
 
-    switch (g_up_direction) {
+    switch (dir) {
 	case DIR_UP:
 	default:
 	    break;
@@ -93,7 +96,7 @@ void get_xy(int led, int &x, int &y, int columns)
     }
 }
 
-void blend_pixel(int led, Colour c)
+void blend_led(int led, Colour c)
 {
     uint8_t a = (c >> 24);
 
@@ -105,13 +108,13 @@ void blend_pixel(int led, Colour c)
     uint8_t bg_r;
     uint8_t bg_g;
     uint8_t bg_b;
-    split_rgb(get_pixel(led), bg_r, bg_g, bg_b);
+    split_rgb(get_led(led), bg_r, bg_g, bg_b);
 
     uint8_t r = (a * (unsigned) fg_r + (255 - a) * (unsigned) bg_r) >> 8;
     uint8_t g = (a * (unsigned) fg_g + (255 - a) * (unsigned) bg_g) >> 8;
     uint8_t b = (a * (unsigned) fg_b + (255 - a) * (unsigned) bg_b) >> 8;
 
-    g_octo.setPixel(led, make_rgb(r, g, b));
+    draw_led(led, make_rgb(r, g, b));
 }
 
 void move_along_box(int origin, bool clockwise, int &x, int &y)

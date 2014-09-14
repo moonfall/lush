@@ -31,15 +31,14 @@ bool Pattern_spectrum_bars::display()
 	int peak_rows = g_peaks[x];
 #endif
 	for (int y = 0; y < ROW_COUNT; ++y) {
-	    int led = get_led(x, flip_y(y));
 	    if (y < rows) {
-		draw_pixel(led, make_current_hue());
+		draw_pixel(x, flip_y(y), make_current_hue());
 #ifdef PEAK_HOLD
 	    } else if (y < peak_rows) {
-		draw_pixel(led, g_peak_leds[x]);
+		draw_pixel(x, flip_y(y), g_peak_leds[x]);
 #endif
 	    } else {
-		draw_pixel(led, COLOUR_BLACK);
+		draw_pixel(x, flip_y(y), COLOUR_BLACK);
 	    }
 	}
 #ifdef PEAK_HOLD

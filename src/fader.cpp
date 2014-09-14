@@ -405,8 +405,10 @@ void Fader_static::set_colours(bool initial, Colour c)
 
 void Fader_static::set_initial_from_current()
 {
-    for (int led = 0; led < LED_COUNT; ++led) {
-	m_initial[led] = get_pixel(led);
+    for (int y = 0; y < ROW_COUNT; ++y) {
+	for (int x = 0; x < COLUMN_COUNT; ++x) {
+	    m_initial[get_led(x, y)] = get_pixel(x, y);
+	}
     }
 }
 
@@ -484,11 +486,13 @@ bool Pattern_random_fader::display()
     int t = now - m_start_time;
 
     bool all_done = true;
-    for (int led = 0; led < LED_COUNT; ++led) {
-	bool done = false;
-	draw_pixel(led, m_fader.generate(led, t, &done));
-	if (!done) {
-	    all_done = false;
+    for (int y = 0; y < ROW_COUNT; ++y) {
+	for (int x = 0; x < COLUMN_COUNT; ++x) {
+	    bool done = false;
+	    draw_pixel(x, y, m_fader.generate(get_led(x, y), t, &done));
+	    if (!done) {
+		all_done = false;
+	    }
 	}
     }
 

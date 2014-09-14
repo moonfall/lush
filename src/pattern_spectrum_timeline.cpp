@@ -22,14 +22,12 @@ bool Pattern_spectrum_timeline::display()
     int end_row = flip_y(start_row);
     for (int y = end_row; y != start_row; y -= TIMELINE_DIRECTION) {
 	for (int x = 0; x < COLUMN_COUNT; ++x) {
-	    draw_pixel(get_led(x, y),
-		    get_pixel(get_led(x, y - TIMELINE_DIRECTION)));
+	    draw_pixel(x, y, get_pixel(x, y - TIMELINE_DIRECTION));
 	}
     }
     for (int x = 0; x < COLUMN_COUNT; ++x) {
 	int lightness = g_bins[x] * g_brightness.get() / SCALE_DENOMINATOR;
-	draw_pixel(get_led(x, start_row),
-		make_hsv(hue, MAX_SATURATION, lightness));
+	draw_pixel(x, start_row, make_hsv(hue, MAX_SATURATION, lightness));
     }
 
     return true;

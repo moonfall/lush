@@ -30,9 +30,11 @@ bool Pattern_peak_ordered::display()
     Colour c = make_hue(g_hue.get());
 
     int peak = get_mapped_peak(LED_COUNT);
-    for (int led = 0; led < LED_COUNT; ++led) {
-	if (m_fader.m_order[led] < peak) {
-	    draw_pixel(led, c);	
+    for (int y = 0; y < ROW_COUNT; ++y) {
+	for (int x = 0; x < COLUMN_COUNT; ++x) {
+	    if (m_fader.m_order[get_led(x, y)] < peak) {
+		draw_pixel(x, y, c);	
+	    }
 	}
     }
 

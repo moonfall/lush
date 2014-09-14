@@ -18,8 +18,7 @@ bool Pattern_spectrum_field::display()
     for (int y = ROW_COUNT - 1; y >= 0; --y) {
 	for (int x = 0; x < COLUMN_COUNT; ++x) { 
 	    int lightness = *intensity * g_brightness.get() / SCALE_DENOMINATOR;
-	    draw_pixel(get_led(x, y),
-		       make_hsv(hue, MAX_SATURATION, lightness));
+	    draw_pixel(x, y, make_hsv(hue, MAX_SATURATION, lightness));
 	    ++intensity;
 	}
     }

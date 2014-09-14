@@ -43,8 +43,10 @@ bool Pattern_dropper::display()
 	m_needs_new_drop = false;
     }
 
-    for (int led = 0; led < LED_COUNT; ++led) {
-	draw_pixel(led, m_field[led]);
+    for (int y = 0; y < ROW_COUNT; ++y) {
+	for (int x = 0; x < COLUMN_COUNT; ++x) {
+	    draw_pixel(x, y, m_field[get_led(x, y)]);
+	}
     }
 
     int x = m_drop.m_x.get();

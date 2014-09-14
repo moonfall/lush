@@ -15,9 +15,7 @@ bool Pattern_wheel::display()
 
     g_last_colour = c;
 
-    for (int led = 0; led < LED_COUNT; ++led) {
-	draw_pixel(led, c);
-    }
+    draw_pixels(c);
 
     return true;
 }

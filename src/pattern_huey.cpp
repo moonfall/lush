@@ -24,8 +24,10 @@ bool Pattern_huey::display()
 {
     int hue = g_hue.get();
     int offset = m_hue_offset.get();
-    for (int led = 0; led < LED_COUNT; ++led, hue += offset) {
-	draw_pixel(led, make_hue(hue));
+    for (int y = 0; y < ROW_COUNT; ++y) {
+	for (int x = 0; x < COLUMN_COUNT; ++x, hue += offset) {
+	    draw_pixel(x, y, make_hue(hue));
+	}
     }
 
     return true;

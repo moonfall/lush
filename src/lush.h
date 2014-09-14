@@ -100,9 +100,20 @@ inline int flip_y(int y, int rows = ROW_COUNT)
     return (rows - 1) - y;
 }
 
-int get_led(int x, int y, int columns = COLUMN_COUNT);
+extern Direction g_up_direction;
 
-void get_xy(int led, int &x, int &y, int columns = COLUMN_COUNT);
+int get_led_dir(Direction dir, int x, int y, int columns = COLUMN_COUNT);
+inline int get_led(int x, int y, int columns = COLUMN_COUNT)
+{
+    return get_led_dir(DIR_UP, x, y, columns);
+}
+
+void get_xy_dir(Direction dir, int led, int &x, int &y,
+		int columns = COLUMN_COUNT);
+inline void get_xy(int led, int &x, int &y, int columns = COLUMN_COUNT)
+{
+    get_xy_dir(DIR_UP, led, x, y, columns);
+}
 
 inline void make_neighbour(Direction dir, int &x, int &y)
 {
@@ -125,22 +136,22 @@ inline void make_neighbour(Direction dir, int &x, int &y)
 // Move along the box that contains (origin,origin)
 void move_along_box(int origin, bool clockwise, int &x, int &y);
 
-inline Colour get_pixel(int led)
+inline Colour get_led(int led)
 {
     return g_octo.getPixel(led);
 }
 
 inline Colour get_pixel(int x, int y)
 {
-    return get_pixel(get_led(x, y));
+    return get_led(get_led_dir(g_up_direction, x, y));
 }
 
-void blend_pixel(int led, Colour c);
-inline void draw_pixel(int led, Colour c)
+void blend_led(int led, Colour c);
+inline void draw_led(int led, Colour c)
 {
     if (c & 0xff000000) {
 	// Blend pixel
-	blend_pixel(led, c);
+	blend_led(led, c);
     } else {
 	// Just write pixel.
 	g_octo.setPixel(led, c);
@@ -149,13 +160,13 @@ inline void draw_pixel(int led, Colour c)
 
 inline void draw_pixel(int x, int y, Colour c)
 {
-    draw_pixel(get_led(x, y), c);
+    draw_led(get_led_dir(g_up_direction, x, y), c);
 }
 
 inline void draw_pixels(Colour c)
 {
     for (int led = 0; led < LED_COUNT; ++led) {
-	draw_pixel(led, c);
+	draw_led(led, c);
     }
 }
 
