@@ -164,14 +164,18 @@ const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 Pattern_option g_option_brightness("BR", g_brightness, true);
 Pattern_option g_option_gain0("G0", g_gain0, true);
 Pattern_option g_option_gain1("G1", g_gain1, true);
+#if 0
 Pattern_option g_option_fft_gain("FG", g_fft_gain, true);
+#endif
 Pattern_option g_option_number("N", g_number, true);
 Pattern_option g_option_up("UP", g_up, true);
 struct Mode g_config_options[] = {
     { &g_option_brightness },
     { &g_option_gain0 },
     { &g_option_gain1 },
+#if 0
     { &g_option_fft_gain },
+#endif
     { &g_option_number },
     { &g_option_up },
 };
@@ -183,6 +187,9 @@ Pattern_selector g_pattern_selector(g_modes, MODE_COUNT);
 Pattern_config g_pattern_config(g_config_options, CONFIG_OPTION_COUNT);
 Pattern_off g_pattern_off;
 struct Mode g_main_modes[] = {
+    { &g_pattern_off, NULL, "" },
+    { &g_pattern_spectrum_bars, NULL, "T" },
+
     { &g_pattern_random, NULL, "R" },
     { &g_pattern_selector, NULL, "S" },
     { &g_pattern_config, NULL, "C" },
@@ -218,6 +225,15 @@ int g_hp_filter_params[] = {
     -COEFF(0.9800523188151258),
 #endif
 
+// highpass, 150Hz, Q=0.707
+#if 0
+    COEFF(0.9850016172570234),
+    COEFF(-1.9700032345140468),
+    COEFF(0.9850016172570234),
+    -COEFF(-1.9697782746275025),
+    -COEFF(0.9702281944005912),
+#endif
+
 // highpass, 200Hz, Q=0.707
 #if 0
     COEFF(0.9800523027005293),
@@ -225,6 +241,15 @@ int g_hp_filter_params[] = {
     COEFF(0.9800523027005293),
     -COEFF(-1.9597066626643354),
     -COEFF(0.960502548137782),
+#endif
+
+// highpass, 250Hz, Q=0.707
+#if 1
+    COEFF(0.9751278424865795),
+    COEFF(-1.950255684973159),
+    COEFF(0.9751278424865795),
+    -COEFF(-1.9496369766256763),
+    -COEFF(0.9508743933206418),
 #endif
 
 // highpass, 1000Hz, Q=0.707
@@ -237,7 +262,7 @@ int g_hp_filter_params[] = {
 #endif
 
     // highpass, 3000Hz, Q=0.707
-#if 1
+#if 0
     COEFF( 0.7385371039326799 ),
     COEFF( -1.4770742078653598 ),
     COEFF( 0.7385371039326799 ),
@@ -780,6 +805,10 @@ void set_fft_bin_count(unsigned bin_count)
 {
     g_bin_count = bin_count;
 
+    // Most music is within 8kHz.
+    // TODO: Adjust down to 4kHZ?
+    int input_count = MAGNITUDE_COUNT * 100 / 275;
+
 #define GAMMA_BINS
 #ifdef GAMMA_BINS
     const float gamma = 2.0;
@@ -822,6 +851,21 @@ void set_fft_scale_factor(float scale_factor)
 }
 
 // g_magnitudes[MAGNITUDE_COUNT] -> g_bins[g_bin_count.get()]
+// logN(magnitude) [min_power, max_power] -> [0, fft_scale]
+// <min_mag == 0; >max_mag == fft_scale
+// patterns: 0..ROW_COUNT ->fft_scale == ROW_COUNT + 1
+// TODO: allow EQ by allowing individual channels to be adjusted?
+// min_power, max_power: set by config [0..100]
+// g_bin_count, g_fft_scale: set by pattern [0..1000]
+// TODO: set scale below such that log_power and all thing are integers
+// and support bounds as listed
+// magnitude [0..65536] ??
+// log_power [0..5]
+// min_power [0..100]
+// max_power [0..100]
+// max_power - min_power [0..100]
+// fft_scale [0..1000]
+// stay under about 8kHz
 void fft_reduce()
 {
     if (g_bin_count == 0) {
@@ -834,12 +878,12 @@ void fft_reduce()
 #endif
     int f_start = FIRST_BIN;
     for (unsigned i = 0; i < g_bin_count; ++i) {
-	float bin_power = 0.0;
+	int bin_power = 0;
 	int bin_width = 0;
 	for (bin_width = 0;
 	     bin_width < g_bin_widths[i] &&
 	     f_start + bin_width < MAGNITUDE_COUNT; ++bin_width) {
-	    float p = (float) g_magnitudes[f_start + bin_width];
+	    int p = g_magnitudes[f_start + bin_width];
 #define MAX_POWER
 #ifdef MAX_POWER
 	    if (p > bin_power) {
@@ -853,23 +897,40 @@ void fft_reduce()
 
 #ifndef MAX_POWER
 	// Average
-	bin_power /= (float) bin_width;
+	bin_power /= bin_width;
 #endif
 
-#if 1
-	float log_power = g_bin_scale * log(bin_power);
+#if 0
+	float log_power = g_bin_scale * log((float)bin_power);
 #endif
 #if 0
-	float log_power = g_bin_scale * log10(bin_power);
+	float log_power = g_bin_scale * log10((float)bin_power);
 #endif
 #if 0
-	float log_power = 20.0 * log10(bin_power);
+	float log_power = 20.0 * log10((float)bin_power);
 #if 0
 	log_power -= (Sample_type) g_min_dbs[i];
 	log_power = log_power < 0.0 ? 0.0 : log_power;
 	log_power /= (Sample_type) (g_max_dbs[i] - g_min_dbs[i]);
 	log_power = log_power > 1.0 ? 1.0 : log_power;
 #endif
+#endif
+#if 1
+	// TODO: use me
+	// log_power *= SCALE -- SCALE
+	// such that g_min_power/g_max_power == 0..255 or 0..100
+	float log_power = 100.0 * log10((float)bin_power);
+	Serial.printf("%5d/%4.1f ", bin_power, log_power);
+	float g_min_power = 100;
+	float g_max_power = 200;
+	if (log_power < g_min_power) {
+	    log_power = 0.0;
+	} else if (log_power > g_max_power) {
+	    log_power = g_fft_scale_factor;
+	} else {
+	    log_power = (log_power - g_min_power) * g_fft_scale_factor /
+		        (g_max_power - g_min_power);
+	}
 #endif
 #if 0
 	Serial.printf("bin %d width %d %d-%d power %.3f %.3f\n",
@@ -890,12 +951,12 @@ void fft_reduce()
 	f_start += bin_width;
     }
 
+    Serial.println();
+
 #ifdef LOG_BINS
-    Serial.print("dc=");
-    Serial.print(g_dc_total / g_dc_sample_count);
-    for (int i = 0; i < g_bin_count; ++i) {
-	Serial.print(" ");
+    for (unsigned i = 0; i < g_bin_count; ++i) {
 	Serial.print(g_bins[i]);
+	Serial.print(" ");
     }
     Serial.println();
 #endif
