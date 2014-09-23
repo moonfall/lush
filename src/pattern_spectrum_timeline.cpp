@@ -1,13 +1,10 @@
 #include <OctoWS2811.h>
 #include "lush.h"
 
-const unsigned SCALE_FACTOR = 100;
-const unsigned SCALE_DENOMINATOR = SCALE_FACTOR * 3;
-
 void Pattern_spectrum_timeline::activate(void *arg)
 {
     set_fft_bin_count(COLUMN_COUNT);
-    set_fft_scale_factor(SCALE_FACTOR);
+    set_fft_scale_factor(MAX_BRIGHTNESS + 1);
 }
 
 // -1 or +1 for reverse or forward.
@@ -26,7 +23,7 @@ bool Pattern_spectrum_timeline::display()
 	}
     }
     for (int x = 0; x < COLUMN_COUNT; ++x) {
-	int lightness = g_bins[x] * g_brightness.get() / SCALE_DENOMINATOR;
+	int lightness = g_bins[x] * g_brightness.get() / MAX_BRIGHTNESS;
 	draw_pixel(x, start_row, make_hsv(hue, MAX_SATURATION, lightness));
     }
 
