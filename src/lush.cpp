@@ -809,7 +809,7 @@ void set_fft_bin_count(unsigned bin_count)
 
     // Most music is within 8kHz.
     // TODO: Adjust down to 4kHZ?
-    int input_count = MAGNITUDE_COUNT * 100 / 275;
+    int select_count = MAGNITUDE_COUNT * 100 / 275;
 
 #define GAMMA_BINS
 #ifdef GAMMA_BINS
@@ -817,9 +817,9 @@ void set_fft_bin_count(unsigned bin_count)
     int f_start = FIRST_BIN;
     for (unsigned i = 0; i < g_bin_count; ++i) {
 	int f_end = round(powf(((float)(i + 1)) / (float) g_bin_count, gamma) *
-		          MAGNITUDE_COUNT);
-	if (f_end > MAGNITUDE_COUNT) {
-	    f_end = MAGNITUDE_COUNT;
+		          select_count);
+	if (f_end > select_count) {
+	    f_end = select_count;
 	}
 	int f_width = f_end - f_start;
 	if (f_width <= 0) {
@@ -831,7 +831,7 @@ void set_fft_bin_count(unsigned bin_count)
 #endif
 
 #ifdef EQUAL_BINS
-    int bin_size = MAGNITUDE_COUNT / g_bin_count;
+    int bin_size = select_count / g_bin_count;
     for (unsigned i = 0; i < g_bin_count; ++i) {
 	g_bin_widths[i] = bin_size;
     }
