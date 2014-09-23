@@ -919,7 +919,6 @@ void fft_reduce()
 	// log_power *= SCALE -- SCALE
 	// such that g_min_power/g_max_power == 0..255 or 0..100
 	float log_power = 100.0 * log10((float)bin_power);
-	Serial.printf("%5d/%4.1f ", bin_power, log_power);
 	float g_min_power = 100;
 	float g_max_power = 200;
 	if (log_power < g_min_power) {
@@ -949,8 +948,6 @@ void fft_reduce()
 
 	f_start += bin_width;
     }
-
-    Serial.println();
 
 #ifdef LOG_BINS
     for (unsigned i = 0; i < g_bin_count; ++i) {
