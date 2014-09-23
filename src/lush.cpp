@@ -395,6 +395,12 @@ void setup()
     // Begin output.
     g_octo.begin();
 
+    // Start cycling colours by default
+    g_hue.set_velocity(256, 10000);
+
+    // Cache the up value since it's always used
+    g_up.set_callback(set_up_direction);
+
     // TODO: Prevent multiple initialization of patterns.
     for (int i = 0; i < MODE_COUNT; ++i) {
     	g_modes[i].m_pattern->setup();
@@ -406,12 +412,6 @@ void setup()
     	g_main_modes[i].m_pattern->setup();
     }
     g_root->activate(NULL);
-
-    // Start cycling colours by default
-    g_hue.set_velocity(256, 10000);
-
-    // Cache the up value since it's always used
-    g_up.set_callback(set_up_direction);
 }
 
 uint16_t spi_issue2(byte b1, byte b2)
