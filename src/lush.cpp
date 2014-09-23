@@ -187,9 +187,6 @@ Pattern_selector g_pattern_selector(g_modes, MODE_COUNT);
 Pattern_config g_pattern_config(g_config_options, CONFIG_OPTION_COUNT);
 Pattern_off g_pattern_off;
 struct Mode g_main_modes[] = {
-    { &g_pattern_off, NULL, "" },
-    { &g_pattern_spectrum_bars, NULL, "T" },
-
     { &g_pattern_random, NULL, "R" },
     { &g_pattern_selector, NULL, "S" },
     { &g_pattern_config, NULL, "C" },
