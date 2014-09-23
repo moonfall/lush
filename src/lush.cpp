@@ -375,11 +375,11 @@ void setup()
     delayMicroseconds(50);
     program_gain();
 
+#ifndef DISABLE_AUDIO
     set_fft_bin_count(0);
     set_fft_scale_factor(0);
 
     // Set up ADC and audio input.
-#ifndef DISABLE_AUDIO
     AudioMemory(12);
     g_audio_input.begin(AUDIO_INPUT_PIN);
     g_peak.begin();
@@ -493,11 +493,13 @@ void adjust_fft_gain(int adjustment)
 
 void program_fft_bin_scale()
 {
+#ifndef DISABLE_AUDIO
     g_bin_scale = (float) g_fft_gain.get() * g_fft_scale_factor /
 		  (float) FFT_GAIN_DENOMINATOR;
     Serial.printf("fft bin scale %.2f (gain %d/%d, factor %f)\n",
 	          g_bin_scale, g_fft_gain.get(), FFT_GAIN_DENOMINATOR,
 		  g_fft_scale_factor);
+#endif
 }
 
 void set_target_fps(unsigned fps)
