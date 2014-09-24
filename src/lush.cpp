@@ -361,6 +361,8 @@ void setup()
 
     Serial.begin(115200);
 
+    randomSeed(analogRead(A13));
+
     // Set up SPI to allow control of digital pot for gain control.
     SPI.begin();
 
