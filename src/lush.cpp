@@ -366,7 +366,8 @@ void setup()
     set_fft_scale_factor(0);
 
     // Set up ADC and audio input.
-    AudioMemory(12);
+    // driley-20140923: Max used 4
+    AudioMemory(6);
     g_audio_input.begin(AUDIO_INPUT_PIN);
     g_peak.begin();
 #endif
@@ -971,6 +972,10 @@ void display_loop()
 
 	// TODO: Is this the best place?
 	reset_peak();
+
+#if 0
+	Serial.printf("mem %u\n", AudioMemoryUsageMax());
+#endif
     }
 }
 
