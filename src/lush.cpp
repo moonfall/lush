@@ -337,19 +337,6 @@ const float GAIN_RAB = 100000;
 const float GAIN_RS_COUNT = 256;
 const float GAIN_RS_TYP = GAIN_RAB / GAIN_RS_COUNT;
 
-Value g_min_db(55.0);
-Value g_max_db(65.0);
-
-#if 1
-float g_min_dbs[MAX_BIN_COUNT] = {
-    55, 55, 55, 55, 55, 55, 55, 55,
-};
-float g_max_dbs[MAX_BIN_COUNT] = {
-    65, 65, 65, 65, 65, 65, 65, 65,
-};
-int g_current_bin = 0;
-#endif
-
 // Output
 // 24 bytes == 6 words for each LED of each strip.
 DMAMEM int g_display_memory[LEDS_PER_STRIP * 6];
@@ -601,7 +588,6 @@ void ui_loop()
 	    case 'm':
 		ui_advance_mode();
 		break;
-#endif
 	    case '0':
 		g_current_bin = 0;
 		break;
@@ -626,6 +612,7 @@ void ui_loop()
 	    case '7':
 		g_current_bin = 7;
 		break;
+#endif
 	}
     }
 
