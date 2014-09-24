@@ -33,27 +33,19 @@ bool Pattern_spectrum_bars::display()
 	// How many rows are lit up because of peak hold.
 	int peak_rows = g_peaks[x] / PEAK_FADE_TIME;
 #endif
-	Serial.print(rows);
-	Serial.print(" ");
-	Serial.print(peak_rows);
-	Serial.print(" ");
 	for (int y = 0; y < ROW_COUNT; ++y) {
 #ifdef PEAK_HOLD
 	    // alternative: y < peak_rows
 	    if (y == peak_rows - 1) {
 		draw_pixel(x, flip_y(y), g_peak_leds[x]);
-		Serial.print("*");
 	    } else
 #endif
 	    if (y < rows) {
 		draw_pixel(x, flip_y(y), c);
-		Serial.print("r");
 	    } else {
 		draw_pixel(x, flip_y(y), COLOUR_BLACK);
-		Serial.print(" ");
 	    }
 	}
-	Serial.println();
 #ifdef PEAK_HOLD
 	// Change to time based.
 	if (g_peaks[x] > 0) {
