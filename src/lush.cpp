@@ -20,6 +20,7 @@
 #undef SAMPLE_TEST
 #undef PROFILE_FFT
 #undef LOG_MAGNITUDES
+#undef LOG_REDUCE
 #undef LOG_BINS
 #undef LOG_SUMMARY
 #undef MAGNITUDE_AVERAGE
@@ -75,6 +76,8 @@ Value g_up(DIR_UP, 0, 3, true);
 // Audio gain control
 Value g_gain0(INITIAL_GAIN, 0, 255);
 Value g_gain1(INITIAL_GAIN, 0, 255);
+Value g_min_power(100, 0, 1000);
+Value g_max_power(300, 0, 1000);
 
 // This controls the amount that the FFT bins are scaled by:
 // 100 == 1.0
@@ -317,8 +320,7 @@ unsigned g_current_peak = 0;
 #ifndef DISABLE_AUDIO
 Sample_type g_magnitudes[MAGNITUDE_COUNT];
 unsigned g_bin_count = 0;
-float g_bin_scale = 1.0;
-float g_fft_scale_factor = 0.0;
+unsigned g_fft_scale_factor = 0;
 Bin_type g_bins[MAX_BIN_COUNT];
 uint8_t g_bin_widths[MAX_BIN_COUNT];
 
@@ -485,18 +487,6 @@ void program_gain()
 void adjust_fft_gain(int adjustment)
 {
     g_fft_gain.modify(adjustment);
-    program_fft_bin_scale();
-}
-
-void program_fft_bin_scale()
-{
-#ifndef DISABLE_AUDIO
-    g_bin_scale = (float) g_fft_gain.get() * g_fft_scale_factor /
-		  (float) FFT_GAIN_DENOMINATOR;
-    Serial.printf("fft bin scale %.2f (gain %d/%d, factor %f)\n",
-	          g_bin_scale, g_fft_gain.get(), FFT_GAIN_DENOMINATOR,
-		  g_fft_scale_factor);
-#endif
 }
 
 void set_target_fps(unsigned fps)
@@ -846,7 +836,6 @@ void set_fft_bin_count(unsigned bin_count)
 void set_fft_scale_factor(float scale_factor)
 {
     g_fft_scale_factor = scale_factor;
-    program_fft_bin_scale();
 }
 
 // g_magnitudes[MAGNITUDE_COUNT] -> g_bins[g_bin_count.get()]
@@ -876,8 +865,15 @@ void fft_reduce()
     const float smoothing = powf(smoothing_factor, (float) FFT_SIZE / 60.0);
 #endif
     int f_start = FIRST_BIN;
+
+    // TODO: Ensure log_scale is set appropriately to allow proper scaling
+    // even if fft_scale_factor is large.
+    const float log_scale = 1000.0;
+    int min_power = g_min_power.get() * 10;
+    int max_power = g_max_power.get() * 10;
+    int power_range = max_power - min_power;
     for (unsigned i = 0; i < g_bin_count; ++i) {
-	int bin_power = 0;
+	int bin_magnitude = 0;
 	int bin_width = 0;
 	for (bin_width = 0;
 	     bin_width < g_bin_widths[i] &&
@@ -885,69 +881,48 @@ void fft_reduce()
 	    int p = g_magnitudes[f_start + bin_width];
 #define MAX_POWER
 #ifdef MAX_POWER
-	    if (p > bin_power) {
-		bin_power = p;
+	    if (p > bin_magnitude) {
+		bin_magnitude = p;
 	    }
 #else
 	    // Average.
-	    bin_power += p;
+	    bin_magnitude += p;
 #endif
 	}
 
 #ifndef MAX_POWER
 	// Average
-	bin_power /= bin_width;
+	bin_magnitude /= bin_width;
 #endif
 
-#if 0
-	float log_power = g_bin_scale * log((float)bin_power);
-#endif
-#if 0
-	float log_power = g_bin_scale * log10((float)bin_power);
-#endif
-#if 0
-	float log_power = 20.0 * log10((float)bin_power);
-#if 0
-	log_power -= (Sample_type) g_min_dbs[i];
-	log_power = log_power < 0.0 ? 0.0 : log_power;
-	log_power /= (Sample_type) (g_max_dbs[i] - g_min_dbs[i]);
-	log_power = log_power > 1.0 ? 1.0 : log_power;
-#endif
-#endif
-#if 1
-	// TODO: use me
-	// log_power *= SCALE -- SCALE
-	// such that g_min_power/g_max_power == 0..255 or 0..100
-	float log_power = 100.0 * log10((float)bin_power);
-	float g_min_power = 100;
-	float g_max_power = 200;
-	if (log_power < g_min_power) {
-	    log_power = 0.0;
-	} else if (log_power > g_max_power) {
-	    log_power = g_fft_scale_factor;
+	int bin_power = (int) (log_scale * log10((float) bin_magnitude));
+	int scaled_power = bin_power;
+	if (scaled_power < min_power) {
+	    scaled_power = 0;
+	} else if (scaled_power > max_power) {
+	    scaled_power = g_fft_scale_factor;
 	} else {
-	    log_power = (log_power - g_min_power) * g_fft_scale_factor /
-		        (g_max_power - g_min_power);
+	    scaled_power = (scaled_power - min_power) * g_fft_scale_factor /
+		        power_range;
 	}
+
+#ifdef LOG_REDUCE
+	Serial.printf("%5u/%3u ", bin_power, scaled_power);
 #endif
-#if 0
-	Serial.printf("bin %d width %d %d-%d power %.3f %.3f\n",
-		      i, bin_width, f_start, f_start + bin_width, bin_power,
-		      log_power);
-#endif
-	if (log_power < 0.0) {
-	    log_power = 0.0;
-	}
 
 #ifdef USE_SMOOTHING
 	g_bins[i] = (int)((float) g_bins[i] * smoothing +
-		          (log_power * (1.0 - smoothing)));
+		          (scaled_power * (1.0 - smoothing)));
 #else
-	g_bins[i] = (int) log_power;
+	g_bins[i] = (int) scaled_power;
 #endif
 
 	f_start += bin_width;
     }
+
+#ifdef LOG_REDUCE
+    Serial.println();
+#endif
 
 #ifdef LOG_BINS
     for (unsigned i = 0; i < g_bin_count; ++i) {
