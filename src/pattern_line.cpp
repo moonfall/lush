@@ -39,8 +39,7 @@ void Pattern_line::display_current()
 {
     draw_pixels(COLOUR_BLACK);
     draw_line(g_x0, g_y0, g_x1, g_y1, make_current_hue());
-    Colour hue_invert = make_hsv(g_hue.get() + 128, MAX_SATURATION,
-		    		 g_brightness.get());
+    Colour hue_invert = make_invert_hue();
     draw_pixel(g_x0, g_y0, hue_invert);
     draw_pixel(g_x1, g_y1, hue_invert);
 }

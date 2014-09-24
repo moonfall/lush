@@ -273,7 +273,12 @@ inline Colour make_hue(uint8_t h)
 
 inline Colour make_current_hue()
 {
-    return make_hsv(g_hue.get(), MAX_SATURATION, g_brightness.get());
+    return make_hue(g_hue.get());
+}
+
+inline Colour make_invert_hue()
+{
+    return make_hue(g_hue.get() + 128);
 }
 
 enum Element_id
