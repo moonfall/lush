@@ -79,11 +79,6 @@ Value g_gain1(INITIAL_GAIN, 0, 255);
 Value g_min_power(100, 0, 1000);
 Value g_max_power(300, 0, 1000);
 
-// This controls the amount that the FFT bins are scaled by:
-// 100 == 1.0
-// TODO: find a better name
-Value g_fft_gain(INITIAL_FFT_GAIN, 0, MAX_FFT_GAIN);
-
 // Shared state state
 Fader_static g_fader1;
 
@@ -167,9 +162,6 @@ const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
 Pattern_option g_option_brightness("BR", g_brightness, true);
 Pattern_option g_option_gain0("G0", g_gain0, true);
 Pattern_option g_option_gain1("G1", g_gain1, true);
-#if 0
-Pattern_option g_option_fft_gain("FG", g_fft_gain, true);
-#endif
 Pattern_option g_option_number("N", g_number, true);
 Pattern_option g_option_up("UP", g_up, true);
 struct Mode g_config_options[] = {
@@ -472,9 +464,9 @@ void program_gain()
 #endif
 }
 
-void adjust_fft_gain(int adjustment)
+void adjust_fft_max_power(int adjustment)
 {
-    g_fft_gain.modify(adjustment);
+    g_max_power.modify(adjustment);
 }
 
 void set_target_fps(unsigned fps)

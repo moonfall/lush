@@ -193,8 +193,7 @@ void adjust_gain(int adjustment1, int adjustment2);
 void program_gain();
 void update_pattern();
 
-void adjust_fft_gain(int adjustment);
-void program_fft_bin_scale();
+void adjust_fft_max_power(int adjustment);
 
 void set_target_fps(unsigned fps);
 
