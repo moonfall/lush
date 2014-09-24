@@ -1,6 +1,6 @@
 #include "lush.h"
 
-Pattern_set::Pattern_set(Mode *modes, unsigned num_modes)
+Pattern_set::Pattern_set(const Mode *modes, unsigned num_modes)
     : m_modes(modes), m_num_modes(num_modes),
       m_current_mode(0, 0, m_num_modes - 1, true),
       m_force_update(true)
@@ -35,13 +35,13 @@ bool Pattern_set::display()
 
 Pattern *Pattern_set::get_child()
 {
-    Mode &mode = m_modes[m_current_mode.get()];
+    const Mode &mode = m_modes[m_current_mode.get()];
     return mode.m_pattern;
 }
 
 void Pattern_set::activate_child()
 {
-    Mode &mode = m_modes[m_current_mode.get()];
+    const Mode &mode = m_modes[m_current_mode.get()];
     mode.m_pattern->activate(mode.m_arg);
     m_force_update = true;
 }

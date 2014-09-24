@@ -3,7 +3,7 @@
 const uint32_t LOCK_MS = 1000;
 const uint32_t SHOW_STATUS_MS = 1000;
 
-Pattern_selector::Pattern_selector(Mode *modes, unsigned num_modes)
+Pattern_selector::Pattern_selector(const Mode *modes, unsigned num_modes)
     : Pattern_set(modes, num_modes)
 {
 }

@@ -119,7 +119,7 @@ Pattern_spectrum_timeline g_pattern_spectrum_timeline;
 // - tour
 // - select specific mode
 // - configuration
-struct Mode g_modes[] = {
+const Mode g_modes[] = {
     { &g_pattern_alphabet },
     { &g_pattern_border },
     { &g_pattern_counter },
@@ -164,7 +164,7 @@ Pattern_option g_option_gain0("G0", g_gain0, true);
 Pattern_option g_option_gain1("G1", g_gain1, true);
 Pattern_option g_option_number("N", g_number, true);
 Pattern_option g_option_up("UP", g_up, true);
-struct Mode g_config_options[] = {
+const Mode g_config_options[] = {
     { &g_option_brightness },
     { &g_option_gain0 },
     { &g_option_gain1 },
@@ -181,7 +181,11 @@ Pattern_random g_pattern_random(g_modes, MODE_COUNT);
 Pattern_selector g_pattern_selector(g_modes, MODE_COUNT);
 Pattern_config g_pattern_config(g_config_options, CONFIG_OPTION_COUNT);
 Pattern_off g_pattern_off;
-struct Mode g_main_modes[] = {
+const Mode g_main_modes[] = {
+#if 0
+    { &g_pattern_spectrum_bars, NULL, "B" },
+#endif
+
     { &g_pattern_random, NULL, "R" },
     { &g_pattern_selector, NULL, "S" },
     { &g_pattern_config, NULL, "C" },

@@ -947,7 +947,7 @@ class Pattern_set
     : public Pattern
 {
   public:
-    Pattern_set(Mode *modes, unsigned num_modes);
+    Pattern_set(const Mode *modes, unsigned num_modes);
 
     virtual void ui_callback(Element_id id, Element const &element);
     virtual void ui_hook();
@@ -972,7 +972,7 @@ class Pattern_set
     virtual void display_overlay();
     virtual void display_status_string(const char *s);
 
-    Mode *m_modes;
+    const Mode *m_modes;
     unsigned m_num_modes;
     Value m_current_mode;
 
@@ -984,7 +984,7 @@ class Pattern_main_menu
     : public Pattern_set
 {
   public:
-    Pattern_main_menu(Mode *modes, unsigned num_modes);
+    Pattern_main_menu(const Mode *modes, unsigned num_modes);
 
     virtual void ui_callback(Element_id id, Element const &element);
     virtual void ui_hook();
@@ -1001,7 +1001,7 @@ class Pattern_selector
     : public Pattern_set
 {
   public:
-    Pattern_selector(Mode *modes, unsigned num_modes);
+    Pattern_selector(const Mode *modes, unsigned num_modes);
 
     virtual void ui_callback(Element_id id, Element const &element);
     virtual void ui_hook();
@@ -1019,7 +1019,7 @@ class Pattern_random
     : public Pattern_selector
 {
   public:
-    Pattern_random(Mode *modes, unsigned num_modes);
+    Pattern_random(const Mode *modes, unsigned num_modes);
 
     virtual void ui_hook();
 
@@ -1039,7 +1039,7 @@ class Pattern_config
     : public Pattern_set
 {
   public:
-    Pattern_config(Mode *modes, unsigned num_modes);
+    Pattern_config(const Mode *modes, unsigned num_modes);
 
     virtual void ui_callback(Element_id id, Element const &element);
 };

@@ -3,7 +3,7 @@
 const uint32_t LOCK_MS = 1000;
 const uint32_t SHOW_STATUS_MS = 1000;
 
-Pattern_random::Pattern_random(Mode *modes, unsigned num_modes)
+Pattern_random::Pattern_random(const Mode *modes, unsigned num_modes)
     : Pattern_selector(modes, num_modes), m_duration_s(10)
 {
 }
