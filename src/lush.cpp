@@ -168,9 +168,6 @@ const Mode g_config_options[] = {
     { &g_option_brightness },
     { &g_option_gain0 },
     { &g_option_gain1 },
-#if 0
-    { &g_option_fft_gain },
-#endif
     { &g_option_number },
     { &g_option_up },
 };
