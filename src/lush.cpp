@@ -855,9 +855,9 @@ void fft_reduce()
 #endif
     int f_start = FIRST_BIN;
 
-    // TODO: Ensure log_scale is set appropriately to allow proper scaling
+    // TODO: Ensure LOG_SCALE is set appropriately to allow proper scaling
     // even if fft_scale_factor is large.
-    const float log_scale = 1000.0;
+    const float LOG_SCALE = 1000.0;
     int min_power = g_min_power.get() * 10;
     int max_power = g_max_power.get() * 10;
     int power_range = max_power - min_power;
@@ -884,7 +884,7 @@ void fft_reduce()
 	bin_magnitude /= bin_width;
 #endif
 
-	int bin_power = (int) (log_scale * log10((float) bin_magnitude));
+	int bin_power = (int) (LOG_SCALE * log10((float) bin_magnitude));
 	int scaled_power = bin_power;
 	if (scaled_power < min_power) {
 	    scaled_power = 0;
@@ -948,6 +948,7 @@ unsigned get_peak()
 
 unsigned get_mapped_peak(unsigned max_value)
 {
+#if 1
     const unsigned MAX_VALUE = 65535;
     const unsigned NOISE_FLOOR = 19000;
 
@@ -960,6 +961,23 @@ unsigned get_mapped_peak(unsigned max_value)
     return min(max_value,
 	       peak * (max_value + 1) /
 	       (unsigned) (MAX_VALUE - NOISE_FLOOR));
+#else
+    const float LOG_SCALE = 350.0;
+    int power = (int) (LOG_SCALE * log10((float) g_current_peak));
+#if 0
+    int min_power = g_min_power.get() * 10;
+    int max_power = g_max_power.get() * 10;
+#endif
+    int min_power = 1000;
+    int max_power = 3000;
+    if (power < min_power) {
+	return 0;
+    } else if (power > max_power) {
+	return max_value;
+    } else {
+	return (power - min_power) * max_value / (max_power - min_power);
+    }
+#endif
 }
 
 void display_loop()
