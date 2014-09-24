@@ -346,6 +346,19 @@ UI_state g_ui;
 
 void setup()
 {
+    // Indicate power status by fading out power LED.
+    pinMode(POWER_LED_PIN, OUTPUT);
+    const int DUTY_CYCLE = 1000;
+    const int DUTY_CHANGE = 3;
+    for (int on_cycle = DUTY_CYCLE; on_cycle > 0; on_cycle -= DUTY_CHANGE) {
+	digitalWrite(POWER_LED_PIN, HIGH);
+	delayMicroseconds(on_cycle);
+	digitalWrite(POWER_LED_PIN, LOW);
+	delayMicroseconds(DUTY_CYCLE - on_cycle);
+    }
+    // DISABLED: POWER_LED_PIN is used for SPI.
+    pinMode(POWER_LED_PIN, INPUT);
+
     Serial.begin(115200);
 
     // Set up SPI to allow control of digital pot for gain control.
@@ -367,13 +380,6 @@ void setup()
 
     pinMode(ENCODER_1_SW_PIN, INPUT_PULLUP);
     pinMode(ENCODER_2_SW_PIN, INPUT_PULLUP);
-
-#if 0
-    // Indicate power status.
-    // DISABLED: POWER_LED_PIN is used for SPI.
-    pinMode(POWER_LED_PIN, OUTPUT);
-    digitalWrite(POWER_LED_PIN, HIGH);
-#endif
 
     // Begin output.
     g_octo.begin();
