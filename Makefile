@@ -139,7 +139,7 @@ $(BUILDDIR)/%.o: %.ino
 
 $(TARGET).elf: $(OBJS) $(LDSCRIPT)
 	@echo "[LD]\t$@"
-	@$(CC) $(LDFLAGS) -o "$@" $(OBJS) $(LIBS)
+	@$(CC) $(LDFLAGS) -o "$@" $(OBJS) $(LIBS) -Wl,-Map,$@.map
 
 %.hex: %.elf
 	@echo "[HEX]\t$@"
