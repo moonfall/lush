@@ -775,8 +775,6 @@ class Pattern_rain
 	RAIN_NUM_MODES,
     };
 
-    Pattern_rain();
-
     // arg is casted to Mode.
     virtual void activate(void *arg);
     virtual bool display();

@@ -4,10 +4,6 @@
 // TODO: set velocity based on beat
 const int PIXEL_VELOCITY = 40;
 
-Pattern_rain::Pattern_rain()
-{
-}
-
 void Pattern_rain::activate(void *arg)
 {
     m_mode = (Mode)(intptr_t)(arg);
