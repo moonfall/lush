@@ -3,7 +3,7 @@
 
 bool Pattern_peak_diagonal::display()
 {
-#define LOG_PEAKS
+#undef LOG_PEAKS
 #ifdef LOG_PEAKS
     const int max_dots = 64;
     char dots[max_dots + 2];

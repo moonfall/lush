@@ -13,7 +13,8 @@ void Pattern_config::ui_callback(Element_id id, Element const &element)
     switch (id) {
 	case UI_KNOB1_ENCODER:
 	    m_current_mode.modify(element.get_current_change());
-	    Serial.printf("mode changed to %d\n", m_current_mode.get());
+	    Serial.print("mode changed to ");
+	    Serial.println(m_current_mode.get());
 	    activate_child();
 	    return;
 	default:

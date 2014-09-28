@@ -13,10 +13,12 @@ void Pattern_selector::ui_callback(Element_id id, Element const &element)
     switch (id) {
 	case UI_KNOB1_BUTTON:
 	    if (element.get_current_change() > 0) {
-		Serial.printf("press at %u\n", millis());
+		Serial.print("press at ");
+		Serial.println(millis());
 		m_unhandled_button_press_ms = millis();
 	    } else if (element.get_current_change() < 0) {
-		Serial.printf("release at %u\n", millis());
+		Serial.print("release at ");
+		Serial.println(millis());
 		m_unhandled_button_press_ms = 0;
 	    }
 	default:
@@ -27,7 +29,8 @@ void Pattern_selector::ui_callback(Element_id id, Element const &element)
 	switch (id) {
 	    case UI_KNOB1_ENCODER:
 		m_current_mode.modify(element.get_current_change());
-		Serial.printf("mode changed to %d\n", m_current_mode.get());
+		Serial.print("mode changed to ");
+		Serial.println(m_current_mode.get());
 		activate_child();
 		return;
 	    default:

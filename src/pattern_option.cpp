@@ -10,7 +10,9 @@ void Pattern_option::ui_callback(Element_id id, Element const &element)
     switch (id) {
 	case UI_KNOB2_ENCODER:
 	    m_value.modify(element.get_current_change());
-	    Serial.printf("%s changed to %d\n", m_name, m_value.get());
+	    Serial.print(m_name);
+	    Serial.print(" changed to ");
+	    Serial.println(m_value.get());
 	    break;
 
 	default:

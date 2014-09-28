@@ -24,7 +24,7 @@ void set_up_direction(int up)
 
 int get_led_dir(Direction dir, int x, int y, int columns)
 {
-#if 1
+#if 0
     if (x < 0 || y < 0 || x > COLUMN_COUNT || y > ROW_COUNT) {
 	Serial.printf("bad pixel %d,%d\n", x, y);
 	return 0;
