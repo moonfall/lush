@@ -34,11 +34,7 @@ const int AUDIO_INPUT_PIN = A3;
 // Bits of resolution for ADC
 const int ANALOG_READ_RESOLUTION = 12;
 // Number of samples to average with each ADC reading.
-#if 1
 const int ANALOG_READ_AVERAGING = 16;
-#else
-const int ANALOG_READ_AVERAGING = 1;
-#endif
 
 const int MCP4261_CS_PIN = 10;
 
