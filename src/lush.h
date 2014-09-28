@@ -936,6 +936,11 @@ T running_average(T &sum, int count, T sample)
 
 struct Mode
 {
+    Mode(Pattern *pattern = NULL, void *arg = NULL, const char *id = NULL)
+	: m_pattern(pattern), m_arg(arg), m_id(id)
+    {
+    }
+
     Pattern *m_pattern;
     void *m_arg;
     const char *m_id;
