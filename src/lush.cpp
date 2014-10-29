@@ -201,94 +201,17 @@ Pattern *g_root = NULL;
 
 // Audio acquisition
 #ifndef DISABLE_AUDIO
-AudioInputAnalog g_audio_input;
-#define COEFF(x) ((int) (x * (float) (1 << 30)))
+AudioInputAnalog g_audio_input(AUDIO_INPUT_PIN);
 // http://forum.pjrc.com/threads/24793-Audio-Library?p=40179&viewfull=1#post40179
 // http://www.earlevel.com/main/2013/10/13/biquad-calculator-v2/
-int g_hp_filter_params[] = {
-// highpass, 50Hz, Q=0.707
-#if 0
-    COEFF(0.9949753356833961),
-    COEFF(-1.9899506713667923),
-    COEFF(0.9949753356833961),
-    -COEFF(-1.989925424437758),
-    -COEFF(0.9899759182958264),
-#endif
 
-// highpass, 100Hz, Q=0.707
-#if 0
-    COEFF(0.9899759179893742),
-    COEFF(-1.9799518359787485),
-    COEFF(0.9899759179893742),
-    -COEFF(-1.979851353142371),
-    -COEFF(0.9800523188151258),
-#endif
-
-// highpass, 150Hz, Q=0.707
-#if 0
-    COEFF(0.9850016172570234),
-    COEFF(-1.9700032345140468),
-    COEFF(0.9850016172570234),
-    -COEFF(-1.9697782746275025),
-    -COEFF(0.9702281944005912),
-#endif
-
-// highpass, 200Hz, Q=0.707
-#if 0
-    COEFF(0.9800523027005293),
-    COEFF(-1.9601046054010587),
-    COEFF(0.9800523027005293),
-    -COEFF(-1.9597066626643354),
-    -COEFF(0.960502548137782),
-#endif
-
-// highpass, 250Hz, Q=0.707
-#if 1
-    COEFF(0.9751278424865795),
-    COEFF(-1.950255684973159),
-    COEFF(0.9751278424865795),
-    -COEFF(-1.9496369766256763),
-    -COEFF(0.9508743933206418),
-#endif
-
-// highpass, 1000Hz, Q=0.707
-#if 0
-    COEFF(0.9041514120481504),
-    COEFF(-1.8083028240963008),
-    COEFF(0.9041514120481504),
-    -COEFF(-1.7990948352036202),
-    -COEFF(0.8175108129889815),
-#endif
-
-    // highpass, 3000Hz, Q=0.707
-#if 0
-    COEFF( 0.7385371039326799 ),
-    COEFF( -1.4770742078653598 ),
-    COEFF( 0.7385371039326799 ),
-    -COEFF( -1.407502284220597 ),
-    -COEFF( 0.5466461315101225 ),
-#endif
-
-    // highpass, 10000Hz, Q=0.707
-#if 0
-    COEFF( 0.33699935872014053 ),
-    COEFF( -0.6739987174402811 ),
-    COEFF( 0.33699935872014053 ),
-    -COEFF( -0.17124071441396285 ),
-    -COEFF( 0.1767567204665992 ),
-#endif
-    0,
-    0,
-    0,
-};
-
-AudioFilterBiquad g_hp_filter(g_hp_filter_params);
+AudioFilterBiquad g_hp_filter;
 #ifdef FFT1024
 AudioAnalyzeFFT1024 g_fft;
 #else
 AudioAnalyzeFFT256 g_fft;
 #endif
-AudioPeak g_peak;
+AudioAnalyzePeak g_peak;
 #define FILTER_AUDIO
 #ifdef FILTER_AUDIO
 AudioConnection g_audio_conn1(g_audio_input, g_hp_filter);
@@ -310,10 +233,6 @@ AudioConnection g_audio_conn3(g_hp_filter, g_peak);
 #endif
 #endif
 
-#undef OCTOWS2811_PEAK_HACK
-#ifdef OCTOWS2811_PEAK_HACK
-unsigned g_peak_updates_to_ignore = 0;
-#endif
 unsigned g_current_peak = 0;
 
 #ifndef DISABLE_AUDIO
@@ -339,7 +258,7 @@ const float GAIN_RS_TYP = GAIN_RAB / GAIN_RS_COUNT;
 // Output
 // 24 bytes == 6 words for each LED of each strip.
 DMAMEM int g_display_memory[LEDS_PER_STRIP * 6];
-int g_drawing_memory[LEDS_PER_STRIP * 6];
+DMAMEM int g_drawing_memory[LEDS_PER_STRIP * 6];
 OctoWS2811 g_octo(LEDS_PER_STRIP, g_display_memory, g_drawing_memory,
 		  WS2811_GRB | WS2811_800kHz);
 unsigned g_target_fps = 30;
@@ -352,7 +271,7 @@ UI_state g_ui;
 
 Pattern *setup_patterns();
 
-void setup()
+void flash_led()
 {
     // Indicate power status by fading out power LED.
     pinMode(POWER_LED_PIN, OUTPUT);
@@ -364,8 +283,14 @@ void setup()
 	digitalWrite(POWER_LED_PIN, LOW);
 	delayMicroseconds(DUTY_CYCLE - on_cycle);
     }
+    digitalWrite(POWER_LED_PIN, LOW);
     // DISABLED: POWER_LED_PIN is used for SPI.
     pinMode(POWER_LED_PIN, INPUT);
+}
+
+void setup()
+{
+    flash_led();
 
     Serial.begin(115200);
 
@@ -382,12 +307,18 @@ void setup()
     set_fft_scale_factor(0);
 
     // Set up ADC and audio input.
+    g_hp_filter.setHighpass(0, 250, 0.707);
     // driley-20140923: Max used 4
     AudioMemory(6);
-    g_audio_input.begin(AUDIO_INPUT_PIN);
-    g_peak.begin();
 #endif
 
+#if 0
+    for (int i = 0; i < 1000; ++i) {
+	Serial.println(i);
+	delay(1);
+    }
+    flash_led();
+#endif
     pinMode(ENCODER_1_SW_PIN, INPUT_PULLUP);
     pinMode(ENCODER_2_SW_PIN, INPUT_PULLUP);
 
@@ -471,9 +402,20 @@ void adjust_gain(int adjustment1, int adjustment2)
 
 void program_gain()
 {
-    int gain0 = set_wiper(0, g_gain0.get());
-    int gain1 = set_wiper(1, g_gain1.get());
+    int target0 = g_gain0.get();
+    int target1 = g_gain1.get();
+#if 0
+    int gain0 = set_wiper(0, target0);
+    int gain1 = set_wiper(1, target1);
+#else
+    int gain0 = target0;
+    int gain1 = target1;
+#endif
     Serial.print("gain set to ");
+    Serial.print(target0);
+    Serial.print("/");
+    Serial.print(target1);
+    Serial.print("->");
     Serial.print(gain0);
     Serial.print("/");
     Serial.println(gain1);
@@ -701,21 +643,8 @@ void ui_loop()
 #ifndef DISABLE_AUDIO
 void sampler_loop()
 {
-#ifdef OCTOWS2811_PEAK_HACK
-    if (g_octo.busy()) {
-	g_peak_updates_to_ignore = 2;
-    } else if (g_peak.update_completed_at) {
-	if (g_peak_updates_to_ignore) {
-	    --g_peak_updates_to_ignore;
-	} else {
-	    g_current_peak = max(g_current_peak, g_peak.Dpp());
-	}
-	g_peak.begin();
-    }
-#else
-    g_current_peak = max(g_current_peak, g_peak.Dpp());
-    g_peak.begin();
-#endif
+    float peak = g_peak.read();
+    g_current_peak = max(g_current_peak, peak * 65535);
 
     bool available = g_fft.available();
     if (available) {
@@ -1007,6 +936,7 @@ void display_loop()
 
 #if 0
 	Serial.printf("mem %u\n", AudioMemoryUsageMax());
+	Serial.print("Free ram:");Serial.println(FreeRam());
 #endif
     }
 }
