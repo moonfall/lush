@@ -284,8 +284,6 @@ void flash_led()
 	delayMicroseconds(DUTY_CYCLE - on_cycle);
     }
     digitalWrite(POWER_LED_PIN, LOW);
-    // DISABLED: POWER_LED_PIN is used for SPI.
-    pinMode(POWER_LED_PIN, INPUT);
 }
 
 void setup()
@@ -297,9 +295,10 @@ void setup()
     randomSeed(analogRead(A13));
 
     // Set up SPI to allow control of digital pot for gain control.
+    pinMode(MCP4261_CS_PIN, OUTPUT);
     SPI.begin();
-
     delayMicroseconds(50);
+
     program_gain();
 
 #ifndef DISABLE_AUDIO
@@ -404,13 +403,8 @@ void program_gain()
 {
     int target0 = g_gain0.get();
     int target1 = g_gain1.get();
-#if 0
     int gain0 = set_wiper(0, target0);
     int gain1 = set_wiper(1, target1);
-#else
-    int gain0 = target0;
-    int gain1 = target1;
-#endif
     Serial.print("gain set to ");
     Serial.print(target0);
     Serial.print("/");
