@@ -116,9 +116,6 @@ Pattern_spectrum_bars g_pattern_spectrum_bars;
 Pattern_spectrum_field g_pattern_spectrum_field;
 Pattern_spectrum_timeline g_pattern_spectrum_timeline;
 #endif
-#if 1
-char x[8192];
-#endif
 
 // Modes:
 // - weighted random mode
