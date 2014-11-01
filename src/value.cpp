@@ -6,7 +6,11 @@
 #include "lush.h"
 
 Value::Value(int initial)
-    : m_min(INT_MIN), m_max(INT_MAX), m_wraps(true)
+    : m_min(INT_MIN), m_max(INT_MAX), m_wraps(true),
+      m_value(initial), m_value_time(0),
+      m_velocity(0), m_velocity_ms(0),
+      m_periodic(0), m_periodic_ms(0),
+      m_callback(NULL)
 {
     set(initial);
     set_velocity(0, 0);
@@ -14,7 +18,11 @@ Value::Value(int initial)
 }
 
 Value::Value(int initial, int min, int max, bool wraps)
-    : m_min(min), m_max(max), m_wraps(wraps)
+    : m_min(min), m_max(max), m_wraps(wraps),
+      m_value(initial), m_value_time(0),
+      m_velocity(0), m_velocity_ms(0),
+      m_periodic(0), m_periodic_ms(0),
+      m_callback(NULL)
 {
     set(initial);
     set_velocity(0, 0);
