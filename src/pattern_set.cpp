@@ -3,7 +3,7 @@
 Pattern_set::Pattern_set(const Mode *modes, unsigned num_modes)
     : m_modes(modes), m_num_modes(num_modes),
       m_current_mode(0, 0, m_num_modes - 1, true),
-      m_force_update(true)
+      m_force_update(true), m_overlay_end_ms(0)
 {
 }
 
