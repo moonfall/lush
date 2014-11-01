@@ -4,7 +4,7 @@ const uint32_t ADVANCE_MS = 3000;
 const uint32_t SHOW_STATUS_MS = 1000;
 
 Pattern_main_menu::Pattern_main_menu(const Mode *modes, unsigned num_modes)
-    : Pattern_set(modes, num_modes)
+    : Pattern_set(modes, num_modes), m_unhandled_button_press_ms(0)
 {
 }
 
