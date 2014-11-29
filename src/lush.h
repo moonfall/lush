@@ -1077,4 +1077,9 @@ extern UI_state g_ui;
 //   min
 //   max
 
+extern Value g_brightness;
+extern Value g_gain0;
+extern Value g_gain1;
+extern Value g_number;
+extern Value g_up;
 #endif // !_LUSH_H_INCLUDED

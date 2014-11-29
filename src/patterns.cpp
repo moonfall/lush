@@ -1,4 +1,4 @@
-#if 0
+#if 1
 #include "lush.h"
 
 const int MAX_MODES = 64;
@@ -20,7 +20,7 @@ Pattern *setup_patterns()
 {
     g_modes = new Mode[MAX_MODES];
     g_modes[g_modes_count++].m_pattern = new Pattern_alphabet();
-    g_modes[g_modes_count++].m_pattern = new Pattern_border;
+    // g_modes[g_modes_count++].m_pattern = new Pattern_border;
     g_modes[g_modes_count++].m_pattern = new Pattern_counter;
     g_modes[g_modes_count++].m_pattern = new Pattern_dropper;
     g_modes[g_modes_count++].m_pattern = new Pattern_heart;
@@ -28,11 +28,10 @@ Pattern *setup_patterns()
     g_modes[g_modes_count++].m_pattern = new Pattern_line;
     g_modes[g_modes_count++].m_pattern = new Pattern_marquee;
     g_modes[g_modes_count++].m_pattern = new Pattern_maze(g_fader1);
-#if 0
     // Allocate plasma causes a hang at startup.
     g_modes[g_modes_count++].m_pattern = new Pattern_plasma;
-    g_modes[g_modes_count++].m_pattern = new Pattern_pulse;
-    g_modes[g_modes_count++].m_pattern = new Pattern_race;
+    // g_modes[g_modes_count++].m_pattern = new Pattern_pulse;
+    // g_modes[g_modes_count++].m_pattern = new Pattern_race;
     g_modes[g_modes_count++].m_pattern = new Pattern_rain;
     g_modes[g_modes_count++].m_pattern = new Pattern_random_fader(g_fader1);
 #if 0
@@ -53,22 +52,37 @@ Pattern *setup_patterns()
 #endif
 
     g_configs = new Mode[MAX_CONFIG_OPTIONS];
-#if 0
     g_configs[g_config_count++].m_pattern = new Pattern_option("BR", g_brightness, true);
     g_configs[g_config_count++].m_pattern = new Pattern_option("G0", g_gain0, true);
     g_configs[g_config_count++].m_pattern = new Pattern_option("G1", g_gain1, true);
     g_configs[g_config_count++].m_pattern = new Pattern_option("N", g_number, true);
     g_configs[g_config_count++].m_pattern = new Pattern_option("UP", g_up, true);
-#endif
 
     g_main_modes = new Mode[MAX_MAIN_MODES];
-    g_main_modes[g_main_modes_count++] = new Pattern_random(g_modes, g_modes_count);
-    g_main_modes[g_main_modes_count++] = new Pattern_selector(g_modes, g_modes_count);
-    g_main_modes[g_main_modes_count++] = new Pattern_config(g_configs, g_config_count);
-    g_main_modes[g_main_modes_count++] = new Pattern_off();
-#endif
+    g_main_modes[g_main_modes_count].m_id = "R";
+    g_main_modes[g_main_modes_count++].m_pattern = new Pattern_random(g_modes, g_modes_count);
+    g_main_modes[g_main_modes_count].m_id = "S";
+    g_main_modes[g_main_modes_count++].m_pattern = new Pattern_selector(g_modes, g_modes_count);
+    g_main_modes[g_main_modes_count].m_id = "C";
+    g_main_modes[g_main_modes_count++].m_pattern = new Pattern_config(g_configs, g_config_count);
+    g_main_modes[g_main_modes_count].m_id = "";
+    g_main_modes[g_main_modes_count++].m_pattern = new Pattern_off();
 
+    for (int i = 0; i < g_modes_count; ++i) {
+        g_modes[i].m_pattern->setup();
+    }
+    for (int i = 0; i < g_config_count; ++i) {
+        g_configs[i].m_pattern->setup();
+    }
+    for (int i = 0; i < g_main_modes_count; ++i) {
+        g_main_modes[i].m_pattern->setup();
+    }
+
+#if 0
     return new Pattern_huey();
-    return new Pattern_main_menu(g_main_modes, g_main_modes_count);
+#endif
+    Pattern *pattern = new Pattern_main_menu(g_main_modes, g_main_modes_count);
+    Serial.printf("main menu %p\n", pattern);
+    return pattern;
 }
 #endif

@@ -3,8 +3,6 @@
 #define DISABLE_BORING
 
 #ifndef DISABLE_AUDIO
-#include <SD.h>
-#include <Wire.h>
 #include <Audio.h>
 #endif
 
@@ -68,7 +66,7 @@ Value g_brightness(16, 0, 255);
 Value g_resume_brightness(16, 0, 255);
 Value g_hue(0, 0, 255, true);
 Value g_number(0, 0, 1000, true);
-Value g_up(DIR_UP, 0, 3, true);
+Value g_up(DIR_DOWN, 0, 3, true);
 
 // Audio gain control
 Value g_gain0(INITIAL_GAIN, 0, 255);
@@ -76,7 +74,7 @@ Value g_gain1(INITIAL_GAIN, 0, 255);
 Value g_min_power(100, 0, 1000);
 Value g_max_power(300, 0, 1000);
 
-#define STATIC_PATTERNS
+#undef STATIC_PATTERNS
 #ifdef STATIC_PATTERNS
 // Shared state state
 Fader_static g_fader1;
@@ -201,6 +199,7 @@ Pattern *g_root = NULL;
 
 // Audio acquisition
 #ifndef DISABLE_AUDIO
+#if 0
 AudioInputAnalog g_audio_input(AUDIO_INPUT_PIN);
 // http://forum.pjrc.com/threads/24793-Audio-Library?p=40179&viewfull=1#post40179
 // http://www.earlevel.com/main/2013/10/13/biquad-calculator-v2/
@@ -231,6 +230,16 @@ AudioConnection g_audio_conn1(g_audio_input, g_hp_filter);
 AudioConnection g_audio_conn2(g_hp_filter, g_fft);
 AudioConnection g_audio_conn3(g_hp_filter, g_peak);
 #endif
+#else
+
+AudioInputAnalog *g_audio_input = NULL;
+AudioFilterBiquad *g_hp_filter = NULL;
+AudioAnalyzeFFT256 *g_fft = NULL;
+AudioAnalyzePeak *g_peak = NULL;
+AudioConnection *g_audio_conn1 = NULL;
+AudioConnection *g_audio_conn2 = NULL;
+AudioConnection *g_audio_conn3 = NULL;
+#endif
 #endif
 
 unsigned g_current_peak = 0;
@@ -259,8 +268,12 @@ const float GAIN_RS_TYP = GAIN_RAB / GAIN_RS_COUNT;
 // 24 bytes == 6 words for each LED of each strip.
 DMAMEM int g_display_memory[LEDS_PER_STRIP * 6];
 DMAMEM int g_drawing_memory[LEDS_PER_STRIP * 6];
+#if 0
+OctoWS2811 *g_octo = NULL;
+#else
 OctoWS2811 g_octo(LEDS_PER_STRIP, g_display_memory, g_drawing_memory,
 		  WS2811_GRB | WS2811_800kHz);
+#endif
 unsigned g_target_fps = 30;
 uint32_t g_last_update = 0;
 
@@ -305,8 +318,20 @@ void setup()
     set_fft_bin_count(0);
     set_fft_scale_factor(0);
 
+#if 1
+    g_audio_input = new AudioInputAnalog(AUDIO_INPUT_PIN);
+    g_hp_filter = new AudioFilterBiquad;
+    g_fft = new AudioAnalyzeFFT256;
+    g_peak = new AudioAnalyzePeak;
+    g_audio_conn1 = new AudioConnection(*g_audio_input, *g_hp_filter);
+    g_audio_conn2 = new AudioConnection(*g_hp_filter, *g_fft);
+    g_audio_conn3 = new AudioConnection(*g_audio_input, *g_peak);
+    // Set up ADC and audio input.
+    g_hp_filter->setHighpass(0, 250, 0.707);
+#else
     // Set up ADC and audio input.
     g_hp_filter.setHighpass(0, 250, 0.707);
+#endif
     // driley-20140923: Max used 4
     AudioMemory(6);
 #endif
@@ -322,12 +347,19 @@ void setup()
     pinMode(ENCODER_2_SW_PIN, INPUT_PULLUP);
 
     // Begin output.
+#if 0
+    g_octo = new OctoWS2811(LEDS_PER_STRIP, g_display_memory, g_drawing_memory,
+			    WS2811_GRB | WS2811_800kHz);
+    g_octo->begin();
+#else
     g_octo.begin();
+#endif
 
     // Start cycling colours by default
     g_hue.set_velocity(256, 10000);
 
     // Cache the up value since it's always used
+    set_up_direction(g_up.get());
     g_up.set_callback(set_up_direction);
 
 #ifdef STATIC_PATTERNS
@@ -345,6 +377,7 @@ void setup()
 #else
     g_root = setup_patterns();	
     g_root->activate(NULL);
+    flash_led();
 #endif
 }
 
@@ -637,13 +670,25 @@ void ui_loop()
 #ifndef DISABLE_AUDIO
 void sampler_loop()
 {
+#if 1
+    float peak = g_peak->read();
+#else
     float peak = g_peak.read();
+#endif
     g_current_peak = max(g_current_peak, peak * 65535);
 
+#if 1
+    bool available = g_fft->available();
+#else
     bool available = g_fft.available();
+#endif
     if (available) {
 	for (int i = 0; i < MAGNITUDE_COUNT; ++i) {
+#if 1
+	    g_magnitudes[i] = g_fft->output[i];
+#else
 	    g_magnitudes[i] = g_fft.output[i];
+#endif
 	}
 
 #ifdef LOG_MAGNITUDES
@@ -713,6 +758,8 @@ float calculate_actual_gain(int wiper)
 	   (((GAIN_RS_COUNT - (float) wiper) * GAIN_RS_TYP) + GAIN_R1) +
 	   1;
 }
+#endif
+#if 1
 
 const unsigned FIRST_BIN = 0;
 void set_fft_bin_count(unsigned bin_count)
@@ -762,6 +809,8 @@ void set_fft_scale_factor(float scale_factor)
 {
     g_fft_scale_factor = scale_factor;
 }
+#endif
+#ifndef DISABLE_AUDIO
 
 // g_magnitudes[MAGNITUDE_COUNT] -> g_bins[g_bin_count.get()]
 // logN(magnitude) [min_power, max_power] -> [0, fft_scale]
