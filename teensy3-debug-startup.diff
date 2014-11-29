@@ -1,0 +1,46 @@
+Only in teensy3.orig: .mk20dx128.c.swp
+diff -ur teensy3.orig/mk20dx128.c teensy3/mk20dx128.c
+--- teensy3.orig/mk20dx128.c	2014-10-27 22:14:43.000000000 -0700
++++ teensy3/mk20dx128.c	2014-10-31 15:20:01.000000000 -0700
+@@ -565,13 +565,22 @@
+ 	__enable_irq();
+ 
+ 	_init_Teensyduino_internal_();
++
+ 	if (RTC_SR & RTC_SR_TIF) {
+ 		// TODO: this should probably set the time more agressively, if
+ 		// we could reliably detect the first reboot after programming.
+ 		rtc_set(TIME_T);
+ 	}
+ 
++#if 1
+ 	__libc_init_array();
++#endif
++
++#if 0
++	digitalWrite(13, 1);
++	delay(150);
++	digitalWrite(13, 0);
++#endif
+ 
+ 	startup_late_hook();
+ 	main();
+diff -ur teensy3.orig/pins_teensy.c teensy3/pins_teensy.c
+--- teensy3.orig/pins_teensy.c	2014-10-31 15:07:45.000000000 -0700
++++ teensy3/pins_teensy.c	2014-10-31 15:12:36.000000000 -0700
+@@ -395,7 +395,15 @@
+ #endif
+ 	delay(4);
+ 
++	pinMode(13, OUTPUT);
++	digitalWrite(13, HIGH);
++	delay(150);
++	digitalWrite(13, LOW);
++	delay(150);
++
+ 	usb_init();
++
++        delay(500);
+ }
+ 
+ 
