@@ -1,5 +1,6 @@
 #include <Audio.h>
 #include "lush.h"
+#include "patterns.h"
 
 Pattern_peak_noise::Pattern_peak_noise(Fader_static &fader)
     : Pattern_peak_ordered(fader)

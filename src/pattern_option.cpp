@@ -1,4 +1,5 @@
 #include "lush.h"
+#include "patterns.h"
 
 Pattern_option::Pattern_option(char const *name, Value &value, bool show_value)
     : m_name(name), m_value(value), m_show_value(show_value)

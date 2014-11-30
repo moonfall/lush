@@ -1,4 +1,5 @@
 #include "lush.h"
+#include "patterns.h"
 
 Pattern_set::Pattern_set(const Mode *modes, unsigned num_modes)
     : m_modes(modes), m_num_modes(num_modes),

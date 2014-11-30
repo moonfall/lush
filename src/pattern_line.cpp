@@ -1,5 +1,6 @@
 #include <OctoWS2811.h>
 #include "lush.h"
+#include "patterns.h"
 
 static int g_x0;
 static int g_y0;

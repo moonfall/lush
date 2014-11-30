@@ -1,5 +1,6 @@
 #include <OctoWS2811.h>
 #include "lush.h"
+#include "patterns.h"
 
 void Pattern_spectrum_bars::activate(void *arg)
 {

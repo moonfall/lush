@@ -1,5 +1,6 @@
 #include <OctoWS2811.h>
 #include "lush.h"
+#include "patterns.h"
 
 const uint32_t MOVE_MS = 20;
 

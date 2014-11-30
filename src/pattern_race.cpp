@@ -1,4 +1,5 @@
 #include "lush.h"
+#include "patterns.h"
 
 const int HUE_OFFSET = 50;
 

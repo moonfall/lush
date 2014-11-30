@@ -1,5 +1,6 @@
 #include <OctoWS2811.h>
 #include "lush.h"
+#include "patterns.h"
 
 const unsigned PULSE_COUNT = 2;
 const uint32_t PULSE_MS = 250;

@@ -15,6 +15,7 @@
 
 #include "lush.h"
 #include "dspinst.h"
+#include "patterns.h"
 
 #undef SAMPLE_TEST
 #undef PROFILE_FFT

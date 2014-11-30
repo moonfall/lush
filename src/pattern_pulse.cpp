@@ -1,5 +1,6 @@
 #include <OctoWS2811.h>
 #include "lush.h"
+#include "patterns.h"
 
 const int DARK_MS = 2000;
 const int PULSE_COUNT = 1;

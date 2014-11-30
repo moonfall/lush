@@ -1,4 +1,5 @@
 #include "lush.h"
+#include "patterns.h"
 
 const int MAX_MODES = 64;
 const int MAX_CONFIG_OPTIONS = 8;

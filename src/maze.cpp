@@ -1,5 +1,6 @@
 #include <OctoWS2811.h>
 #include "lush.h"
+#include "maze.h"
 
 Maze::Maze()
 {

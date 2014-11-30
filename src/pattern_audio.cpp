@@ -1,4 +1,5 @@
 #include "lush.h"
+#include "patterns.h"
 
 void Pattern_audio::ui_callback(Element_id id, Element const &element)
 {

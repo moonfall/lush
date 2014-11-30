@@ -1,5 +1,6 @@
 #include <OctoWS2811.h>
 #include "lush.h"
+#include "patterns.h"
 
 // TODO: set velocity based on beat
 const int PIXEL_VELOCITY = 40;

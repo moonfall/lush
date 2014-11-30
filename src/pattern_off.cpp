@@ -1,4 +1,5 @@
 #include "lush.h"
+#include "patterns.h"
 
 void Pattern_off::activate(void *arg)
 {

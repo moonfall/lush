@@ -1,4 +1,5 @@
 #include "lush.h"
+#include "patterns.h"
 
 const uint32_t LOCK_MS = 1000;
 const uint32_t SHOW_STATUS_MS = 1000;

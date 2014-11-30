@@ -1,5 +1,6 @@
 #include <OctoWS2811.h>
 #include "lush.h"
+#include "patterns.h"
 
 #define dist(a, b, c, d) sqrt(double((a - c) * (a - c) + (b - d) * (b - d)))
 

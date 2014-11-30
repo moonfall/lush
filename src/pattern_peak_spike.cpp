@@ -1,5 +1,6 @@
 #include <Audio.h>
 #include "lush.h"
+#include "patterns.h"
 
 bool Pattern_peak_spike::display()
 {

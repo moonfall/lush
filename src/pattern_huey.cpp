@@ -1,5 +1,6 @@
 #include <OctoWS2811.h>
 #include "lush.h"
+#include "patterns.h"
 
 Pattern_huey::Pattern_huey()
     : m_hue_offset(1, 0, 255, true)
