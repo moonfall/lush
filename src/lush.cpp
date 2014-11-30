@@ -74,128 +74,7 @@ Value g_gain1(INITIAL_GAIN, 0, 255);
 Value g_min_power(100, 0, 1000);
 Value g_max_power(300, 0, 1000);
 
-#undef STATIC_PATTERNS
-#ifdef STATIC_PATTERNS
-// Shared state state
-Fader_static g_fader1;
-
-// Patterns
-Pattern_alphabet g_pattern_alphabet;
-#ifndef DISABLE_BORING
-Pattern_border g_pattern_border;
-#endif
-Pattern_counter g_pattern_counter;
-Pattern_dropper g_pattern_dropper;
-Pattern_heart g_pattern_heart;
-Pattern_huey g_pattern_huey;
-Pattern_line g_pattern_line;
-Pattern_marquee g_pattern_marquee;
-Pattern_maze g_pattern_maze(g_fader1);
-Pattern_plasma g_pattern_plasma;
-#ifndef DISABLE_BORING
-Pattern_pulse g_pattern_pulse;
-Pattern_race g_pattern_race;
-#endif
-Pattern_rain g_pattern_rain;
-Pattern_random_fader g_random_fader(g_fader1);
-#if 0
-Pattern_synthesia_fire g_pattern_synthesia_fire;
-#endif
-Pattern_synthesia_plasma_complex g_pattern_synthesia_plasma_complex;
-Pattern_wheel g_pattern_wheel;
-#ifndef DISABLE_AUDIO
-Pattern_peak_diagonal g_pattern_peak_diagonal;
-#ifndef DISABLE_BORING
-Pattern_peak_ordered g_pattern_peak_ordered(g_fader1);
-#endif
-Pattern_peak_noise g_pattern_peak_noise(g_fader1);
-Pattern_peak_spike g_pattern_peak_spike;
-Pattern_spectrum_bars g_pattern_spectrum_bars;
-Pattern_spectrum_field g_pattern_spectrum_field;
-Pattern_spectrum_timeline g_pattern_spectrum_timeline;
-#endif
-
-// Modes:
-// - weighted random mode
-// - tour
-// - select specific mode
-// - configuration
-const Mode g_modes[] = {
-    { &g_pattern_alphabet },
-#ifndef DISABLE_BORING
-    { &g_pattern_border },
-#endif
-    { &g_pattern_counter },
-    { &g_pattern_dropper },
-    { &g_pattern_heart },
-    { &g_pattern_huey },
-    { &g_pattern_line },
-    { &g_pattern_marquee },
-    { &g_pattern_maze },
-    { &g_pattern_plasma },
-#ifndef DISABLE_BORING
-    { &g_pattern_pulse },
-    { &g_pattern_race },
-#endif
-    { &g_pattern_rain },
-#ifndef DISABLE_BORING
-    { &g_pattern_rain, (void *) Pattern_rain::RAIN_CURRENT_HUE },
-    { &g_pattern_rain, (void *) Pattern_rain::RAIN_RANDOM_COLOUR },
-    { &g_pattern_rain, (void *) Pattern_rain::RAIN_SINGLE_RANDOM_COLOUR },
-    { &g_pattern_rain, (void *) Pattern_rain::RAIN_PURE_WHITE },
-#endif
-    { &g_random_fader },
-#if 0
-    { &g_pattern_synthesia_fire },
-#endif
-    { &g_pattern_synthesia_plasma_complex },
-    { &g_pattern_wheel },
-#ifndef DISABLE_AUDIO
-    { &g_pattern_peak_diagonal },
-    { &g_pattern_peak_noise },
-#ifndef DISABLE_BORING
-    { &g_pattern_peak_ordered },
-#endif
-    { &g_pattern_peak_spike },
-    { &g_pattern_spectrum_bars },
-    { &g_pattern_spectrum_field },
-    { &g_pattern_spectrum_timeline },
-#endif
-};
-const int MODE_COUNT = sizeof(g_modes) / sizeof(g_modes[0]);
-
-Pattern_option g_option_brightness("BR", g_brightness, true);
-Pattern_option g_option_gain0("G0", g_gain0, true);
-Pattern_option g_option_gain1("G1", g_gain1, true);
-Pattern_option g_option_number("N", g_number, true);
-Pattern_option g_option_up("UP", g_up, true);
-const Mode g_config_options[] = {
-    { &g_option_brightness },
-    { &g_option_gain0 },
-    { &g_option_gain1 },
-    { &g_option_number },
-    { &g_option_up },
-};
-const int CONFIG_OPTION_COUNT = sizeof(g_config_options) /
-				sizeof(g_config_options[0]);
-
-Pattern_random g_pattern_random(g_modes, MODE_COUNT);
-Pattern_selector g_pattern_selector(g_modes, MODE_COUNT);
-Pattern_config g_pattern_config(g_config_options, CONFIG_OPTION_COUNT);
-Pattern_off g_pattern_off;
-const Mode g_main_modes[] = {
-    { &g_pattern_random, NULL, "R" },
-    { &g_pattern_selector, NULL, "S" },
-    { &g_pattern_config, NULL, "C" },
-    { &g_pattern_off, NULL, "" },
-};
-const int MAIN_MODE_COUNT = sizeof(g_main_modes) / sizeof(g_main_modes[0]);
-Pattern_main_menu g_pattern_main_menu(g_main_modes, MAIN_MODE_COUNT);
-
-Pattern *g_root = &g_pattern_main_menu;
-#else
 Pattern *g_root = NULL;
-#endif
 
 // Audio acquisition
 #ifndef DISABLE_AUDIO
@@ -362,23 +241,10 @@ void setup()
     set_up_direction(g_up.get());
     g_up.set_callback(set_up_direction);
 
-#ifdef STATIC_PATTERNS
-    // TODO: Prevent multiple initialization of patterns.
-    for (int i = 0; i < MODE_COUNT; ++i) {
-    	g_modes[i].m_pattern->setup();
-    }
-    for (int i = 0; i < CONFIG_OPTION_COUNT; ++i) {
-    	g_config_options[i].m_pattern->setup();
-    }
-    for (int i = 0; i < MAIN_MODE_COUNT; ++i) {
-    	g_main_modes[i].m_pattern->setup();
-    }
-    g_root->activate(NULL);
-#else
     g_root = setup_patterns();	
     g_root->activate(NULL);
+
     flash_led();
-#endif
 }
 
 uint16_t spi_issue2(byte b1, byte b2)

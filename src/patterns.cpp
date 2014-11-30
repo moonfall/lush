@@ -1,4 +1,3 @@
-#if 1
 #include "lush.h"
 
 const int MAX_MODES = 64;
@@ -78,11 +77,7 @@ Pattern *setup_patterns()
         g_main_modes[i].m_pattern->setup();
     }
 
-#if 0
-    return new Pattern_huey();
-#endif
     Pattern *pattern = new Pattern_main_menu(g_main_modes, g_main_modes_count);
     Serial.printf("main menu %p\n", pattern);
     return pattern;
 }
-#endif
