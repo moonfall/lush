@@ -147,12 +147,8 @@ const float GAIN_RS_TYP = GAIN_RAB / GAIN_RS_COUNT;
 // 24 bytes == 6 words for each LED of each strip.
 DMAMEM int g_display_memory[LEDS_PER_STRIP * 6];
 DMAMEM int g_drawing_memory[LEDS_PER_STRIP * 6];
-#if 0
-OctoWS2811 *g_octo = NULL;
-#else
 OctoWS2811 g_octo(LEDS_PER_STRIP, g_display_memory, g_drawing_memory,
 		  WS2811_GRB | WS2811_800kHz);
-#endif
 unsigned g_target_fps = 30;
 uint32_t g_last_update = 0;
 
@@ -226,13 +222,7 @@ void setup()
     pinMode(ENCODER_2_SW_PIN, INPUT_PULLUP);
 
     // Begin output.
-#if 0
-    g_octo = new OctoWS2811(LEDS_PER_STRIP, g_display_memory, g_drawing_memory,
-			    WS2811_GRB | WS2811_800kHz);
-    g_octo->begin();
-#else
     g_octo.begin();
-#endif
 
     // Start cycling colours by default
     g_hue.set_velocity(256, 10000);
