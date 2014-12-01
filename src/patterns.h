@@ -181,18 +181,6 @@ class Pattern_huey
     Value m_hue_offset;
 };
 
-class Pattern_line
-    : public Pattern
-{
-  public:
-    virtual void activate(void *arg);
-    virtual bool display();
-  private:
-    void display_current();
-
-    uint32_t m_last_move_ms;
-};
-
 class Pattern_marquee
     : public Pattern
 {
@@ -454,6 +442,18 @@ class Pattern_spectrum_timeline
 
     virtual void activate(void *arg);
     virtual bool display();
+};
+
+class Pattern_spinner
+    : public Pattern
+{
+  public:
+    virtual void activate(void *arg);
+    virtual bool display();
+  private:
+    void display_current();
+
+    uint32_t m_last_move_ms;
 };
 
 class Pattern_synthesia_fire
