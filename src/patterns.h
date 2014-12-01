@@ -308,7 +308,7 @@ class Pattern_rain
 	RAIN_SINGLE_RANDOM_COLOUR,
 	RAIN_PURE_WHITE,
 
-	// The follow should be last.
+	// The following should be last.
 	RAIN_NUM_MODES,
     };
 
