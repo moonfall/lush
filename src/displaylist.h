@@ -25,6 +25,11 @@ struct Coord
     {
     }
 
+    bool operator==(Coord const &rhs) const
+    {
+	return m_x == rhs.m_x && m_y == rhs.m_y;
+    }
+
     int m_x;
     int m_y;
 };
@@ -82,4 +87,6 @@ class Line
 
 void draw_objects(Object **objects, unsigned count);
 
+int interpolate(int s, int e, int t, int max_t);
+Coord interpolate(Coord const &s, Coord const &e, int t, int max_t);
 #endif // !_DISPLAYLIST_H_INCLUDED
