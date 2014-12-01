@@ -13,26 +13,47 @@ struct Object
     virtual void draw() = 0;
 };
 
+struct Coord
+{
+    Coord()
+	: m_x(0), m_y(0)
+    {
+    }
+
+    Coord(int x, int y)
+	: m_x(x), m_y(y)
+    {
+    }
+
+    int m_x;
+    int m_y;
+};
+
 class Pixel
     : public Object
 {
   public:
     Pixel()
-	: m_x(0), m_y(0), m_c(COLOUR_BLACK)
+	: m_p(0, 0), m_c(COLOUR_BLACK)
     {
     }
 
     Pixel(int x, int y, Colour c)
-	: m_x(x), m_y(y), m_c(c)
+	: m_p(x, y), m_c(c)
     {
     }
 
-    void draw() {
-	draw_pixel(m_x, m_y, m_c);
+    Pixel(Coord const &pos, Colour c)
+	: m_p(pos), m_c(c)
+    {
     }
 
-    int m_x;
-    int m_y;
+    void draw()
+    {
+	draw_pixel(m_p.m_x, m_p.m_y, m_c);
+    }
+
+    Coord m_p;
     Colour m_c;
 };
 
@@ -40,19 +61,22 @@ class Line
     : public Object
 {
   public:
+    Line(Coord const &p0, Coord const &p1, Colour c)
+	: m_p0(p0), m_p1(p1), m_c(c)
+    {
+    }
     Line(int x0, int y0, int x1, int y1, Colour c)
-	: m_x0(x0), m_y0(y0), m_x1(x1), m_y1(y1), m_c(c)
+	: m_p0(x0, y0), m_p1(x1, y1), m_c(c)
     {
     }
 
-    void draw() {
-	draw_line(m_x0, m_y0, m_x1, m_y1, m_c);
+    void draw()
+    {
+	draw_line(m_p0.m_x, m_p0.m_y, m_p1.m_x, m_p1.m_y, m_c);
     }
 
-    int m_x0;
-    int m_y0;
-    int m_x1;
-    int m_y1;
+    Coord m_p0;
+    Coord m_p1;
     Colour m_c;
 };
 

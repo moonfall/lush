@@ -51,7 +51,7 @@ bool Pattern_snake::is_collision(int x, int y) const
 {
     // Check all existing segments.
     for (unsigned i = 0; i < m_length; ++i) {
-	if (m_segments[i].m_x == x && m_segments[i].m_y == y) { 
+	if (m_segments[i].m_p.m_x == x && m_segments[i].m_p.m_y == y) { 
 	    return true;
 	}
     }
