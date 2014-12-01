@@ -190,11 +190,13 @@ class Pattern_line
 
     void reset();
     static Coord pick_corner();
+    static bool is_valid_move(Coord const &s0, Coord const &s1,
+			      Coord const &e0, Coord const &e1);
   private:
     // start and end of endpoints 0 and 1
     Coord m_s0;
-    Coord m_e0;
     Coord m_s1;
+    Coord m_e0;
     Coord m_e1;
     int m_t;
 };
