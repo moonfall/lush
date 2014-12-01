@@ -26,7 +26,6 @@ Pattern *setup_patterns()
     g_modes[g_modes_count++].m_pattern = new Pattern_heart;
     Pattern_huey *huey = new Pattern_huey;
     g_modes[g_modes_count++].m_pattern = huey;
-    g_modes[g_modes_count++].m_pattern = new Pattern_spinner;
     g_modes[g_modes_count++].m_pattern = new Pattern_marquee;
     g_modes[g_modes_count++].m_pattern = new Pattern_maze(g_fader1);
     g_modes[g_modes_count++].m_pattern = new Pattern_plasma;
@@ -36,6 +35,7 @@ Pattern *setup_patterns()
     g_modes[g_modes_count++].m_pattern = new Pattern_random_fader(g_fader1);
     Pattern_snake *snake = new Pattern_snake;
     g_modes[g_modes_count++].m_pattern = snake;
+    g_modes[g_modes_count++].m_pattern = new Pattern_spinner;
 #if 0
     g_modes[g_modes_count++].m_pattern = new Pattern_synthesia_fire;
 #endif
