@@ -181,6 +181,24 @@ class Pattern_huey
     Value m_hue_offset;
 };
 
+class Pattern_line
+    : public Pattern
+{
+  public:
+    virtual void activate(void *arg);
+    virtual bool display();
+
+    void reset();
+    static Coord pick_corner();
+  private:
+    // start and end of endpoints 0 and 1
+    Coord m_s0;
+    Coord m_e0;
+    Coord m_s1;
+    Coord m_e1;
+    int m_t;
+};
+
 class Pattern_marquee
     : public Pattern
 {

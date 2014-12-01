@@ -18,6 +18,10 @@ int g_main_modes_count = 0;
 
 Pattern *setup_patterns()
 {
+#if 1
+    return new Pattern_line;
+#endif
+
     g_modes = new Mode[MAX_MODES];
     g_modes[g_modes_count++].m_pattern = new Pattern_alphabet();
     // g_modes[g_modes_count++].m_pattern = new Pattern_border;
@@ -26,6 +30,7 @@ Pattern *setup_patterns()
     g_modes[g_modes_count++].m_pattern = new Pattern_heart;
     Pattern_huey *huey = new Pattern_huey;
     g_modes[g_modes_count++].m_pattern = huey;
+    g_modes[g_modes_count++].m_pattern = new Pattern_line;
     g_modes[g_modes_count++].m_pattern = new Pattern_marquee;
     g_modes[g_modes_count++].m_pattern = new Pattern_maze(g_fader1);
     g_modes[g_modes_count++].m_pattern = new Pattern_plasma;
