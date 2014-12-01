@@ -3,6 +3,7 @@
 
 Pattern_snake::Pattern_snake()
     : m_max_length(MAX_LENGTH / 4, 1, MAX_LENGTH),
+      m_mode(SNAKE_CURRENT_HUE),
       m_length(0),
       m_x(0),
       m_y(0)
@@ -23,6 +24,12 @@ void Pattern_snake::ui_callback(Element_id id, Element const &element)
 	default:
 	    break;
     }
+}
+
+void Pattern_snake::activate(void *arg)
+{
+    m_mode = (Mode)(intptr_t) arg;
+    m_length = 0;
 }
 
 bool Pattern_snake::display()
@@ -85,7 +92,18 @@ void Pattern_snake::advance()
 	--m_length;
     }
 
-    m_segments[m_length] = Pixel(m_x, m_y, make_current_hue());
+    m_segments[m_length] = Pixel(m_x, m_y, get_colour());
     ++m_length;
+}
+
+Colour Pattern_snake::get_colour() const
+{
+    switch (m_mode) {
+	default:
+	case SNAKE_CURRENT_HUE:
+	    return make_current_hue();
+	case SNAKE_BLACK:
+	    return COLOUR_BLACK;
+    }
 }
 

@@ -387,18 +387,28 @@ class Pattern_snake
     : public Pattern
 {
   public:
+    enum Mode
+    {
+	SNAKE_CURRENT_HUE,
+	SNAKE_BLACK,
+    };
+
     Pattern_snake();
 
     virtual void setup();
+    // arg is casted to Mode.
+    virtual void activate(void *arg);
     virtual void ui_callback(Element_id id, Element const &element);
     virtual bool display();
 
     bool is_valid(int x, int y) const;
     bool is_collision(int x, int y) const;
     void advance();
+    Colour get_colour() const;
 
     static const unsigned int MAX_LENGTH = COLUMN_COUNT * ROW_COUNT / 2;
     Value m_max_length;
+    Mode m_mode;
     Pixel m_segments[MAX_LENGTH];
     unsigned m_length;
     int m_x;
