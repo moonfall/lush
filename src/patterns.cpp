@@ -18,10 +18,6 @@ int g_main_modes_count = 0;
 
 Pattern *setup_patterns()
 {
-#if 1
-    return new Pattern_line;
-#endif
-
     g_modes = new Mode[MAX_MODES];
     g_modes[g_modes_count++].m_pattern = new Pattern_alphabet();
     // g_modes[g_modes_count++].m_pattern = new Pattern_border;
