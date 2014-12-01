@@ -63,7 +63,7 @@ const int FFT_GAIN_DENOMINATOR = 1000;
 const int MAX_FFT_GAIN = 10000;
 
 // Config options
-Value g_brightness(32, 0, 255);
+Value g_brightness(3, 0, 255);
 Value g_resume_brightness(16, 0, 255);
 Value g_hue(0, 0, 255, true);
 Value g_number(0, 0, 1000, true);
