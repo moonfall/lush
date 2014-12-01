@@ -461,6 +461,27 @@ class Pattern_set
     uint32_t m_overlay_end_ms;
 };
 
+class Pattern_composite
+    : public Pattern
+{
+  public:
+    Pattern_composite(const Mode *modes, unsigned num_modes);
+
+    virtual void ui_callback(Element_id id, Element const &element);
+    virtual void ui_hook();
+
+    virtual void activate(void *arg);
+    virtual bool display();
+
+  protected:
+    Pattern *get_top();
+
+    const Mode *m_modes;
+    unsigned m_num_modes;
+
+    bool m_force_update;
+};
+
 class Pattern_main_menu
     : public Pattern_set
 {
