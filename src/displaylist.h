@@ -30,6 +30,11 @@ struct Coord
 	return m_x == rhs.m_x && m_y == rhs.m_y;
     }
 
+    bool is_flipped(Coord const &rhs) const
+    {
+	return m_x == flip_x(rhs.m_x) && m_y == flip_y(rhs.m_y);
+    }
+
     int m_x;
     int m_y;
 };
