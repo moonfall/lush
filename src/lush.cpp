@@ -313,85 +313,6 @@ void loop()
     display_loop();
 }
 
-#if 0
-void ui_callback(Element_id id, Element const &element)
-{
-    switch (id) {
-	case UI_KNOB1_ENCODER:
-	    if (g_ui.m_knob2_button.get_current().m_value) {
-		g_brightness.modify(element.get_current_change());
-	    } else {
-		g_gain0.modify(element.get_current_change());
-		g_gain1.modify(element.get_current_change());
-		program_gain();
-	    }
-	    break;
-
-	case UI_KNOB1_BUTTON:
-	    if (element.get_current_change() > 0) {
-		// On press: start fading off when pressed
-		g_resume_brightness = g_brightness;
-		g_brightness.set_velocity(-g_brightness.get(), TURN_OFF_MS);
-	    } else if (element.get_current_change() < 0) {
-		// On release: turn off, or switch modes
-		if (!g_off && g_brightness.get() == 0) {
-		    turn_off();
-		} else {
-		    ui_advance_mode();
-		}
-		g_brightness = g_resume_brightness;
-	    }
-	    break;
-
-	case UI_KNOB2_ENCODER:
-#if 0
-	    if (g_ui.m_knob2_button.get_current().m_value) {
-		g_max_db.modify(element.get_current_change());
-		if (g_max_db.get() <= g_min_db.get()) {
-		    g_min_db.set(g_max_db.get() - 1);
-		}
-	    } else {
-		g_min_db.modify(element.get_current_change());
-		if (g_min_db.get() >= g_max_db.get()) {
-		    g_max_db.set(g_min_db.get() + 1);
-		}
-	    }
-
-	    Serial.print("db range ");
-	    Serial.print(g_min_db.get());
-	    Serial.print("-");
-	    Serial.print(g_max_db.get());
-	    Serial.println();
-#else
-	    if (g_ui.m_knob2_button.get_current().m_value) {
-		g_max_dbs[g_current_bin] += element.get_current_change();
-		if (g_max_dbs[g_current_bin] <= g_min_dbs[g_current_bin]) {
-		    g_min_dbs[g_current_bin] = g_max_dbs[g_current_bin] - 1;
-		}
-	    } else {
-		g_min_dbs[g_current_bin] += element.get_current_change();
-		if (g_min_dbs[g_current_bin] >= g_max_dbs[g_current_bin]) {
-		    g_max_dbs[g_current_bin] = g_min_dbs[g_current_bin] + 1;
-		}
-	    }
-
-	    Serial.print("db range ");
-	    Serial.print(g_current_bin);
-	    Serial.print(" of ");
-	    Serial.print(g_min_dbs[g_current_bin]);
-	    Serial.print("-");
-	    Serial.print(g_max_dbs[g_current_bin]);
-	    Serial.println();
-#endif
-	    break;
-
-	case UI_KNOB2_BUTTON:
-	    // No action, just modify KNOB2 encoder
-	    break;
-    }
-}
-#endif
-
 void ui_loop()
 {
     while (Serial.available() > 0) {
@@ -402,35 +323,6 @@ void ui_loop()
 	    case 'B':
 		g_brightness.modify(1);
 		break;
-#if 0
-	    case 'm':
-		ui_advance_mode();
-		break;
-	    case '0':
-		g_current_bin = 0;
-		break;
-	    case '1':
-		g_current_bin = 1;
-		break;
-	    case '2':
-		g_current_bin = 2;
-		break;
-	    case '3':
-		g_current_bin = 3;
-		break;
-	    case '4':
-		g_current_bin = 4;
-		break;
-	    case '5':
-		g_current_bin = 5;
-		break;
-	    case '6':
-		g_current_bin = 6;
-		break;
-	    case '7':
-		g_current_bin = 7;
-		break;
-#endif
 	}
     }
 
