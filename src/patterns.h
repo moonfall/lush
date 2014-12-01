@@ -97,6 +97,7 @@ class Pattern_counter
     Pattern_counter();
 
     virtual void setup();
+    virtual void ui_callback(Element_id id, Element const &element);
     virtual bool display();
 
     Value m_counter;

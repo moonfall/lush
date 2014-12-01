@@ -14,6 +14,16 @@ void Pattern_counter::setup()
     m_counter.set_velocity(1, 250);
 }
 
+void Pattern_counter::ui_callback(Element_id id, Element const &element)
+{
+    switch (id) {
+	case UI_KNOB2_ENCODER:
+	    m_counter.modify(element.get_current_change());
+	default:
+	    break;
+    }
+}
+
 bool Pattern_counter::display()
 {
     draw_pixels(COLOUR_BLACK);
