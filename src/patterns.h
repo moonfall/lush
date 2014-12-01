@@ -1,6 +1,7 @@
 #ifndef _PATTERNS_H_INCLUDED
 #define _PATTERNS_H_INCLUDED
 
+#include "displaylist.h"
 #include "fader.h"
 #include "lush.h"
 #include "maze.h"
@@ -331,6 +332,28 @@ class Pattern_rain
     Mode m_mode;
     int m_wheel;
     Drop m_drop;
+};
+
+class Pattern_snake
+    : public Pattern
+{
+  public:
+    Pattern_snake();
+
+    virtual void setup();
+    virtual void ui_callback(Element_id id, Element const &element);
+    virtual bool display();
+
+    bool is_valid(int x, int y) const;
+    bool is_collision(int x, int y) const;
+    void advance();
+
+    static const unsigned int MAX_LENGTH = COLUMN_COUNT * ROW_COUNT / 2;
+    Value m_max_length;
+    Pixel m_segments[MAX_LENGTH];
+    unsigned m_length;
+    int m_x;
+    int m_y;
 };
 
 class Pattern_spectrum_bars

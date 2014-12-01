@@ -88,6 +88,7 @@ enum Direction
     DIR_RIGHT,
     DIR_DOWN,
     DIR_LEFT,
+    NUM_DIRECTIONS,
 };
 
 inline int flip_x(int x, int columns = COLUMN_COUNT)
@@ -129,6 +130,8 @@ inline void make_neighbour(Direction dir, int &x, int &y)
 	    break;
 	case DIR_LEFT:
 	    --x;
+	    break;
+	case NUM_DIRECTIONS:
 	    break;
     }
 }

@@ -328,6 +328,7 @@ void draw_string(int x, int y, const char *s, Colour fg, const Colour *bg,
     while (*s) {
 	draw_char(x, y, *s, fg, bg);
 	switch (dir) {
+	    default:
 	    case DIR_UP:
 		y -= (FONT_HEIGHT + spacing);
 		break;

@@ -34,6 +34,7 @@ Pattern *setup_patterns()
     // g_modes[g_modes_count++].m_pattern = new Pattern_race;
     g_modes[g_modes_count++].m_pattern = new Pattern_rain;
     g_modes[g_modes_count++].m_pattern = new Pattern_random_fader(g_fader1);
+    g_modes[g_modes_count++].m_pattern = new Pattern_snake;
 #if 0
     g_modes[g_modes_count++].m_pattern = new Pattern_synthesia_fire;
 #endif
