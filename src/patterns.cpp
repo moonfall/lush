@@ -24,7 +24,8 @@ Pattern *setup_patterns()
     g_modes[g_modes_count++].m_pattern = new Pattern_counter;
     g_modes[g_modes_count++].m_pattern = new Pattern_dropper;
     g_modes[g_modes_count++].m_pattern = new Pattern_heart;
-    g_modes[g_modes_count++].m_pattern = new Pattern_huey;
+    Pattern_huey *huey = new Pattern_huey;
+    g_modes[g_modes_count++].m_pattern = huey;
     g_modes[g_modes_count++].m_pattern = new Pattern_line;
     g_modes[g_modes_count++].m_pattern = new Pattern_marquee;
     g_modes[g_modes_count++].m_pattern = new Pattern_maze(g_fader1);
@@ -33,7 +34,8 @@ Pattern *setup_patterns()
     // g_modes[g_modes_count++].m_pattern = new Pattern_race;
     g_modes[g_modes_count++].m_pattern = new Pattern_rain;
     g_modes[g_modes_count++].m_pattern = new Pattern_random_fader(g_fader1);
-    g_modes[g_modes_count++].m_pattern = new Pattern_snake;
+    Pattern_snake *snake = new Pattern_snake;
+    g_modes[g_modes_count++].m_pattern = snake;
 #if 0
     g_modes[g_modes_count++].m_pattern = new Pattern_synthesia_fire;
 #endif
@@ -50,6 +52,10 @@ Pattern *setup_patterns()
     g_modes[g_modes_count++].m_pattern = new Pattern_spectrum_field;
     g_modes[g_modes_count++].m_pattern = new Pattern_spectrum_timeline;
 #endif
+
+    // Composite patterns
+    g_modes[g_modes_count++].m_pattern = new Pattern_composite_pair(
+	Mode(huey), Mode(snake, (void *) Pattern_snake::SNAKE_BLACK));
 
     g_configs = new Mode[MAX_CONFIG_OPTIONS];
     g_configs[g_config_count++].m_pattern = new Pattern_option("BR", g_brightness, true);
