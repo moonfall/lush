@@ -28,7 +28,6 @@ Pattern *setup_patterns()
     g_modes[g_modes_count++].m_pattern = new Pattern_line;
     g_modes[g_modes_count++].m_pattern = new Pattern_marquee;
     g_modes[g_modes_count++].m_pattern = new Pattern_maze(g_fader1);
-    // Allocate plasma causes a hang at startup.
     g_modes[g_modes_count++].m_pattern = new Pattern_plasma;
     // g_modes[g_modes_count++].m_pattern = new Pattern_pulse;
     // g_modes[g_modes_count++].m_pattern = new Pattern_race;
