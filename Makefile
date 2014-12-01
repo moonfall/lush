@@ -27,20 +27,25 @@ BUILDDIR = $(abspath $(CURDIR)/build)
 # path location for Teensy Loader, teensy_post_compile and teensy_reboot
 TOOLSPATH = $(CURDIR)/tools
 
+ARDUINOPATH = /Applications/Arduino.app/Contents/Resources/Java
+
 ifeq ($(OS),Windows_NT)
     $(error What is Win Dose?)
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Darwin)
-        TOOLSPATH = /Applications/Arduino.app/Contents/Resources/Java/hardware/tools/
+        TOOLSPATH = $(ARDUINOPATH)/hardware/tools/
     endif
 endif
 
 # path location for Teensy 3 core
 COREPATH = teensy3
+COREPATH = $(ARDUINOPATH)/hardware/teensy/cores/teensy3
 
 # path location for Arduino libraries
+ARDUINOLIBRARYPATH = $(ARDUINOPATH)/libraries
 LIBRARYPATH = libraries
+ARDUINOLIBRARIES = Encoder SD SPI Wire
 
 # path location for the arm-none-eabi compiler
 COMPILERPATH = $(TOOLSPATH)/arm-none-eabi/bin
@@ -95,8 +100,13 @@ OBJCOPY = $(abspath $(COMPILERPATH))/arm-none-eabi-objcopy
 SIZE = $(abspath $(COMPILERPATH))/arm-none-eabi-size
 
 # automatically create lists of the sources and objects
-LC_FILES := $(wildcard $(LIBRARYPATH)/*/*.c $(LIBRARYPATH)/*/utility/*.c)
-LCPP_FILES := $(wildcard $(LIBRARYPATH)/*/*.cpp $(LIBRARYPATH)/*/utility/*.cpp)
+LOCALLIBLIST = $(wildcard $(LIBRARYPATH)/*)
+ARDUINOLIBLIST = $(foreach lib,$(ARDUINOLIBRARIES),$(ARDUINOLIBRARYPATH)/$(lib))
+LIBLIST = $(ARDUINOLIBLIST) $(LOCALLIBLIST)
+#LC_FILES := $(wildcard $(LIBRARYPATH)/*/*.c $(LIBRARYPATH)/*/utility/*.c)
+#LCPP_FILES := $(wildcard $(LIBRARYPATH)/*/*.cpp $(LIBRARYPATH)/*/utility/*.cpp)
+LC_FILES := $(foreach lib,$(LIBLIST),$(wildcard $(lib)/*.c $(lib)/utility/*.c))
+LCPP_FILES := $(foreach lib,$(LIBLIST),$(wildcard $(lib)/*.cpp $(lib)/utility/*.cpp))
 TC_FILES := $(wildcard $(COREPATH)/*.c)
 TCPP_FILES := $(wildcard $(COREPATH)/*.cpp)
 C_FILES := $(wildcard src/*.c)
@@ -104,7 +114,8 @@ CPP_FILES := $(wildcard src/*.cpp)
 INO_FILES := $(wildcard src/*.ino)
 
 # include paths for libraries
-L_INC := $(foreach lib,$(filter %/, $(wildcard $(LIBRARYPATH)/*/ $(LIBRARYPATH)/*/utility/)), -I$(lib))
+#L_INC := $(foreach lib,$(filter %/, $(wildcard $(LIBRARYPATH)/*/ $(LIBRARYPATH)/*/utility/)), -I$(lib))
+L_INC := $(foreach lib,$(LIBLIST), -I$(lib)) $(foreach lib,$(LIBLIST), -I$(lib)/utility)
 
 SOURCES := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o) $(INO_FILES:.ino=.o) $(TC_FILES:.c=.o) $(TCPP_FILES:.cpp=.o) $(LC_FILES:.c=.o) $(LCPP_FILES:.cpp=.o)
 OBJS := $(foreach src,$(SOURCES), $(BUILDDIR)/$(src))

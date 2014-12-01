@@ -217,31 +217,31 @@ void setup()
 
 uint16_t spi_issue2(byte b1, byte b2)
 {
-  digitalWrite(MCP4261_CS_PIN, LOW);
-  delayMicroseconds(20);
-  byte high = SPI.transfer(b1);
-  byte low = SPI.transfer(b2);
-  delayMicroseconds(20);
-  digitalWrite(MCP4261_CS_PIN, HIGH);
-  delayMicroseconds(50);
-  return high << 8 | low;
+    digitalWrite(MCP4261_CS_PIN, LOW);
+    delayMicroseconds(20);
+    byte high = SPI.transfer(b1);
+    byte low = SPI.transfer(b2);
+    delayMicroseconds(20);
+    digitalWrite(MCP4261_CS_PIN, HIGH);
+    delayMicroseconds(50);
+    return high << 8 | low;
 }
 
 uint16_t set_wiper(int wiper, int pos)
 {
-  const int WR = B00 << 2;
-  const int RD = B11 << 2;
+    const int WR = B00 << 2;
+    const int RD = B11 << 2;
 
-  byte b1 = (wiper << 4) | WR | ((pos >> 8) & 0x3);
-  byte b2 = pos & 0xff;
-  uint16_t r = spi_issue2(b1, b2);
+    byte b1 = (wiper << 4) | WR | ((pos >> 8) & 0x3);
+    byte b2 = pos & 0xff;
+    uint16_t r = spi_issue2(b1, b2);
 
-  b1 = (wiper << 4) | RD;
-  b2 = 0xff;
-  r = spi_issue2(b1, b2);
-  uint16_t data = r & 0x1ff;
+    b1 = (wiper << 4) | RD;
+    b2 = 0xff;
+    r = spi_issue2(b1, b2);
+    uint16_t data = r & 0x1ff;
 
-  return data;
+    return data;
 }
 
 void set_gain(int gain)
