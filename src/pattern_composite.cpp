@@ -46,3 +46,11 @@ Pattern *Pattern_composite::get_top()
 {
     return m_num_modes == 0 ? NULL : m_modes[m_num_modes - 1].m_pattern;
 }
+
+Pattern_composite_pair::Pattern_composite_pair(Mode const &bottom,
+					       Mode const &top)
+    : Pattern_composite(m_modes_pair, 2)
+{
+    m_modes_pair[0] = bottom;
+    m_modes_pair[1] = top;
+}

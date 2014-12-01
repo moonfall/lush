@@ -577,6 +577,16 @@ class Pattern_composite
     bool m_force_update;
 };
 
+class Pattern_composite_pair
+    : public Pattern_composite
+{
+  public:
+    Pattern_composite_pair(Mode const &bottom, Mode const &top);
+
+  protected:
+    Mode m_modes_pair[2];
+};
+
 class Pattern_main_menu
     : public Pattern_set
 {
