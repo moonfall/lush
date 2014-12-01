@@ -684,17 +684,25 @@ void display_loop()
 #ifdef DISABLE_DISPLAY
     return;
 #endif
-    if (should_display() && g_root->display()) {
-	show_pixels();
-	g_last_update = millis();
+    if (should_display() ) {
+	if (!g_root->is_full_screen()) {
+	    draw_pixels(COLOUR_BLACK);
+	} else {
+	    Serial.print("skip clear\n");
+	}
 
-	// TODO: Is this the best place?
-	reset_peak();
+	if (g_root->display()) {
+	    show_pixels();
+	    g_last_update = millis();
+
+	    // TODO: Is this the best place?
+	    reset_peak();
 
 #if 0
-	Serial.printf("mem %u\n", AudioMemoryUsageMax());
-	Serial.print("Free ram:");Serial.println(FreeRam());
+	    Serial.printf("mem %u\n", AudioMemoryUsageMax());
+	    Serial.print("Free ram:");Serial.println(FreeRam());
 #endif
+	}
     }
 }
 

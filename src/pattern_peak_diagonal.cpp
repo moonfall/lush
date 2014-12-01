@@ -15,9 +15,6 @@ bool Pattern_peak_diagonal::display()
     Serial.printf("peak %5u %s\n", get_peak(), dots);
 #endif
 
-    // Clean slate.
-    draw_pixels(COLOUR_BLACK);
-
     Colour c = make_hue(g_hue.get());
 
     int leds = get_mapped_peak((COLUMN_COUNT + 1) * ROW_COUNT / 2);

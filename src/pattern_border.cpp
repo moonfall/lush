@@ -31,7 +31,6 @@ bool Pattern_border::display()
 
 void Pattern_border::display_current()
 {
-    draw_pixels(COLOUR_BLACK);
     draw_pixel(m_x, m_y, make_current_hue());
 }
 

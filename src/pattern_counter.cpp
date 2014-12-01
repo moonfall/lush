@@ -26,8 +26,6 @@ void Pattern_counter::ui_callback(Element_id id, Element const &element)
 
 bool Pattern_counter::display()
 {
-    draw_pixels(COLOUR_BLACK);
-
     int counter = m_counter.get() % 100;
     Colour c = make_current_hue();
     draw_char(0, 1, counter / 10 + '0', c, &COLOUR_BLACK);

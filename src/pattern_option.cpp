@@ -23,8 +23,6 @@ void Pattern_option::ui_callback(Element_id id, Element const &element)
 
 bool Pattern_option::display()
 {
-    draw_pixels(COLOUR_BLACK);
-
     Colour c = make_rgb(0, g_brightness.get(), 0);
     draw_centered_string(0, 0, COLUMN_COUNT, FONT_HEIGHT, m_name, c,
 		         &COLOUR_BLACK);

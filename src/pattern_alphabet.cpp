@@ -26,8 +26,6 @@ void Pattern_alphabet::ui_callback(Element_id id, Element const &element)
 
 bool Pattern_alphabet::display()
 {
-    draw_pixels(COLOUR_BLACK);
-
     Colour c = make_current_hue();
 
     char s[2];

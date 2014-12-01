@@ -25,6 +25,11 @@ void Pattern_composite::activate(void *arg)
     m_force_update = true;
 }
 
+bool Pattern_composite::is_full_screen()
+{
+    return m_modes[0].m_pattern->is_full_screen();
+}
+
 bool Pattern_composite::display()
 {
     bool needs_update = m_force_update;

@@ -15,8 +15,6 @@ void Pattern_race::setup()
 
 bool Pattern_race::display()
 {
-    draw_pixels(COLOUR_BLACK);
-
     int counter = m_counter.get() % LED_COUNT;
     Colour c = make_current_hue();
 

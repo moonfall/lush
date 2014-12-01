@@ -29,6 +29,13 @@ class Pattern
     {
     }
 
+    // full screen will handle clearing background if necessary, otherwise
+    // Pattern expects a reasonable background
+    virtual bool is_full_screen()
+    {
+	return false;
+    }
+
     virtual bool display() = 0;
 };
 
@@ -46,6 +53,12 @@ class Pattern_random_fader
     Pattern_random_fader(Fader_static &fader);
 
     virtual void activate(void *arg);
+
+    virtual bool is_full_screen()
+    {
+	return true;
+    }
+
     virtual bool display();
 
     void randomize();
@@ -111,6 +124,12 @@ class Pattern_dropper
     Pattern_dropper();
 
     virtual void activate(void *arg);
+
+    virtual bool is_full_screen()
+    {
+	return true;
+    }
+
     virtual bool display();
 
     class Drop
@@ -150,6 +169,12 @@ class Pattern_huey
     Pattern_huey();
 
     virtual void ui_callback(Element_id id, Element const &element);
+
+    virtual bool is_full_screen()
+    {
+	return true;
+    }
+
     virtual bool display();
 
   private:
@@ -191,6 +216,12 @@ class Pattern_maze
     Pattern_maze(Fader_static &fader);
 
     virtual void activate(void *arg);
+
+    virtual bool is_full_screen()
+    {
+	return true;
+    }
+
     virtual bool display();
 
     virtual void regenerate();
@@ -210,6 +241,12 @@ class Pattern_off
 {
   public:
     virtual void activate(void *arg);
+
+    virtual bool is_full_screen()
+    {
+	return true;
+    }
+
     virtual bool display();
 };
 
@@ -258,6 +295,12 @@ class Pattern_plasma
     virtual void ui_callback(Element_id id, Element const &element);
 
     virtual void activate(void *arg);
+
+    virtual bool is_full_screen()
+    {
+	return true;
+    }
+
     virtual bool display();
 
     void reset_plasma();
@@ -275,6 +318,12 @@ class Pattern_pulse
 {
   public:
     virtual void activate(void *arg);
+
+    virtual bool is_full_screen()
+    {
+	return true;
+    }
+
     virtual bool display();
 
   private:
@@ -361,6 +410,12 @@ class Pattern_spectrum_bars
 {
   public:
     virtual void activate(void *arg);
+
+    virtual bool is_full_screen()
+    {
+	return true;
+    }
+
     virtual bool display();
 };
 
@@ -369,6 +424,12 @@ class Pattern_spectrum_field
 {
   public:
     virtual void activate(void *arg);
+
+    virtual bool is_full_screen()
+    {
+	return true;
+    }
+
     virtual bool display();
 };
 
@@ -376,6 +437,11 @@ class Pattern_spectrum_timeline
     : public Pattern_audio
 {
   public:
+    virtual bool is_full_screen()
+    {
+	return true;
+    }
+
     virtual void activate(void *arg);
     virtual bool display();
 };
@@ -387,6 +453,12 @@ class Pattern_synthesia_fire
     Pattern_synthesia_fire();
 
     virtual void setup();
+
+    virtual bool is_full_screen()
+    {
+	return true;
+    }
+
     virtual bool display();
 
     int m_matrix_layer1[COLUMN_COUNT][ROW_COUNT];
@@ -400,6 +472,12 @@ class Pattern_synthesia_plasma_complex
     Pattern_synthesia_plasma_complex();
 
     virtual void setup();
+
+    virtual bool is_full_screen()
+    {
+	return true;
+    }
+
     virtual bool display();
 
     Value m_time;
@@ -409,6 +487,11 @@ class Pattern_wheel
     : public Pattern
 {
   public:
+    virtual bool is_full_screen()
+    {
+	return true;
+    }
+
     virtual bool display();
 };
 
@@ -434,6 +517,7 @@ class Pattern_set
     virtual void ui_hook();
 
     virtual void activate(void *arg);
+    virtual bool is_full_screen();
     virtual bool display();
 
   protected:
@@ -471,6 +555,7 @@ class Pattern_composite
     virtual void ui_hook();
 
     virtual void activate(void *arg);
+    virtual bool is_full_screen();
     virtual bool display();
 
   protected:

@@ -36,8 +36,6 @@ void Pattern_marquee::ui_callback(Element_id id, Element const &element)
 
 bool Pattern_marquee::display()
 {
-    draw_pixels(COLOUR_BLACK);
-
     Colour c = make_current_hue();
 
     draw_string(m_pos.get(), 1, m_text, c, &COLOUR_BLACK, DIR_RIGHT, 1);

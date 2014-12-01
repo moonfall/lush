@@ -20,7 +20,6 @@ const unsigned HEART_ROWS = sizeof(HEART) / sizeof(HEART[0]);
 
 void Pattern_heart::activate(void *arg)
 {
-    draw_pixels(COLOUR_BLACK);
     m_activate_ms = millis();
     m_last_colour = COLOUR_BLACK;
 }

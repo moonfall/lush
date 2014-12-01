@@ -20,8 +20,6 @@ void Pattern_rain::activate(void *arg)
 
 bool Pattern_rain::display()
 {
-    draw_pixels(COLOUR_BLACK);
-
     int y = m_drop.m_y.get();
     if (y >= ROW_COUNT) {
 	m_drop.reset(get_colour());

@@ -23,6 +23,11 @@ void Pattern_set::activate(void *arg)
     activate_child();
 }
 
+bool Pattern_set::is_full_screen()
+{
+    return get_child()->is_full_screen();
+}
+
 bool Pattern_set::display()
 {
     bool needs_update = get_child()->display() || m_force_update;

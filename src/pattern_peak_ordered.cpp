@@ -25,9 +25,6 @@ bool Pattern_peak_ordered::display()
     Serial.printf("peak %5u %s\n", get_peak(), dots);
 #endif
 
-    // Clean slate.
-    draw_pixels(COLOUR_BLACK);
-
     Colour c = make_hue(g_hue.get());
 
     int peak = get_mapped_peak(LED_COUNT);

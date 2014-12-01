@@ -28,7 +28,6 @@ void Pattern_snake::ui_callback(Element_id id, Element const &element)
 bool Pattern_snake::display()
 {
     advance();
-    draw_pixels(COLOUR_BLACK);
     for (unsigned i = 0; i < m_length; ++i) {
 	m_segments[i].draw();
     }
